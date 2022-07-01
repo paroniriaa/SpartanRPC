@@ -27,7 +27,7 @@ const (
 
 var NewCoderFuncMap map[Type]NewCoderFunc
 
-func init() {
+func Init() {
 	NewCoderFuncMap = make(map[Type]NewCoderFunc)
 	NewCoderFuncMap[Json] = NewJsonCoder
 }
