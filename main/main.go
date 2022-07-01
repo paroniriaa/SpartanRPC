@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Distributed-RPC-Framework"
 	"Distributed-RPC-Framework/coder"
 	"Distributed-RPC-Framework/server"
 	"encoding/json"
@@ -11,13 +12,13 @@ import (
 )
 
 func start(address chan string) {
-	listener, err := net.Listen("tcp", ":0")
+	portNumber, err := net.Listen("tcp", ":80")
 	if err != nil {
 		log.Fatal("network issue:", err)
 	}
-	log.Println("start RPC server on port", listener.Addr())
-	address <- listener.Addr().String()
-	server.Connection_handle(listener)
+	log.Println("start RPC server on port", portNumber.Addr())
+	address <- portNumber.Addr().String()
+	server.Accept(portNumber)
 }
 
 func main() {
@@ -35,7 +36,7 @@ func main() {
 	n := 0
 	for n < 5 {
 		header := &coder.Header{
-			ServiceMethod: "Test.Echo",
+			ServiceMethod: "Foo.Sum",
 			SeqNumber:     uint64(n),
 		}
 		n++

@@ -33,7 +33,7 @@ func (coder *JsonCoder) Write(header *Header, body interface{}) (error error) {
 	}
 	error = coder.encoder.Encode(body)
 	if error != nil {
-		log.Println("Error in encoding body:", error)
+		log.Println("Error in encoding header:", error)
 		return error
 	}
 	defer func() {
@@ -42,11 +42,9 @@ func (coder *JsonCoder) Write(header *Header, body interface{}) (error error) {
 		if runtimeError != nil {
 			log.Println("Error in encoding process:", runtimeError)
 		}
-		/*
-			if error != nil {
-				_ = coder.Close()
-			}
-		*/
+		if error != nil {
+			_ = coder.Close()
+		}
 	}()
 	return error
 }

@@ -52,7 +52,7 @@ var invalidRequest = struct{}{}
 func (server *Server) Connection_handle(listener net.Listener) {
 	for {
 		connection, err_msg := listener.Accept()
-		if err_msg != nil {
+		if connection != nil {
 			log.Println("rpc server: accept error:", err_msg)
 			return
 		}
@@ -98,7 +98,6 @@ func (server *Server) server_coder(message coder.Coder) {
 func (server *Server) read_header(message coder.Coder) (*coder.Header, error) {
 	var h coder.Header
 	errors := message.ReadHeader(&h)
-
 	if errors != nil {
 		if errors != io.EOF && errors != io.ErrUnexpectedEOF {
 			log.Println("rpc server: read header error:", errors)
