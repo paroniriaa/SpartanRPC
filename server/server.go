@@ -50,7 +50,7 @@ var invalidRequest = struct{}{}
 //@function
 // Accept accepts connections on the listener and serves requests
 // for each incoming connection.
-func (server *Server) connection_handle(listening net.Listener) {
+func (server *Server) Connection_handle(listening net.Listener) {
 	for {
 		connection, err_msg := listening.Accept()
 		if connection != nil {
@@ -148,4 +148,4 @@ func (server *Server) request_handle(message coder.Coder, request *request, send
 
 // Accept accepts connections on the listener and serves requests
 // for each incoming connection.
-func connection_handle(lis net.Listener) { default_server.connection_handle(lis) }
+func Connection_handle(lis net.Listener) { default_server.Connection_handle(lis) }
