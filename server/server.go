@@ -1,6 +1,7 @@
 package server
 
 import (
+	"Distributed-RPC-Framework/coder"
 	"encoding/json"
 	"io"
 	"log"
@@ -37,19 +38,20 @@ var DefaultServer = NewServer()
 func (server *Server) Connection_Handle(connection io.ReadWriteCloser) {
 	defer func() { _ = connection.Close() }()
 	var opt Option
-	if err := json.NewDecoder(connection).Decode(&opt); err != nil {
+	err := json.NewDecoder(connection).Decode(&opt)
+
+	switch {
+	case err != nil:
 		log.Println("rpc server: options error: ", err)
 		return
-	}
-	if opt.MagicNumber != MagicNumber {
+	case opt.MagicNumber != MagicNumber:
 		log.Printf("rpc server: invalid magic number %x", opt.MagicNumber)
 		return
-	}
-	f := coder.NewCodecFuncMap[opt.CoderType]
-	if f == nil {
+	case coder.NewCodecFuncMap[opt.CoderType] == nil:
 		log.Printf("rpc server: invalid codec type %s", opt.CoderType)
 		return
 	}
+
 	server.serverCoder(f(connection))
 }
 

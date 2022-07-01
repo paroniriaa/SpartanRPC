@@ -1,11 +1,17 @@
 package coder
 
-import "io"
+import (
+	"io"
+)
+
+type Type string
+
+type NewCoderFunc func(io.ReadWriteCloser) Coder
 
 type Header struct {
-	ServiceMethod string // format "Service.Method"
-	Seq           uint64 // sequence number chosen by client
-	Error         string
+	ServiceMethod string // the format for specific service and method: "Service.Method"
+	SeqNumber     uint64 // the sequence number chosen by client
+	Error         string // error message from server's response if the rpc call failed
 }
 
 type Coder interface {
@@ -15,17 +21,13 @@ type Coder interface {
 	Write(*Header, interface{}) error
 }
 
-type NewCodecFunc func(io.ReadWriteCloser) Coder
-
-type Type string
-
 const (
-	Jsonype  Type = "application/json"
+	Json Type = "application/json"
 )
 
-var NewCodecFuncMap map[Type]NewCodecFunc
+var NewCoderFuncMap map[Type]NewCoderFunc
 
 func init() {
-	NewCodecFuncMap = make(map[Type]NewCodecFunc)
-	NewCodecFuncMap[Jsonype] = NewJsonCoder
+	NewCoderFuncMap = make(map[Type]NewCoderFunc)
+	NewCoderFuncMap[Json] = NewJsonCoder
 }
