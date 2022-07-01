@@ -25,19 +25,19 @@ func New_server() *Server {
 
 // request stores all information of a call
 type request struct {
-	header            *coder.Header // header of request
+	header       *coder.Header // header of request
 	argv, replyv reflect.Value // argv and replyv of request
 }
 
 type Option struct {
-	IDNumber int        // MagicNumber marks this's a geerpc request
-	CoderType   coder.Type // client may choose different Codec to encode body
+	IDNumber  int        // MagicNumber marks this's a geerpc request
+	CoderType coder.Type // client may choose different Codec to encode body
 }
 
 //TODO: variable
 var DefaultOption = &Option{
-	IDNumber: MagicNumber,
-	CoderType:   coder.Json,
+	IDNumber:  MagicNumber,
+	CoderType: coder.Json,
 }
 
 // DefaultServer is the default instance of *Server.
@@ -46,13 +46,12 @@ var default_server = New_server()
 // invalidRequest is a placeholder for response argv when error occurs
 var invalidRequest = struct{}{}
 
-
 //@function
 // Accept accepts connections on the listener and serves requests
 // for each incoming connection.
-func (server *Server) connection_handle(listening net.Listener) {
+func (server *Server) Connection_handle(listener net.Listener) {
 	for {
-		connection, err_msg := listening.Accept()
+		connection, err_msg := listener.Accept()
 		if connection != nil {
 			log.Println("rpc server: accept error:", err_msg)
 			return
@@ -80,8 +79,8 @@ func (server *Server) connection_handle(listening net.Listener) {
 func (server *Server) server_coder(message coder.Coder) {
 	sending := new(sync.Mutex)
 	waitGroup := new(sync.WaitGroup)
-	for{
-		requests,errors := server.read_request(message)
+	for {
+		requests, errors := server.read_request(message)
 		if requests == nil && errors != nil {
 			break
 		} else {
@@ -95,7 +94,6 @@ func (server *Server) server_coder(message coder.Coder) {
 	waitGroup.Wait()
 	_ = message.Close()
 }
-
 
 func (server *Server) read_header(message coder.Coder) (*coder.Header, error) {
 	var h coder.Header
@@ -125,7 +123,6 @@ func (server *Server) read_request(message coder.Coder) (*request, error) {
 	return requests, nil
 }
 
-
 func (server *Server) send_response(message coder.Coder, header *coder.Header, body interface{}, sending *sync.Mutex) {
 	sending.Lock()
 	errors := message.Write(header, body)
@@ -144,8 +141,6 @@ func (server *Server) request_handle(message coder.Coder, request *request, send
 	defer waitGroup.Done()
 }
 
-
-
 // Accept accepts connections on the listener and serves requests
 // for each incoming connection.
-func connection_handle(lis net.Listener) { default_server.connection_handle(lis) }
+func Connection_handle(lis net.Listener) { default_server.Connection_handle(lis) }
