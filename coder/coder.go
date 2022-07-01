@@ -4,14 +4,10 @@ import (
 	"io"
 )
 
-type Type string
-
-type NewCoderFunc func(io.ReadWriteCloser) Coder
-
 type Header struct {
-	ServiceMethod string // the format for specific service and method: "Service.Method"
-	SeqNumber     uint64 // the sequence number chosen by client
-	Error         string // error message from server's response if the rpc call failed
+	ServiceMethod  string // format "Service.Method"
+	SequenceNumber uint64 // sequence number chosen by client
+	Error          string //
 }
 
 type Coder interface {
@@ -21,13 +17,17 @@ type Coder interface {
 	Write(*Header, interface{}) error
 }
 
+type NewCoderFunc func(io.ReadWriteCloser) Coder
+
+type Type string
+
 const (
 	Json Type = "application/json"
 )
 
 var NewCoderFuncMap map[Type]NewCoderFunc
 
-func Init() {
+func init() {
 	NewCoderFuncMap = make(map[Type]NewCoderFunc)
 	NewCoderFuncMap[Json] = NewJsonCoder
 }

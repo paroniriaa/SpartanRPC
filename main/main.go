@@ -1,13 +1,12 @@
 package main
 
 import (
-	"Distributed-RPC-Framework"
 	"Distributed-RPC-Framework/coder"
 	"Distributed-RPC-Framework/server"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net"
+	"strconv"
 	"time"
 )
 
@@ -18,11 +17,11 @@ func start(address chan string) {
 	}
 	log.Println("start RPC server on port", portNumber.Addr())
 	address <- portNumber.Addr().String()
-	server.Accept(portNumber)
+	server.Connection_handle(portNumber)
 }
 
 func main() {
-	log.SetFlags(0)
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
 	address := make(chan string)
 	go start(address)
 
@@ -36,15 +35,16 @@ func main() {
 	n := 0
 	for n < 5 {
 		header := &coder.Header{
-			ServiceMethod: "Foo.Sum",
-			SeqNumber:     uint64(n),
+			ServiceMethod:  "Test.Echo",
+			SequenceNumber: uint64(n),
 		}
-		n++
-		_ = communication.Write(header,
-			fmt.Sprintf("RPC Sequence Number #{header.SeqNumber}"))
+		request := "RPC Sequence Number " + strconv.Itoa(n)
+		log.Println("Request:", request)
+		_ = communication.Write(header, request)
 		_ = communication.ReadHeader(header)
 		var response string
 		_ = communication.ReadBody(&response)
 		log.Println("Response:", response)
+		n++
 	}
 }
