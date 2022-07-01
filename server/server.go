@@ -53,7 +53,7 @@ var invalidRequest = struct{}{}
 func (server *Server) Connection_handle(listening net.Listener) {
 	for {
 		connection, err_msg := listening.Accept()
-		if connection != nil {
+		if err_msg != nil {
 			log.Println("rpc server: accept error:", err_msg)
 			return
 		}
