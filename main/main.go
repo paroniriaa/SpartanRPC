@@ -21,8 +21,7 @@ func start(address chan string) {
 }
 
 func main() {
-	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
-	//log.SetFlags(0)
+	log.SetFlags(0)
 	address := make(chan string)
 	go start(address)
 
