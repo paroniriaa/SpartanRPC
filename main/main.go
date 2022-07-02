@@ -1,12 +1,12 @@
 package main
 
 import (
-	"Distributed-RPC-Framework/client"
+	"Distributed-RPC-Framework/coder"
 	"Distributed-RPC-Framework/server"
-	"fmt"
+	"encoding/json"
 	"log"
 	"net"
-	"sync"
+	"strconv"
 	"time"
 )
 
@@ -24,24 +24,29 @@ func main() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
 	address := make(chan string)
 	go start(address)
-	client, _ := client.Connection("tcp", <-address)
-	defer func() { _ = client.Close() }()
+
+	connection, _ := net.Dial("tcp", <-address)
+	defer func() { _ = connection.Close() }()
+
 	time.Sleep(time.Second)
-	var waitGroup sync.WaitGroup
+	_ = json.NewEncoder(connection).Encode(server.DefaultOption)
+	communication := coder.NewJsonCoder(connection)
 
 	n := 0
 	for n < 5 {
-		waitGroup.Add(1)
-		go func(n int) {
-			defer waitGroup.Done()
-			args := fmt.Sprintf("geerpc req %d", n)
-			var reply string
-			if err := client.Call("Foo.Sum",args, &reply); err != nil {
-				log.Fatal("call Foo.Sum error:", err)
-			}
-			log.Println("reply:", reply)
-		}(n)
+		requestHeader := &coder.Header{
+			ServiceMethod:  "Test.Echo",
+			SequenceNumber: uint64(n),
+		}
+		requestBody := "Hello there! " + strconv.Itoa(n)
+		log.Printf("Request: ServiceMethod -> %s, SequenceNumber -> %d, Message -> %s", requestHeader.ServiceMethod, requestHeader.SequenceNumber, requestBody)
+		_ = communication.EncodeMessageHeaderAndBody(requestHeader, requestBody)
+
+		responseHeader := &coder.Header{}
+		var responseBody string
+		_ = communication.DecodeMessageHeader(responseHeader)
+		_ = communication.DecodeMessageBody(&responseBody)
+		log.Printf("Response: ServiceMethod -> %s, SequenceNumber -> %d, Message -> %s", responseHeader.ServiceMethod, responseHeader.SequenceNumber, responseBody)
 		n++
 	}
-	waitGroup.Wait()
 }
