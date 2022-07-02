@@ -15,20 +15,23 @@ import (
 const MagicNumber = 0x3bef5c
 
 // TODO: struct
+// Server represents an RPC Server.
 type Server struct{}
 
+// NewServer returns a new Server.
 func New_server() *Server {
 	return &Server{}
 }
 
+// request stores all information of a call
 type request struct {
-	header       *coder.Header
-	argv, replyv reflect.Value
+	header       *coder.Header // header of request
+	argv, replyv reflect.Value // argv and replyv of request
 }
 
 type Option struct {
-	IDNumber  int
-	CoderType coder.Type
+	IDNumber  int             // MagicNumber marks the identification of RPC request
+	CoderType coder.CoderType // CoderType is the type of Coder that client chooses for encoding and decoding
 }
 
 //TODO: variable
@@ -37,16 +40,20 @@ var DefaultOption = &Option{
 	CoderType: coder.Json,
 }
 
+// DefaultServer is the default instance of *Server.
 var default_server = New_server()
 
+// invalidRequest is a placeholder for response argv when error occurs
 var invalidRequest = struct{}{}
 
-//TODO: function
+//@function
+// Accept accepts connections on the listener and serves requests
+// for each incoming connection.
 func (server *Server) Connection_handle(listening net.Listener) {
 	for {
 		connection, err_msg := listening.Accept()
 		if err_msg != nil {
-			log.Println("RPC server - accept error:", err_msg)
+			log.Println("RPC server accept error:", err_msg)
 			return
 		}
 
@@ -55,16 +62,16 @@ func (server *Server) Connection_handle(listening net.Listener) {
 		errors := json.NewDecoder(connection).Decode(&option)
 		switch {
 		case errors != nil:
-			log.Println("RPC server - option error: ", errors)
+			log.Println("RPC server option error: ", errors)
 			return
 		case option.IDNumber != MagicNumber:
-			log.Printf("RPC server - ID number error: %x is invalid", option.IDNumber)
+			log.Printf("RPC server ID number error: %x is invalid", option.IDNumber)
 			return
-		case coder.NewCoderFuncMap[option.CoderType] == nil:
-			log.Printf("RPC server - coderType error:  %s coder type is invalid invalid", option.CoderType)
+		case coder.CoderFunctionMap[option.CoderType] == nil:
+			log.Printf("RPC server invalid coder type error: %s", option.CoderType)
 			return
 		}
-		coder_function_map := coder.NewCoderFuncMap[option.CoderType]
+		coder_function_map := coder.CoderFunctionMap[option.CoderType]
 		server.server_coder(coder_function_map(connection))
 	}
 }
@@ -90,10 +97,10 @@ func (server *Server) server_coder(message coder.Coder) {
 
 func (server *Server) read_header(message coder.Coder) (*coder.Header, error) {
 	var h coder.Header
-	errors := message.ReadHeader(&h)
+	errors := message.DecodeMessageHeader(&h)
 	if errors != nil {
 		if errors != io.EOF && errors != io.ErrUnexpectedEOF {
-			log.Println("RPC server - readHeader error:", errors)
+			log.Println("RPC server read header error:", errors)
 		}
 		return nil, errors
 	}
@@ -106,28 +113,34 @@ func (server *Server) read_request(message coder.Coder) (*request, error) {
 		return nil, errors
 	}
 	requests := &request{header: header}
+	// TODO: now we don't know the type of request argv
+	// day 1, just suppose it's string
 	requests.argv = reflect.New(reflect.TypeOf(""))
-	err := message.ReadBody(requests.argv.Interface())
+	err := message.DecodeMessageBody(requests.argv.Interface())
 	if err != nil {
-		log.Println("RPC server - readArgv err:", err)
+		log.Println("RPC server read argv error:", err)
 	}
 	return requests, nil
 }
 
 func (server *Server) send_response(message coder.Coder, header *coder.Header, body interface{}, sending *sync.Mutex) {
 	sending.Lock()
-	errors := message.Write(header, body)
+	errors := message.EncodeMessageHeaderAndBody(header, body)
 	if errors != nil {
-		log.Println("RPC server - writeResponse error:", errors)
+		log.Println("RPC server write response error:", errors)
 	}
 	defer sending.Unlock()
 }
 
 func (server *Server) request_handle(message coder.Coder, request *request, sending *sync.Mutex, waitGroup *sync.WaitGroup) {
+	// TODO, should call registered rpc methods to get the right replyv
+	// day 1, just print argv and send a hello message
 	log.Println(request.header, request.argv.Elem())
-	request.replyv = reflect.ValueOf(fmt.Sprintf("RPC response %d", request.header.SequenceNumber))
+	request.replyv = reflect.ValueOf(fmt.Sprintf("%s", request.argv.Elem()))
 	server.send_response(message, request.header, request.replyv.Interface(), sending)
 	defer waitGroup.Done()
 }
 
+// Accept accepts connections on the listener and serves requests
+// for each incoming connection.
 func Connection_handle(lis net.Listener) { default_server.Connection_handle(lis) }
