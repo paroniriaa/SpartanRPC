@@ -30,8 +30,8 @@ type request struct {
 }
 
 type Option struct {
-	IDNumber  int             // MagicNumber marks this's a geerpc request
-	CoderType coder.CoderType // client may choose different Codec to encode body
+	IDNumber  int             // MagicNumber marks the identification of RPC request
+	CoderType coder.CoderType // CoderType is the type of Coder that client chooses for encoding and decoding
 }
 
 //TODO: variable
@@ -53,7 +53,7 @@ func (server *Server) Connection_handle(listening net.Listener) {
 	for {
 		connection, err_msg := listening.Accept()
 		if err_msg != nil {
-			log.Println("rpc server: accept error:", err_msg)
+			log.Println("RPC server accept error:", err_msg)
 			return
 		}
 
@@ -62,13 +62,13 @@ func (server *Server) Connection_handle(listening net.Listener) {
 		errors := json.NewDecoder(connection).Decode(&option)
 		switch {
 		case errors != nil:
-			log.Println("rpc option error: ", errors)
+			log.Println("RPC server option error: ", errors)
 			return
 		case option.IDNumber != MagicNumber:
-			log.Printf("rpc ID number error: %x is invalid", option.IDNumber)
+			log.Printf("RPC server ID number error: %x is invalid", option.IDNumber)
 			return
 		case coder.CoderFunctionMap[option.CoderType] == nil:
-			log.Printf("rpc server: invalid codec type %s", option.CoderType)
+			log.Printf("RPC server invalid coder type error: %s", option.CoderType)
 			return
 		}
 		coder_function_map := coder.CoderFunctionMap[option.CoderType]
@@ -100,7 +100,7 @@ func (server *Server) read_header(message coder.Coder) (*coder.Header, error) {
 	errors := message.DecodeMessageHeader(&h)
 	if errors != nil {
 		if errors != io.EOF && errors != io.ErrUnexpectedEOF {
-			log.Println("rpc server: read header error:", errors)
+			log.Println("RPC server read header error:", errors)
 		}
 		return nil, errors
 	}
@@ -118,7 +118,7 @@ func (server *Server) read_request(message coder.Coder) (*request, error) {
 	requests.argv = reflect.New(reflect.TypeOf(""))
 	err := message.DecodeMessageBody(requests.argv.Interface())
 	if err != nil {
-		log.Println("rpc server: read argv err:", err)
+		log.Println("RPC server read argv error:", err)
 	}
 	return requests, nil
 }
@@ -127,7 +127,7 @@ func (server *Server) send_response(message coder.Coder, header *coder.Header, b
 	sending.Lock()
 	errors := message.EncodeMessageHeaderAndBody(header, body)
 	if errors != nil {
-		log.Println("rpc server: write response error:", errors)
+		log.Println("RPC server write response error:", errors)
 	}
 	defer sending.Unlock()
 }
