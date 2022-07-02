@@ -14,7 +14,7 @@ import (
 
 // Call represents an active RPC.
 type Call struct {
-	SeqNumber           uint64
+	SeqNumber     uint64
 	ServiceMethod string      // format "<service>.<method>"
 	Args          interface{} // arguments to the function
 	Reply         interface{} // reply from the function
@@ -27,15 +27,15 @@ func (call *Call) done() {
 }
 
 type Client struct {
-	message       coder.Coder
-	option      *server.Option
-	sending  sync.Mutex // protect following
-	header   coder.Header
+	message      coder.Coder
+	option       *server.Option
+	sending      sync.Mutex // protect following
+	header       coder.Header
 	locker       sync.Mutex // protect following
-	seqNumber      uint64
-	pending_Pool  map[uint64]*Call
-	IsClosed  bool // user has called Close
-	IsShutdown bool // server has told us to stop
+	seqNumber    uint64
+	pending_Pool map[uint64]*Call
+	IsClosed     bool // user has called Close
+	IsShutdown   bool // server has told us to stop
 }
 
 var _ io.Closer = (*Client)(nil)
@@ -62,7 +62,7 @@ func (client *Client) IsAvailable() bool {
 func (client *Client) addCall(call *Call) (uint64, error) {
 	client.locker.Lock()
 	defer client.locker.Unlock()
-	if client.IsClosed{
+	if client.IsClosed {
 		return 0, errors.New("connection is shut down")
 	}
 	if client.IsShutdown {
@@ -109,7 +109,7 @@ func (client *Client) receiveCall() {
 			call.Error = fmt.Errorf(h.Error)
 			Error = client.message.ReadBody(nil)
 			call.done()
-		} else{
+		} else {
 			Error = client.message.ReadBody(call.Reply)
 			if Error != nil {
 				call.Error = errors.New("reading body " + Error.Error())
@@ -124,7 +124,7 @@ func (client *Client) receiveCall() {
 func CreateClient(connection net.Conn, option *server.Option) (*Client, error) {
 	functionMap := coder.NewCoderFuncMap[option.CoderType]
 	errors := json.NewEncoder(connection).Encode(option)
-	switch{
+	switch {
 	case functionMap == nil:
 		err := fmt.Errorf("invalid codec type %s", option.CoderType)
 		log.Println("rpc client: codec error:", err)
@@ -140,9 +140,9 @@ func CreateClient(connection net.Conn, option *server.Option) (*Client, error) {
 
 func newClientCoder(message coder.Coder, option *server.Option) *Client {
 	client := &Client{
-		seqNumber:     1, // seq starts with 1, 0 means invalid call
+		seqNumber:    1, // seq starts with 1, 0 means invalid call
 		message:      message,
-		option:     option,
+		option:       option,
 		pending_Pool: make(map[uint64]*Call),
 	}
 	go client.receiveCall()
@@ -151,7 +151,7 @@ func newClientCoder(message coder.Coder, option *server.Option) *Client {
 
 func parseOptions(options ...*server.Option) (*server.Option, error) {
 	// if opts is nil or pass nil as parameter
-	switch{
+	switch {
 	case len(options) == 0 || options[0] == nil:
 		return server.DefaultOption, nil
 	case len(options) != 1:
@@ -217,7 +217,7 @@ func (client *Client) sendCall(call *Call) {
 // Go invokes the function asynchronously.
 // It returns the Call structure representing the invocation.
 func (client *Client) Go(serviceMethod string, args, reply interface{}, done chan *Call) *Call {
-	switch{
+	switch {
 	case done == nil:
 		done = make(chan *Call, 10)
 	case cap(done) == 0:
