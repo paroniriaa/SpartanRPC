@@ -30,8 +30,8 @@ type request struct {
 }
 
 type Option struct {
-	IDNumber  int        // IDNumber marks a geerpc request
-	CoderType coder.Type // May choose different Coder to encode body
+	IDNumber  int             // MagicNumber marks this's a geerpc request
+	CoderType coder.CoderType // client may choose different Codec to encode body
 }
 
 //TODO: variable
@@ -40,14 +40,14 @@ var DefaultOption = &Option{
 	CoderType: coder.Json,
 }
 
-// A default instance of *Server.
+// DefaultServer is the default instance of *Server.
 var default_server = New_server()
 
-// A placeholder for response argv when error occurs
+// invalidRequest is a placeholder for response argv when error occurs
 var invalidRequest = struct{}{}
 
 //@function
-// Connection_handle accepts connections on the listener and serves requests
+// Accept accepts connections on the listener and serves requests
 // for each incoming connection.
 func (server *Server) Connection_handle(listening net.Listener) {
 	for {
@@ -67,11 +67,11 @@ func (server *Server) Connection_handle(listening net.Listener) {
 		case option.IDNumber != MagicNumber:
 			log.Printf("rpc ID number error: %x is invalid", option.IDNumber)
 			return
-		case coder.NewCoderFuncMap[option.CoderType] == nil:
+		case coder.CoderFunctionMap[option.CoderType] == nil:
 			log.Printf("rpc server: invalid codec type %s", option.CoderType)
 			return
 		}
-		coder_function_map := coder.NewCoderFuncMap[option.CoderType]
+		coder_function_map := coder.CoderFunctionMap[option.CoderType]
 		server.server_coder(coder_function_map(connection))
 	}
 }
@@ -97,7 +97,7 @@ func (server *Server) server_coder(message coder.Coder) {
 
 func (server *Server) read_header(message coder.Coder) (*coder.Header, error) {
 	var h coder.Header
-	errors := message.ReadHeader(&h)
+	errors := message.DecodeMessageHeader(&h)
 	if errors != nil {
 		if errors != io.EOF && errors != io.ErrUnexpectedEOF {
 			log.Println("rpc server: read header error:", errors)
@@ -114,9 +114,9 @@ func (server *Server) read_request(message coder.Coder) (*request, error) {
 	}
 	requests := &request{header: header}
 	// TODO: now we don't know the type of request argv
-	// day 1, just suppose it's a string
+	// day 1, just suppose it's string
 	requests.argv = reflect.New(reflect.TypeOf(""))
-	err := message.ReadBody(requests.argv.Interface())
+	err := message.DecodeMessageBody(requests.argv.Interface())
 	if err != nil {
 		log.Println("rpc server: read argv err:", err)
 	}
@@ -125,7 +125,7 @@ func (server *Server) read_request(message coder.Coder) (*request, error) {
 
 func (server *Server) send_response(message coder.Coder, header *coder.Header, body interface{}, sending *sync.Mutex) {
 	sending.Lock()
-	errors := message.Write(header, body)
+	errors := message.EncodeMessageHeaderAndBody(header, body)
 	if errors != nil {
 		log.Println("rpc server: write response error:", errors)
 	}
@@ -136,11 +136,11 @@ func (server *Server) request_handle(message coder.Coder, request *request, send
 	// TODO, should call registered rpc methods to get the right replyv
 	// day 1, just print argv and send a hello message
 	log.Println(request.header, request.argv.Elem())
-	request.replyv = reflect.ValueOf(fmt.Sprintf("geerpc resp %d", request.header.SequenceNumber))
+	request.replyv = reflect.ValueOf(fmt.Sprintf("%s", request.argv.Elem()))
 	server.send_response(message, request.header, request.replyv.Interface(), sending)
 	defer waitGroup.Done()
 }
 
-// Connection_handle accepts connections on the listener and serves requests
+// Accept accepts connections on the listener and serves requests
 // for each incoming connection.
 func Connection_handle(lis net.Listener) { default_server.Connection_handle(lis) }
