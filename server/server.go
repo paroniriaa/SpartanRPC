@@ -30,8 +30,8 @@ type request struct {
 }
 
 type Option struct {
-	IDNumber  int        // MagicNumber marks this's a geerpc request
-	CoderType coder.Type // client may choose different Codec to encode body
+	IDNumber  int        // IDNumber marks a geerpc request
+	CoderType coder.Type // May choose different Coder to encode body
 }
 
 //TODO: variable
@@ -40,14 +40,14 @@ var DefaultOption = &Option{
 	CoderType: coder.Json,
 }
 
-// DefaultServer is the default instance of *Server.
+// A default instance of *Server.
 var default_server = New_server()
 
-// invalidRequest is a placeholder for response argv when error occurs
+// A placeholder for response argv when error occurs
 var invalidRequest = struct{}{}
 
 //@function
-// Accept accepts connections on the listener and serves requests
+// Connection_handle accepts connections on the listener and serves requests
 // for each incoming connection.
 func (server *Server) Connection_handle(listening net.Listener) {
 	for {
@@ -114,7 +114,7 @@ func (server *Server) read_request(message coder.Coder) (*request, error) {
 	}
 	requests := &request{header: header}
 	// TODO: now we don't know the type of request argv
-	// day 1, just suppose it's string
+	// day 1, just suppose it's a string
 	requests.argv = reflect.New(reflect.TypeOf(""))
 	err := message.ReadBody(requests.argv.Interface())
 	if err != nil {
@@ -141,6 +141,6 @@ func (server *Server) request_handle(message coder.Coder, request *request, send
 	defer waitGroup.Done()
 }
 
-// Accept accepts connections on the listener and serves requests
+// Connection_handle accepts connections on the listener and serves requests
 // for each incoming connection.
 func Connection_handle(lis net.Listener) { default_server.Connection_handle(lis) }
