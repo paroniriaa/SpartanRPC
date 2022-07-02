@@ -98,18 +98,18 @@ func (client *Client) receiveCall() {
 	var Error error
 	for Error == nil {
 		var h coder.Header
-		if Error = client.message.ReadHeader(&h); Error != nil {
+		if Error = client.message.DecodeMessageHeader(&h); Error != nil {
 			break
 		}
 		call := client.deleteCall(h.SequenceNumber)
 		if call == nil {
-			Error = client.message.ReadBody(nil)
+			Error = client.message.DecodeMessageBody(nil)
 		} else if h.Error != "" {
 			call.Error = fmt.Errorf(h.Error)
-			Error = client.message.ReadBody(nil)
+			Error = client.message.DecodeMessageBody(nil)
 			call.done()
 		} else {
-			Error = client.message.ReadBody(call.Reply)
+			Error = client.message.DecodeMessageBody(call.Reply)
 			if Error != nil {
 				call.Error = errors.New("RPC Client - receiveCall error: reading body " + Error.Error())
 			}
@@ -120,7 +120,7 @@ func (client *Client) receiveCall() {
 }
 
 func CreateClient(connection net.Conn, option *server.Option) (*Client, error) {
-	functionMap := coder.NewCoderFuncMap[option.CoderType]
+	functionMap := coder.CoderFunctionMap[option.CoderType]
 	errors := json.NewEncoder(connection).Encode(option)
 	switch {
 	case functionMap == nil:
@@ -193,7 +193,7 @@ func (client *Client) sendCall(call *Call) {
 	client.header.ServiceMethod = call.ServiceMethod
 	client.header.SequenceNumber = seqNumber
 	client.header.Error = ""
-	Error := client.message.Write(&client.header, call.Args)
+	Error := client.message.EncodeMessageHeaderAndBody(&client.header, call.Args)
 	if Error != nil {
 		if call := client.deleteCall(seqNumber); call != nil {
 			call.Error = Error

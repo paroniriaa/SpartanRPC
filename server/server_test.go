@@ -42,10 +42,10 @@ func TestServer(test *testing.T) {
 		}
 		request := "RPC Sequence Number " + strconv.Itoa(n)
 		log.Println("Request:", request)
-		_ = communication.Write(header, request)
-		_ = communication.ReadHeader(header)
+		_ = communication.EncodeMessageHeaderAndBody(header, request)
+		_ = communication.DecodeMessageHeader(header)
 		var response string
-		_ = communication.ReadBody(&response)
+		_ = communication.DecodeMessageBody(&response)
 		log.Println("Response:", response)
 		n++
 	}

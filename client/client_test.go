@@ -36,7 +36,7 @@ func TestClient(test *testing.T) {
 		waitGroup.Add(1)
 		go func(n int) {
 			defer waitGroup.Done()
-			args := fmt.Sprintf("geerpc req %d", n)
+			args := fmt.Sprintf("RPC req %d", n)
 			var reply string
 			if err := client.Call("Foo.Sum",args, &reply); err != nil {
 				log.Fatal("call Foo.Sum error:", err)
