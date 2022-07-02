@@ -49,9 +49,9 @@ var invalidRequest = struct{}{}
 //@function
 // Accept accepts connections on the listener and serves requests
 // for each incoming connection.
-func (server *Server) Connection_handle(listener net.Listener) {
+func (server *Server) Connection_handle(listening net.Listener) {
 	for {
-		connection, err_msg := listener.Accept()
+		connection, err_msg := listening.Accept()
 		if err_msg != nil {
 			log.Println("rpc server: accept error:", err_msg)
 			return
@@ -83,7 +83,7 @@ func (server *Server) server_coder(message coder.Coder) {
 		requests, errors := server.read_request(message)
 		if requests == nil && errors != nil {
 			break
-		} else {
+		} else if errors != nil {
 			requests.header.Error = errors.Error()
 			server.send_response(message, requests.header, invalidRequest, sending)
 			continue
@@ -98,7 +98,6 @@ func (server *Server) server_coder(message coder.Coder) {
 func (server *Server) read_header(message coder.Coder) (*coder.Header, error) {
 	var h coder.Header
 	errors := message.ReadHeader(&h)
-
 	if errors != nil {
 		if errors != io.EOF && errors != io.ErrUnexpectedEOF {
 			log.Println("rpc server: read header error:", errors)
@@ -137,7 +136,7 @@ func (server *Server) request_handle(message coder.Coder, request *request, send
 	// TODO, should call registered rpc methods to get the right replyv
 	// day 1, just print argv and send a hello message
 	log.Println(request.header, request.argv.Elem())
-	request.replyv = reflect.ValueOf(fmt.Sprintf("geerpc resp %d", request.header.SeqNumber))
+	request.replyv = reflect.ValueOf(fmt.Sprintf("geerpc resp %d", request.header.SequenceNumber))
 	server.send_response(message, request.header, request.replyv.Interface(), sending)
 	defer waitGroup.Done()
 }

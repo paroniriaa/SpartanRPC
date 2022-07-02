@@ -17,7 +17,7 @@ func CreateConnection() (connection net.Conn) {
 	log.Println("start rpc server on", l.Addr())
 	addr := make(chan string)
 	addr <- l.Addr().String()
-	server.Connection_handle(l)
+	server.Accept(l)
 	connection, _ = net.Dial("tcp", <-addr)
 	return connection
 }
@@ -30,8 +30,8 @@ func TestNewJsonCoder(test *testing.T) {
 	// send request & receive response
 	for i := 0; i < 5; i++ {
 		header := &Header{
-			ServiceMethod: "Test.Echo",
-			SeqNumber:     uint64(i),
+			ServiceMethod:  "Test.Echo",
+			SequenceNumber: uint64(i),
 		}
 		request := "RPC request " + strconv.Itoa(i)
 		_ = connectionCoder.Write(header, request)

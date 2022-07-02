@@ -1,12 +1,13 @@
-package main
+package server
+
 
 import (
 	"Distributed-RPC-Framework/coder"
-	"Distributed-RPC-Framework/server"
 	"encoding/json"
 	"log"
 	"net"
 	"strconv"
+	"testing"
 	"time"
 )
 
@@ -17,10 +18,11 @@ func start(address chan string) {
 	}
 	log.Println("start RPC server on port", portNumber.Addr())
 	address <- portNumber.Addr().String()
-	server.Connection_handle(portNumber)
+	Connection_handle(portNumber)
 }
 
-func main() {
+func TestServer(test *testing.T) {
+	test.Helper()
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
 	address := make(chan string)
 	go start(address)
@@ -29,7 +31,7 @@ func main() {
 	defer func() { _ = connection.Close() }()
 
 	time.Sleep(time.Second)
-	_ = json.NewEncoder(connection).Encode(server.DefaultOption)
+	_ = json.NewEncoder(connection).Encode(DefaultOption)
 	communication := coder.NewJsonCoder(connection)
 
 	n := 0
@@ -48,3 +50,4 @@ func main() {
 		n++
 	}
 }
+
