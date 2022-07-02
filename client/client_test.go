@@ -1,12 +1,13 @@
-package main
+package client
+
 
 import (
-	"Distributed-RPC-Framework/client"
 	"Distributed-RPC-Framework/server"
 	"fmt"
 	"log"
 	"net"
 	"sync"
+	"testing"
 	"time"
 )
 
@@ -20,11 +21,12 @@ func start(address chan string) {
 	server.Connection_handle(portNumber)
 }
 
-func main() {
+func TestClient(test *testing.T) {
+	test.Helper()
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
 	address := make(chan string)
 	go start(address)
-	client, _ := client.Connection("tcp", <-address)
+	client, _ := Connection("tcp", <-address)
 	defer func() { _ = client.Close() }()
 	time.Sleep(time.Second)
 	var waitGroup sync.WaitGroup
@@ -45,3 +47,4 @@ func main() {
 	}
 	waitGroup.Wait()
 }
+

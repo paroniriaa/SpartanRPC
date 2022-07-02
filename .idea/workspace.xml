@@ -6,6 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/client.go" beforeDir="false" afterPath="$PROJECT_DIR$/client/client.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main/main.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,7 +59,7 @@
       <recent name="K:\github_repo\Distributed-RPC-Framework\main" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.TestServer in Distributed-RPC-Framework/server">
+  <component name="RunManager" selected="Go Test.TestClient in Distributed-RPC-Framework/client">
     <configuration name="go build main.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$" />
@@ -65,6 +67,17 @@
       <filePath value="$PROJECT_DIR$/main/main.go" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestClient in Distributed-RPC-Framework/client" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/client" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="Distributed-RPC-Framework/client" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTestClient\E$" />
       <method v="2" />
     </configuration>
     <configuration name="TestServer in Distributed-RPC-Framework/server" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
@@ -80,8 +93,9 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Test.TestServer in Distributed-RPC-Framework/server" />
+        <item itemvalue="Go Test.TestClient in Distributed-RPC-Framework/client" />
         <item itemvalue="Go Build.go build main.go" />
+        <item itemvalue="Go Test.TestServer in Distributed-RPC-Framework/server" />
       </list>
     </recent_temporary>
   </component>

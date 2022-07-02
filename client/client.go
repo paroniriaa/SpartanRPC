@@ -63,9 +63,10 @@ func (client *Client) addCall(call *Call) (uint64, error) {
 	client.locker.Lock()
 	defer client.locker.Unlock()
 	if client.IsClosed{
-		if client.IsShutdown {
-			return 0, errors.New("connection is shut down")
-		}
+		return 0, errors.New("connection is shut down")
+	}
+	if client.IsShutdown {
+		return 0, errors.New("connection is shut down")
 	}
 	call.SeqNumber = client.seqNumber
 	client.pending_Pool[call.SeqNumber] = call
