@@ -39,7 +39,7 @@ func TestJsonCoder(test *testing.T) {
 		var err error
 		err = TestJsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
 		if err != nil {
-			test.Errorf("EncodeMessageHeaderAndBody Error: #{err}")
+			test.Errorf("EncodeMessageHeaderAndBody Error: %s", err)
 		}
 	})
 
@@ -48,13 +48,13 @@ func TestJsonCoder(test *testing.T) {
 		responseHeader := &coder.Header{}
 		err = TestJsonCoder.DecodeMessageHeader(responseHeader)
 		if err != nil {
-			test.Errorf("DecodeMessageHeader Error: #{err}")
+			test.Errorf("DecodeMessageHeader Error: %s", err)
 		}
 		if responseHeader.ServiceMethod != requestHeader.ServiceMethod {
-			test.Errorf("DecodeMessageHeader Error: responseHeader.ServiceMethod expected to be #{requestHeader.ServiceMethod}, but got #{responseHeader.ServiceMethod}")
+			test.Errorf("DecodeMessageHeader Error: responseHeader.ServiceMethod expected to be %s, but got %s", requestHeader.ServiceMethod, responseHeader.ServiceMethod)
 		}
 		if responseHeader.SequenceNumber != requestHeader.SequenceNumber {
-			test.Errorf("DecodeMessageHeader Error: responseHeader.ServiceMethod expected to be #{requestHeader.SequenceNumber}, but got #{responseHeader.SequenceNumber}")
+			test.Errorf("DecodeMessageHeader Error: responseHeader.SequenceNumber expected to be %d, but got %d", requestHeader.SequenceNumber, responseHeader.SequenceNumber)
 		}
 	})
 
@@ -63,10 +63,10 @@ func TestJsonCoder(test *testing.T) {
 		var responseBody string
 		err = TestJsonCoder.DecodeMessageBody(&responseBody)
 		if err != nil {
-			test.Errorf("DecodeMessageBody Error: #{err}")
+			test.Errorf("DecodeMessageBody Error: %s", err)
 		}
 		if responseBody != requestBody {
-			test.Errorf("DecodeMessageBody Error: responseHeader.ServiceMethod expected to be #{requestBody}, but got #{responseBody}")
+			test.Errorf("DecodeMessageBody Error: responseBody expected to be %s, but got %s", responseBody, responseBody)
 		}
 	})
 
