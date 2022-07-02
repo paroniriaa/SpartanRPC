@@ -17,7 +17,7 @@
       </list>
     </option>
   </component>
-  <component name="GOROOT" url="file://$PROJECT_DIR$/../../../../../Program Files/Go" />
+  <component name="GOROOT" url="file://$PROJECT_DIR$/../../Go/go1.18.3" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -45,7 +45,7 @@
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
-    <property name="last_opened_file_path" value="$USER_HOME$/Desktop/RPC" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
@@ -55,7 +55,7 @@
       <recent name="K:\github_repo\Distributed-RPC-Framework\main" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.TestServer in Distributed-RPC-Framework/server">
+  <component name="RunManager" selected="Go Test.TestClient in Distributed-RPC-Framework/client">
     <configuration name="go build main.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$" />
@@ -63,6 +63,17 @@
       <filePath value="$PROJECT_DIR$/main/main.go" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestClient in Distributed-RPC-Framework/client" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/client" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="Distributed-RPC-Framework/client" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTestClient\E$" />
       <method v="2" />
     </configuration>
     <configuration name="TestServer in Distributed-RPC-Framework/server" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
@@ -78,6 +89,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Test.TestClient in Distributed-RPC-Framework/client" />
         <item itemvalue="Go Test.TestServer in Distributed-RPC-Framework/server" />
         <item itemvalue="Go Build.go build main.go" />
       </list>
