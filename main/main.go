@@ -34,17 +34,19 @@ func main() {
 
 	n := 0
 	for n < 5 {
-		header := &coder.Header{
+		requestHeader := &coder.Header{
 			ServiceMethod:  "Test.Echo",
 			SequenceNumber: uint64(n),
 		}
-		request := "RPC Sequence Number " + strconv.Itoa(n)
-		log.Println("Request:", request)
-		_ = communication.Write(header, request)
-		_ = communication.ReadHeader(header)
-		var response string
-		_ = communication.ReadBody(&response)
-		log.Println("Response:", response)
+		requestBody := "Hello there! " + strconv.Itoa(n)
+		log.Printf("Request: ServiceMethod -> %s, SequenceNumber -> %d, Message -> %s", requestHeader.ServiceMethod, requestHeader.SequenceNumber, requestBody)
+		_ = communication.EncodeMessageHeaderAndBody(requestHeader, requestBody)
+
+		responseHeader := &coder.Header{}
+		var responseBody string
+		_ = communication.DecodeMessageHeader(responseHeader)
+		_ = communication.DecodeMessageBody(&responseBody)
+		log.Printf("Response: ServiceMethod -> %s, SequenceNumber -> %d, Message -> %s", responseHeader.ServiceMethod, responseHeader.SequenceNumber, responseBody)
 		n++
 	}
 }
