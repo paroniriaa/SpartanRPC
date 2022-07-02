@@ -1,35 +1,57 @@
-package main
-package codec
+package coder
 
 import (
-"io"
+	"bufio"
+	"encoding/json"
+	"io"
+	"log"
 )
 
-type Header struct {
-	ServiceMethod string // format "Service.Method"
-	Seq           uint64 // sequence number chosen by client
-	Error         string
+type JsonCoder struct {
+	connection io.ReadWriteCloser
+	buffer     *bufio.Writer
+	decoder    *json.Decoder
+	encoder    *json.Encoder
 }
 
-type Codec interface {
-	io.Closer
-	ReadHeader(*Header) error
-	ReadBody(interface{}) error
-	Write(*Header, interface{}) error
+var _ Coder = (*JsonCoder)(nil)
+
+func NewJsonCoder(connection io.ReadWriteCloser) Coder {
+	buffer := bufio.NewWriter(connection)
+	return &JsonCoder{
+		connection: connection,
+		buffer:     buffer,
+		decoder:    json.NewDecoder(connection),
+		encoder:    json.NewEncoder(buffer),
+	}
 }
 
-type NewCodecFunc func(io.ReadWriteCloser) Codec
+func (coder *JsonCoder) ReadHeader(h *Header) error {
+	return coder.decoder.Decode(h)
+}
 
-type Type string
+func (coder *JsonCoder) ReadBody(body interface{}) error {
+	return coder.decoder.Decode(body)
+}
 
-const (
-	GobType  Type = "application/gob"
-	JsonType Type = "application/json" // not implemented
-)
+func (coder *JsonCoder) Write(h *Header, body interface{}) (err error) {
+	if err = coder.encoder.Encode(h); err != nil {
+		log.Println("rpc: gob error encoding header:", err)
+		return
+	}
+	if err = coder.encoder.Encode(body); err != nil {
+		log.Println("rpc: gob error encoding body:", err)
+		return
+	}
+	defer func() {
+		_ = coder.buffer.Flush()
+		if err != nil {
+			_ = coder.Close()
+		}
+	}()
+	return
+}
 
-var NewCodecFuncMap map[Type]NewCodecFunc
-
-func init() {
-	NewCodecFuncMap = make(map[Type]NewCodecFunc)
-	NewCodecFuncMap[GobType] = NewGobCodec
+func (coder *JsonCoder) Close() error {
+	return coder.connection.Close()
 }

@@ -1,49 +1,50 @@
 package main
 
 import (
+	"Distributed-RPC-Framework/coder"
+	"Distributed-RPC-Framework/server"
 	"encoding/json"
-	"fmt"
-	"geerpc"
-	"geerpc/codec"
 	"log"
 	"net"
+	"strconv"
 	"time"
 )
 
-func startServer(addr chan string) {
-	// pick a free port
-	l, err := net.Listen("tcp", ":0")
+func start(address chan string) {
+	portNumber, err := net.Listen("tcp", ":80")
 	if err != nil {
-		log.Fatal("network error:", err)
+		log.Fatal("network issue:", err)
 	}
-	log.Println("start rpc server on", l.Addr())
-	addr <- l.Addr().String()
-	geerpc.Accept(l)
+	log.Println("start RPC server on port", portNumber.Addr())
+	address <- portNumber.Addr().String()
+	server.Connection_handle(portNumber)
 }
 
 func main() {
-	log.SetFlags(0)
-	addr := make(chan string)
-	go startServer(addr)
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
+	address := make(chan string)
+	go start(address)
 
-	// in fact, following code is like a simple geerpc client
-	conn, _ := net.Dial("tcp", <-addr)
-	defer func() { _ = conn.Close() }()
+	connection, _ := net.Dial("tcp", <-address)
+	defer func() { _ = connection.Close() }()
 
 	time.Sleep(time.Second)
-	// send options
-	_ = json.NewEncoder(conn).Encode(geerpc.DefaultOption)
-	cc := codec.NewGobCodec(conn)
-	// send request & receive response
-	for i := 0; i < 5; i++ {
-		h := &codec.Header{
-			ServiceMethod: "Foo.Sum",
-			Seq:           uint64(i),
+	_ = json.NewEncoder(connection).Encode(server.DefaultOption)
+	communication := coder.NewJsonCoder(connection)
+
+	n := 0
+	for n < 5 {
+		header := &coder.Header{
+			ServiceMethod:  "Test.Echo",
+			SequenceNumber: uint64(n),
 		}
-		_ = cc.Write(h, fmt.Sprintf("geerpc req %d", h.Seq))
-		_ = cc.ReadHeader(h)
-		var reply string
-		_ = cc.ReadBody(&reply)
-		log.Println("reply:", reply)
+		request := "RPC Sequence Number " + strconv.Itoa(n)
+		log.Println("Request:", request)
+		_ = communication.Write(header, request)
+		_ = communication.ReadHeader(header)
+		var response string
+		_ = communication.ReadBody(&response)
+		log.Println("Response:", response)
+		n++
 	}
 }
