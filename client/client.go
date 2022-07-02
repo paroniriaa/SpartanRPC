@@ -12,47 +12,47 @@ import (
 	"sync"
 )
 
-// Call represents an active RPC.
+// TODO: struct
 type Call struct {
 	SeqNumber     uint64
-	ServiceMethod string      // format "<service>.<method>"
-	Args          interface{} // arguments to the function
-	Reply         interface{} // reply from the function
-	Error         error       // if error occurs, it will be set
-	Done          chan *Call  // Strobes when call is complete.
-}
-
-func (call *Call) done() {
-	call.Done <- call
+	ServiceMethod string
+	Args          interface{}
+	Reply         interface{}
+	Error         error
+	Done          chan *Call
 }
 
 type Client struct {
 	message      coder.Coder
 	option       *server.Option
-	sending      sync.Mutex // protect following
+	sending      sync.Mutex
 	header       coder.Header
-	locker       sync.Mutex // protect following
+	locker       sync.Mutex
 	seqNumber    uint64
 	pending_Pool map[uint64]*Call
-	IsClosed     bool // user has called Close
-	IsShutdown   bool // server has told us to stop
+	IsClosed     bool
+	IsShutdown   bool
 }
 
+//TODO: variable
 var _ io.Closer = (*Client)(nil)
 
-// Close the connection
+//TODO: function
+func (call *Call) done() {
+	call.Done <- call
+}
+
 func (client *Client) Close() error {
 	defer client.locker.Unlock()
 	client.locker.Lock()
 	if client.IsClosed {
-		return errors.New("connection is shut down")
+		return errors.New("RPC client - close error: connection is closed")
 	} else {
 		client.IsClosed = true
 		return client.message.Close()
 	}
 }
 
-// IsAvailable return true if the client does work
 func (client *Client) IsAvailable() bool {
 	defer client.locker.Unlock()
 	client.locker.Lock()
@@ -63,10 +63,10 @@ func (client *Client) addCall(call *Call) (uint64, error) {
 	client.locker.Lock()
 	defer client.locker.Unlock()
 	if client.IsClosed {
-		return 0, errors.New("connection is shut down")
+		return 0, errors.New("RPC client - addCall error: client is closed")
 	}
 	if client.IsShutdown {
-		return 0, errors.New("connection is shut down")
+		return 0, errors.New("RPC client - addCall error: client is shutdown")
 	}
 	call.SeqNumber = client.seqNumber
 	client.pending_Pool[call.SeqNumber] = call
@@ -82,7 +82,6 @@ func (client *Client) deleteCall(seqNumber uint64) *Call {
 	return call
 }
 
-// for loop
 func (client *Client) terminateCalls(Error error) {
 	client.sending.Lock()
 	defer client.sending.Unlock()
@@ -112,12 +111,11 @@ func (client *Client) receiveCall() {
 		} else {
 			Error = client.message.ReadBody(call.Reply)
 			if Error != nil {
-				call.Error = errors.New("reading body " + Error.Error())
+				call.Error = errors.New("RPC Client - receiveCall error: reading body " + Error.Error())
 			}
 			call.done()
 		}
 	}
-	// error occurs, so terminateCalls pending calls
 	client.terminateCalls(Error)
 }
 
@@ -126,11 +124,11 @@ func CreateClient(connection net.Conn, option *server.Option) (*Client, error) {
 	errors := json.NewEncoder(connection).Encode(option)
 	switch {
 	case functionMap == nil:
-		err := fmt.Errorf("invalid codec type %s", option.CoderType)
-		log.Println("rpc client: codec error:", err)
+		err := fmt.Errorf("RPC Client - createClient error: %s coderType is invalid", option.CoderType)
+		log.Println("RPC Client - coder error:", err)
 		return nil, err
 	case errors != nil:
-		log.Println("rpc client: options error: ", errors)
+		log.Println("RPC Client - option error: ", errors)
 		_ = connection.Close()
 		return nil, errors
 	default:
@@ -140,7 +138,7 @@ func CreateClient(connection net.Conn, option *server.Option) (*Client, error) {
 
 func newClientCoder(message coder.Coder, option *server.Option) *Client {
 	client := &Client{
-		seqNumber:    1, // seq starts with 1, 0 means invalid call
+		seqNumber:    1,
 		message:      message,
 		option:       option,
 		pending_Pool: make(map[uint64]*Call),
@@ -150,12 +148,11 @@ func newClientCoder(message coder.Coder, option *server.Option) *Client {
 }
 
 func parseOptions(options ...*server.Option) (*server.Option, error) {
-	// if opts is nil or pass nil as parameter
 	switch {
 	case len(options) == 0 || options[0] == nil:
 		return server.DefaultOption, nil
 	case len(options) != 1:
-		return nil, errors.New("number of options is more than 1")
+		return nil, errors.New("RPC Client - parseOptions error: options should be lower than 2")
 	default:
 		opt := options[0]
 		opt.IDNumber = server.DefaultOption.IDNumber
@@ -166,7 +163,6 @@ func parseOptions(options ...*server.Option) (*server.Option, error) {
 	}
 }
 
-// Dial connects to an RPC server at the specified network address
 func Connection(protocol, serverAddress string, options ...*server.Option) (client *Client, err error) {
 	opt, err := parseOptions(options...)
 	if err != nil {
@@ -176,7 +172,6 @@ func Connection(protocol, serverAddress string, options ...*server.Option) (clie
 	if err != nil {
 		return nil, err
 	}
-	// close the connection if client is nil
 	defer func() {
 		if client == nil {
 			_ = conn.Close()
@@ -186,11 +181,8 @@ func Connection(protocol, serverAddress string, options ...*server.Option) (clie
 }
 
 func (client *Client) sendCall(call *Call) {
-	// make sure that the client will send a complete request
 	defer client.sending.Unlock()
 	client.sending.Lock()
-
-	// register this call.
 	seqNumber, err := client.addCall(call)
 	if err != nil {
 		call.Error = err
@@ -198,15 +190,11 @@ func (client *Client) sendCall(call *Call) {
 		return
 	}
 
-	// prepare request header
 	client.header.ServiceMethod = call.ServiceMethod
 	client.header.SequenceNumber = seqNumber
 	client.header.Error = ""
 	Error := client.message.Write(&client.header, call.Args)
-	// encode and send the request
 	if Error != nil {
-		// call may be nil, it usually means that Write partially failed,
-		// client has received the response and handled
 		if call := client.deleteCall(seqNumber); call != nil {
 			call.Error = Error
 			call.done()
@@ -214,14 +202,12 @@ func (client *Client) sendCall(call *Call) {
 	}
 }
 
-// Go invokes the function asynchronously.
-// It returns the Call structure representing the invocation.
 func (client *Client) Go(serviceMethod string, args, reply interface{}, done chan *Call) *Call {
 	switch {
 	case done == nil:
 		done = make(chan *Call, 10)
 	case cap(done) == 0:
-		log.Panic("rpc client: done channel is unbuffered")
+		log.Panic("RPC Client - Go error: unbuffered")
 	}
 	call := &Call{
 		ServiceMethod: serviceMethod,
@@ -233,8 +219,6 @@ func (client *Client) Go(serviceMethod string, args, reply interface{}, done cha
 	return call
 }
 
-// Call invokes the named function, waits for it to complete,
-// and returns its error status.
 func (client *Client) Call(serviceMethod string, args, reply interface{}) error {
 	call := <-client.Go(serviceMethod, args, reply, make(chan *Call, 1)).Done
 	return call.Error

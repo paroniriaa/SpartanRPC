@@ -15,23 +15,20 @@ import (
 const MagicNumber = 0x3bef5c
 
 // TODO: struct
-// Server represents an RPC Server.
 type Server struct{}
 
-// NewServer returns a new Server.
 func New_server() *Server {
 	return &Server{}
 }
 
-// request stores all information of a call
 type request struct {
-	header       *coder.Header // header of request
-	argv, replyv reflect.Value // argv and replyv of request
+	header       *coder.Header
+	argv, replyv reflect.Value
 }
 
 type Option struct {
-	IDNumber  int        // MagicNumber marks this's a geerpc request
-	CoderType coder.Type // client may choose different Codec to encode body
+	IDNumber  int
+	CoderType coder.Type
 }
 
 //TODO: variable
@@ -40,20 +37,16 @@ var DefaultOption = &Option{
 	CoderType: coder.Json,
 }
 
-// DefaultServer is the default instance of *Server.
 var default_server = New_server()
 
-// invalidRequest is a placeholder for response argv when error occurs
 var invalidRequest = struct{}{}
 
-//@function
-// Accept accepts connections on the listener and serves requests
-// for each incoming connection.
+//TODO: function
 func (server *Server) Connection_handle(listening net.Listener) {
 	for {
 		connection, err_msg := listening.Accept()
 		if err_msg != nil {
-			log.Println("rpc server: accept error:", err_msg)
+			log.Println("RPC server - accept error:", err_msg)
 			return
 		}
 
@@ -62,13 +55,13 @@ func (server *Server) Connection_handle(listening net.Listener) {
 		errors := json.NewDecoder(connection).Decode(&option)
 		switch {
 		case errors != nil:
-			log.Println("rpc option error: ", errors)
+			log.Println("RPC server - option error: ", errors)
 			return
 		case option.IDNumber != MagicNumber:
-			log.Printf("rpc ID number error: %x is invalid", option.IDNumber)
+			log.Printf("RPC server - ID number error: %x is invalid", option.IDNumber)
 			return
 		case coder.NewCoderFuncMap[option.CoderType] == nil:
-			log.Printf("rpc server: invalid codec type %s", option.CoderType)
+			log.Printf("RPC server - coderType error:  %s coder type is invalid invalid", option.CoderType)
 			return
 		}
 		coder_function_map := coder.NewCoderFuncMap[option.CoderType]
@@ -100,7 +93,7 @@ func (server *Server) read_header(message coder.Coder) (*coder.Header, error) {
 	errors := message.ReadHeader(&h)
 	if errors != nil {
 		if errors != io.EOF && errors != io.ErrUnexpectedEOF {
-			log.Println("rpc server: read header error:", errors)
+			log.Println("RPC server - readHeader error:", errors)
 		}
 		return nil, errors
 	}
@@ -113,12 +106,10 @@ func (server *Server) read_request(message coder.Coder) (*request, error) {
 		return nil, errors
 	}
 	requests := &request{header: header}
-	// TODO: now we don't know the type of request argv
-	// day 1, just suppose it's string
 	requests.argv = reflect.New(reflect.TypeOf(""))
 	err := message.ReadBody(requests.argv.Interface())
 	if err != nil {
-		log.Println("rpc server: read argv err:", err)
+		log.Println("RPC server - readArgv err:", err)
 	}
 	return requests, nil
 }
@@ -127,20 +118,16 @@ func (server *Server) send_response(message coder.Coder, header *coder.Header, b
 	sending.Lock()
 	errors := message.Write(header, body)
 	if errors != nil {
-		log.Println("rpc server: write response error:", errors)
+		log.Println("RPC server - writeResponse error:", errors)
 	}
 	defer sending.Unlock()
 }
 
 func (server *Server) request_handle(message coder.Coder, request *request, sending *sync.Mutex, waitGroup *sync.WaitGroup) {
-	// TODO, should call registered rpc methods to get the right replyv
-	// day 1, just print argv and send a hello message
 	log.Println(request.header, request.argv.Elem())
-	request.replyv = reflect.ValueOf(fmt.Sprintf("geerpc resp %d", request.header.SequenceNumber))
+	request.replyv = reflect.ValueOf(fmt.Sprintf("RPC response %d", request.header.SequenceNumber))
 	server.send_response(message, request.header, request.replyv.Interface(), sending)
 	defer waitGroup.Done()
 }
 
-// Accept accepts connections on the listener and serves requests
-// for each incoming connection.
 func Connection_handle(lis net.Listener) { default_server.Connection_handle(lis) }
