@@ -6,12 +6,13 @@
   <component name="ChangeListManager">
     <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/client.go" beforeDir="false" afterPath="$PROJECT_DIR$/client/client.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/client_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/client/client_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/coder/coder.go" beforeDir="false" afterPath="$PROJECT_DIR$/coder/coder.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/coder/coder_test.go" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/coder/json_coder.go" beforeDir="false" afterPath="$PROJECT_DIR$/coder/json_coder.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/coder/json_coder_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/server_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,7 +64,7 @@
       <recent name="K:\github_repo\Distributed-RPC-Framework\main" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.server_test.go">
+  <component name="RunManager" selected="Go Build.go build main.go">
     <configuration name="go build main.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$" />
@@ -117,11 +118,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Test.server_test.go" />
+        <item itemvalue="Go Build.go build main.go" />
         <item itemvalue="Go Test.client_test.go" />
+        <item itemvalue="Go Test.server_test.go" />
         <item itemvalue="Go Test.TestClient in Distributed-RPC-Framework/client" />
         <item itemvalue="Go Test.TestServer in Distributed-RPC-Framework/server" />
-        <item itemvalue="Go Build.go build main.go" />
       </list>
     </recent_temporary>
   </component>
