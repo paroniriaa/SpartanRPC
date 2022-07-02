@@ -21,35 +21,53 @@ func NewJsonCoder(connection io.ReadWriteCloser) Coder {
 	return &JsonCoder{
 		connection: connection,
 		buffer:     buffer,
-		decoder:    json.NewDecoder(connection),
 		encoder:    json.NewEncoder(buffer),
+		decoder:    json.NewDecoder(connection),
 	}
 }
 
-func (coder *JsonCoder) ReadHeader(h *Header) error {
-	return coder.decoder.Decode(h)
+/*
+func (coder *JsonCoder) Connection() (connection io.ReadWriteCloser) {
+	return coder.connection
 }
 
-func (coder *JsonCoder) ReadBody(body interface{}) error {
+func (coder *JsonCoder) Buffer() (buffer *bufio.Writer) {
+	return coder.buffer
+}
+
+func (coder *JsonCoder) Encoder() (decoder *json.Encoder) {
+	return coder.encoder
+}
+
+func (coder *JsonCoder) Decoder() (decoder *json.Decoder) {
+	return coder.decoder
+}
+*/
+
+func (coder *JsonCoder) DecodeMessageHeader(header *Header) error {
+	return coder.decoder.Decode(header)
+}
+
+func (coder *JsonCoder) DecodeMessageBody(body interface{}) error {
 	return coder.decoder.Decode(body)
 }
 
-func (coder *JsonCoder) Write(h *Header, body interface{}) (err error) {
-	if err = coder.encoder.Encode(h); err != nil {
-		log.Println("rpc: gob error encoding header:", err)
-		return
+func (coder *JsonCoder) EncodeMessageHeaderAndBody(header *Header, body interface{}) (error error) {
+	if error = coder.encoder.Encode(header); error != nil {
+		log.Fatal("Coder Error when encoding header:", error)
+		return error
 	}
-	if err = coder.encoder.Encode(body); err != nil {
-		log.Println("rpc: gob error encoding body:", err)
-		return
+	if error = coder.encoder.Encode(body); error != nil {
+		log.Println("Coder Error when encoding body:", error)
+		return error
 	}
 	defer func() {
 		_ = coder.buffer.Flush()
-		if err != nil {
+		if error != nil {
 			_ = coder.Close()
 		}
 	}()
-	return
+	return error
 }
 
 func (coder *JsonCoder) Close() error {

@@ -4,30 +4,41 @@ import (
 	"io"
 )
 
+/*
+	ServiceMethod  is the format for specific service and method: "Service.Method"
+	SequenceNumber is the sequence number chosen by client
+	Error is the error message from server's response if the rpc call failed
+*/
 type Header struct {
-	ServiceMethod  string // format "Service.Method"
-	SequenceNumber uint64 // sequence number chosen by client
-	Error          string //
+	ServiceMethod  string
+	SequenceNumber uint64
+	Error          string
 }
 
 type Coder interface {
 	io.Closer
-	ReadHeader(*Header) error
-	ReadBody(interface{}) error
-	Write(*Header, interface{}) error
+	/*
+		Connection() io.ReadWriteCloser
+		Buffer() *bufio.Writer
+		Encoder() *json.Encoder
+		Decoder() *json.Decoder
+	*/
+	DecodeMessageHeader(*Header) error
+	DecodeMessageBody(interface{}) error
+	EncodeMessageHeaderAndBody(*Header, interface{}) error
 }
 
-type NewCoderFunc func(io.ReadWriteCloser) Coder
+type CoderFunction func(io.ReadWriteCloser) Coder
 
-type Type string
+type CoderType string
 
 const (
-	Json Type = "application/json"
+	Json CoderType = "application/json"
 )
 
-var NewCoderFuncMap map[Type]NewCoderFunc
+var CoderFunctionMap map[CoderType]CoderFunction
 
 func init() {
-	NewCoderFuncMap = make(map[Type]NewCoderFunc)
-	NewCoderFuncMap[Json] = NewJsonCoder
+	CoderFunctionMap = make(map[CoderType]CoderFunction)
+	CoderFunctionMap[Json] = NewJsonCoder
 }
