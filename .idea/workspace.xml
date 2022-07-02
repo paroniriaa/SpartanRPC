@@ -4,7 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="" />
+    <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/client.go" beforeDir="false" afterPath="$PROJECT_DIR$/client/client.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/client_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/client/client_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/coder/coder.go" beforeDir="false" afterPath="$PROJECT_DIR$/coder/coder.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/coder/coder_test.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/coder/json_coder.go" beforeDir="false" afterPath="$PROJECT_DIR$/coder/json_coder.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/coder/json_coder_test.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/server_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server_test.go" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -17,7 +26,7 @@
       </list>
     </option>
   </component>
-  <component name="GOROOT" url="file://$USER_HOME$/sdk/go1.18.3" />
+  <component name="GOROOT" url="file://$PROJECT_DIR$/../../Go/go1.18.3" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -49,27 +58,71 @@
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
-    <property name="nodejs_package_manager_path" value="npm" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Local Project\Distributed-RPC-Framework\test" />
       <recent name="K:\github_repo\Distributed-RPC-Framework\main" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Go Build.go build main.go">
     <configuration name="go build main.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$" />
       <kind value="FILE" />
+      <filePath value="$PROJECT_DIR$/main/main.go" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/main/main.go" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestClient in Distributed-RPC-Framework/client" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/client" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="Distributed-RPC-Framework/client" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTestClient\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestServer in Distributed-RPC-Framework/server" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/server" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="Distributed-RPC-Framework/server" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTestServer\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="client_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/client" />
+      <framework value="gotest" />
+      <kind value="FILE" />
+      <package value="Distributed-RPC-Framework" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/client/client_test.go" />
+      <method v="2" />
+    </configuration>
+    <configuration name="server_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/server" />
+      <framework value="gotest" />
+      <kind value="FILE" />
+      <package value="Distributed-RPC-Framework" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/server/server_test.go" />
       <method v="2" />
     </configuration>
     <recent_temporary>
       <list>
         <item itemvalue="Go Build.go build main.go" />
+        <item itemvalue="Go Test.client_test.go" />
+        <item itemvalue="Go Test.server_test.go" />
+        <item itemvalue="Go Test.TestClient in Distributed-RPC-Framework/client" />
+        <item itemvalue="Go Test.TestServer in Distributed-RPC-Framework/server" />
       </list>
     </recent_temporary>
   </component>
@@ -81,7 +134,6 @@
       <option name="presentableId" value="Default" />
       <updated>1656660190663</updated>
       <workItem from="1656660195914" duration="4144000" />
-      <workItem from="1656727674097" duration="12329000" />
     </task>
     <servers />
   </component>
@@ -98,6 +150,11 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="client" />
+    <option name="LAST_COMMIT_MESSAGE" value="client" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
