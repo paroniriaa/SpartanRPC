@@ -50,7 +50,7 @@ func (method *Method) CreateOutput() reflect.Value {
 	} else if method.OutputType.Elem().Kind() == reflect.Slice {
 		output.Elem().Set(reflect.MakeSlice(method.OutputType.Elem(), 0, 0))
 	} else {
-		log.Printf("CreateOutput error: reflect return type should be either reflect.Map or reflect.Slice, but got %s.", method.OutputType.Elem().Kind())
+		// Do nothing
 	}
 	return output
 }
@@ -73,11 +73,11 @@ func (service *Service) createMethod() {
 		method := service.serviceType.Method(i)
 		methodType := method.Type
 		switch {
-		case methodType.NumIn() != 1:
-			log.Println("service - createMethod error: methodType.NumIn() != 1")
+		case methodType.NumIn() != 3:
+			log.Printf("service - createMethod error: methodType.NumIn() != 1, got %d", methodType.NumIn())
 			continue
-		case methodType.NumOut() != 3:
-			log.Println("service - createMethod error: methodType.NumIn() != 3")
+		case methodType.NumOut() != 1:
+			log.Printf("service - createMethod error: methodType.NumIn() != 3, got %d", methodType.NumIn())
 			continue
 		case methodType.Out(0) != reflect.TypeOf((*error)(nil)).Elem():
 			log.Println("service - createMethod error: methodType.Out(0) != reflect.TypeOf((*error)(nil)).Elem()")
@@ -109,7 +109,7 @@ func (service *Service) Call(method *Method, input, output reflect.Value) error 
 	if errors != nil {
 		return errors.(error)
 	} else {
-		log.Println("finished methodType Call")
+		log.Printf("finished %s Call", method.methodType.Name)
 		return nil
 	}
 }
