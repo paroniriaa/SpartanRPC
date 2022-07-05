@@ -71,7 +71,7 @@ func (Service *Service) createMethod() {
 	for i := 0; i < Service.serviceType.NumMethod(); i++ {
 		method := Service.serviceType.Method(i)
 		methodType := method.Type
-		switch {
+		switch{
 		case methodType.NumIn() != 1:
 			log.Println("Service - createMethod error: methodType.NumIn() != 1")
 			continue
@@ -82,7 +82,7 @@ func (Service *Service) createMethod() {
 			log.Println("Service - createMethod error: methodType.Out(0) != reflect.TypeOf((*error)(nil)).Elem()")
 			continue
 		default:
-			inputType, outputType := methodType.In(1), methodType.In(2)
+			inputType, outputType := method.Type.In(1), method.Type.In(2)
 			if !(ast.IsExported(inputType.Name()) || inputType.PkgPath() == "") {
 				log.Println("Service - createMethod error: !(ast.IsExported(inputType.Name())|| inputType.PkgPath() == '')")
 				continue
