@@ -37,7 +37,7 @@ func createServer(address chan string) {
 	server.Connection_handle(listener)
 }
 
-func clientCallRPC(client *client.Client, number int, waitGroup sync.WaitGroup) {
+func clientCallRPC(client *client.Client, number int, waitGroup *sync.WaitGroup) {
 	defer waitGroup.Done()
 	waitGroup.Add(1)
 	input := &Input{Number1: number, Number2: number ^ 2}
@@ -60,16 +60,7 @@ func main() {
 	var waitGroup sync.WaitGroup
 	n := 0
 	for n < 5 {
-		waitGroup.Add(1)
-		go func(n int) {
-			defer waitGroup.Done()
-			input := &Input{Number1: n, Number2: n ^ 2}
-			var output int
-			if err := testClient.Call("Demo.Sum", input, &output); err != nil {
-				log.Fatal("Client RPC call Demo.Sum error:", err)
-			}
-			log.Printf("%d + %d = %d", input.Number1, input.Number2, output)
-		}(n)
+		clientCallRPC(testClient, n, &waitGroup)
 		n++
 	}
 	waitGroup.Wait()
