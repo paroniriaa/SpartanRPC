@@ -9,7 +9,10 @@ import (
 
 type Test int
 
-type Input struct{ Number1, Number2 int }
+type Input struct {
+	Number1 int
+	Number2 int
+}
 
 func (function Test) Sum(input Input, output *int) error {
 	*output = input.Number1 + input.Number2
