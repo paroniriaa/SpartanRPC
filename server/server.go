@@ -2,12 +2,15 @@ package server
 
 import (
 	"Distributed-RPC-Framework/coder"
+	"Distributed-RPC-Framework/service"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net"
 	"reflect"
+	"strings"
 	"sync"
 )
 
@@ -16,7 +19,9 @@ const MagicNumber = 0x3bef5c
 
 // TODO: struct
 // Server represents an RPC Server.
-type Server struct{}
+type Server struct{
+	serviceMap sync.Map
+}
 
 // NewServer returns a new Server.
 func New_server() *Server {
@@ -34,7 +39,10 @@ type Option struct {
 	CoderType coder.CoderType // CoderType is the type of Coder that client chooses for encoding and decoding
 }
 
+
 //TODO: variable
+
+
 var DefaultOption = &Option{
 	IDNumber:  MagicNumber,
 	CoderType: coder.Json,
@@ -46,7 +54,39 @@ var default_server = New_server()
 // invalidRequest is a placeholder for response argv when error occurs
 var invalidRequest = struct{}{}
 
-//@function
+//TODO: function
+
+func (server *Server) Register(serviceValue interface{}) error {
+	service := service.CreateService(serviceValue)
+	if _, dup := server.serviceMap.LoadOrStore(service.ServiceName, service); dup {
+		return errors.New("rpc: service already defined: " + service.ServiceName)
+	}
+	return nil
+}
+
+func Register(serviceValue interface{}) error { return default_server.Register(serviceValue) }
+
+
+func (server *Server) searchService(serviceMethod string) (services *service.Service, methodType *service.ServiceType, Error error) {
+	splitIndex := strings.LastIndex(serviceMethod, ".")
+	if splitIndex < 0 {
+		Error = errors.New("Server - searchService error: "+serviceMethod+" ill-formed invalid.")
+		return
+	}
+	serviceName, methodName := serviceMethod[:splitIndex], serviceMethod[splitIndex+1:]
+	input, isServiceStatus := server.serviceMap.Load(serviceName)
+	if !isServiceStatus {
+		Error = errors.New("Server - searchService error: "+serviceName+" serviceName didn't exist")
+		return
+	}
+	services = input.(*service.Service)
+	methodType = services.ServiceMethod[methodName]
+	if methodType == nil {
+		Error = errors.New("Server - searchService error: "+methodName+" methodName didn't exist")
+	}
+	return
+}
+
 // Accept accepts connections on the listener and serves requests
 // for each incoming connection.
 func (server *Server) Connection_handle(listening net.Listener) {

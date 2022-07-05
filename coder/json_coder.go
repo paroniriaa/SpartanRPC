@@ -26,23 +26,6 @@ func NewJsonCoder(connection io.ReadWriteCloser) Coder {
 	}
 }
 
-/*
-func (coder *JsonCoder) Connection() (connection io.ReadWriteCloser) {
-	return coder.connection
-}
-
-func (coder *JsonCoder) Buffer() (buffer *bufio.Writer) {
-	return coder.buffer
-}
-
-func (coder *JsonCoder) Encoder() (decoder *json.Encoder) {
-	return coder.encoder
-}
-
-func (coder *JsonCoder) Decoder() (decoder *json.Decoder) {
-	return coder.decoder
-}
-*/
 
 func (coder *JsonCoder) DecodeMessageHeader(header *Header) error {
 	return coder.decoder.Decode(header)
