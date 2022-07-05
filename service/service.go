@@ -9,13 +9,12 @@ import (
 
 // TODO: const
 
-
 // TODO: struct
 type ServiceType struct {
 	service    reflect.Method
-	inputType   reflect.Type
+	inputType  reflect.Type
 	returnType reflect.Type
-	countCalls  uint64
+	countCalls uint64
 }
 
 type Service struct {
@@ -25,16 +24,15 @@ type Service struct {
 	ServiceMethod map[string]*ServiceType
 }
 
-
 //TODO: function
 
 func (service *ServiceType) CountCalls() uint64 {
 	return atomic.LoadUint64(&service.countCalls)
 }
 
-func (service *ServiceType) getInput() reflect.Value {
+func (service *ServiceType) GetInput() reflect.Value {
 	var input reflect.Value
-	switch service.inputType.Kind(){
+	switch service.inputType.Kind() {
 	case reflect.Ptr:
 		input = reflect.New(service.inputType.Elem())
 	default:
@@ -43,12 +41,12 @@ func (service *ServiceType) getInput() reflect.Value {
 	return input
 }
 
-func (service *ServiceType) getOutput() reflect.Value {
+func (service *ServiceType) GetOutput() reflect.Value {
 	// reply must be a pointer type
 	output := reflect.New(service.returnType.Elem())
-	if service.returnType.Elem().Kind() == reflect.Map{
+	if service.returnType.Elem().Kind() == reflect.Map {
 		output.Elem().Set(reflect.MakeMap(service.returnType.Elem()))
-	} else if service.returnType.Elem().Kind() == reflect.Slice{
+	} else if service.returnType.Elem().Kind() == reflect.Slice {
 		output.Elem().Set(reflect.MakeSlice(service.returnType.Elem(), 0, 0))
 	} else {
 		log.Println("Server - getOutput error: error reflect return type.")
@@ -85,7 +83,7 @@ func (Service *Service) createMethod() {
 			continue
 		default:
 			inputType, outputType := methodType.In(1), methodType.In(2)
-			if !(ast.IsExported(inputType.Name())|| inputType.PkgPath() == "") {
+			if !(ast.IsExported(inputType.Name()) || inputType.PkgPath() == "") {
 				log.Println("Service - createMethod error: !(ast.IsExported(inputType.Name())|| inputType.PkgPath() == '')")
 				continue
 			} else if !(ast.IsExported(outputType.Name()) || outputType.PkgPath() == "") {
@@ -94,7 +92,7 @@ func (Service *Service) createMethod() {
 			}
 			Service.ServiceMethod[method.Name] = &ServiceType{
 				service:    method,
-				inputType:   inputType,
+				inputType:  inputType,
 				returnType: outputType,
 			}
 			log.Printf("RPC server: created %s.%s\n", Service.ServiceName, method.Name)
@@ -102,7 +100,7 @@ func (Service *Service) createMethod() {
 	}
 }
 
-func (Service *Service) call(ServiceType *ServiceType, input, output reflect.Value) error {
+func (Service *Service) Call(ServiceType *ServiceType, input, output reflect.Value) error {
 	atomic.AddUint64(&ServiceType.countCalls, 1)
 	Function := ServiceType.service.Func
 	outputValue := Function.Call([]reflect.Value{Service.serviceValue, input, output})

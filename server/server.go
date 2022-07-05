@@ -19,7 +19,7 @@ const MagicNumber = 0x3bef5c
 
 // TODO: struct
 // Server represents an RPC Server.
-type Server struct{
+type Server struct {
 	serviceMap sync.Map
 }
 
@@ -32,6 +32,8 @@ func New_server() *Server {
 type request struct {
 	header       *coder.Header // header of request
 	argv, replyv reflect.Value // argv and replyv of request
+	serviceType  *service.ServiceType
+	service      *service.Service
 }
 
 type Option struct {
@@ -39,9 +41,7 @@ type Option struct {
 	CoderType coder.CoderType // CoderType is the type of Coder that client chooses for encoding and decoding
 }
 
-
 //TODO: variable
-
 
 var DefaultOption = &Option{
 	IDNumber:  MagicNumber,
@@ -54,35 +54,22 @@ var default_server = New_server()
 // invalidRequest is a placeholder for response argv when error occurs
 var invalidRequest = struct{}{}
 
-//TODO: function
-
-func (server *Server) Register(serviceValue interface{}) error {
-	service := service.CreateService(serviceValue)
-	if _, dup := server.serviceMap.LoadOrStore(service.ServiceName, service); dup {
-		return errors.New("rpc: service already defined: " + service.ServiceName)
-	}
-	return nil
-}
-
-func Register(serviceValue interface{}) error { return default_server.Register(serviceValue) }
-
-
 func (server *Server) searchService(serviceMethod string) (services *service.Service, methodType *service.ServiceType, Error error) {
 	splitIndex := strings.LastIndex(serviceMethod, ".")
 	if splitIndex < 0 {
-		Error = errors.New("Server - searchService error: "+serviceMethod+" ill-formed invalid.")
+		Error = errors.New("Server - searchService error: " + serviceMethod + " ill-formed invalid.")
 		return
 	}
 	serviceName, methodName := serviceMethod[:splitIndex], serviceMethod[splitIndex+1:]
 	input, isServiceStatus := server.serviceMap.Load(serviceName)
 	if !isServiceStatus {
-		Error = errors.New("Server - searchService error: "+serviceName+" serviceName didn't exist")
+		Error = errors.New("Server - searchService error: " + serviceName + " serviceName didn't exist")
 		return
 	}
 	services = input.(*service.Service)
 	methodType = services.ServiceMethod[methodName]
 	if methodType == nil {
-		Error = errors.New("Server - searchService error: "+methodName+" methodName didn't exist")
+		Error = errors.New("Server - searchService error: " + methodName + " methodName didn't exist")
 	}
 	return
 }
@@ -148,19 +135,31 @@ func (server *Server) read_header(message coder.Coder) (*coder.Header, error) {
 }
 
 func (server *Server) read_request(message coder.Coder) (*request, error) {
-	header, errors := server.read_header(message)
-	if errors != nil {
-		return nil, errors
+	header, Error := server.read_header(message)
+	if Error != nil {
+		return nil, Error
 	}
 	requests := &request{header: header}
-	// TODO: now we don't know the type of request argv
-	// day 1, just suppose it's string
-	requests.argv = reflect.New(reflect.TypeOf(""))
-	err := message.DecodeMessageBody(requests.argv.Interface())
-	if err != nil {
-		log.Println("RPC server read argv error:", err)
+
+	requests.service, requests.serviceType, Error = server.searchService(header.ServiceMethod)
+	if Error != nil {
+		return requests, Error
 	}
-	return requests, nil
+	requests.argv = requests.serviceType.GetInput()
+	requests.replyv = requests.serviceType.GetInput()
+
+	input := requests.argv.Interface()
+	if requests.argv.Type().Kind() != reflect.Pointer {
+		input = requests.argv.Addr().Interface()
+	}
+
+	Error = message.DecodeMessageBody(input)
+	if Error != nil {
+		log.Println("RPC Server: Read Body Error: ", Error)
+		return requests, Error
+	}
+	return requests, Error
+
 }
 
 func (server *Server) send_response(message coder.Coder, header *coder.Header, body interface{}, sending *sync.Mutex) {
@@ -173,6 +172,14 @@ func (server *Server) send_response(message coder.Coder, header *coder.Header, b
 }
 
 func (server *Server) request_handle(message coder.Coder, request *request, sending *sync.Mutex, waitGroup *sync.WaitGroup) {
+	Error := request.service.Call(request.serviceType, request.argv, request.replyv)
+	if Error != nil {
+		request.header.Error = Error.Error()
+		server.send_response(message, request.header, invalidRequest, sending)
+		return
+	}
+	server.send_response(message, request.header, request.replyv.Interface(), sending)
+
 	// TODO, should call registered rpc methods to get the right replyv
 	// day 1, just print argv and send a hello message
 	log.Println(request.header, request.argv.Elem())
@@ -184,3 +191,16 @@ func (server *Server) request_handle(message coder.Coder, request *request, send
 // Accept accepts connections on the listener and serves requests
 // for each incoming connection.
 func Connection_handle(lis net.Listener) { default_server.Connection_handle(lis) }
+
+func (server *Server) ServerRegistry(serviceValue interface{}) error {
+	newService := service.CreateService(serviceValue)
+	_, duplicate := server.serviceMap.LoadOrStore(newService.ServiceName, newService)
+	if duplicate {
+		return errors.New("RPC Service has already been defined: " + newService.ServiceName)
+	}
+	return nil
+}
+
+func ServerRegistry(serviceValue interface{}) error {
+	return default_server.ServerRegistry(serviceValue)
+}
