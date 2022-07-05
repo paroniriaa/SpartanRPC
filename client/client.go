@@ -163,7 +163,7 @@ func parseOptions(options ...*server.Option) (*server.Option, error) {
 	}
 }
 
-func Connection(protocol, serverAddress string, options ...*server.Option) (client *Client, err error) {
+func Connwwwection(protocol, serverAddress string, options ...*server.Option) (client *Client, err error) {
 	opt, err := parseOptions(options...)
 	if err != nil {
 		return nil, err
