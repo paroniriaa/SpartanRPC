@@ -21,20 +21,21 @@ type Server struct {
 	serviceMap sync.Map
 }
 
-func New_server() *Server {
-	return &Server{}
-}
-
-type request struct {
-	header       *coder.Header
-	argv, replyv reflect.Value
-	serviceType  *service.ServiceType
-	service      *service.Service
+type Request struct {
+	header  *coder.Header
+	input   reflect.Value
+	output  reflect.Value
+	method  *service.Method
+	service *service.Service
 }
 
 type Option struct {
 	IDNumber  int
 	CoderType coder.CoderType
+}
+
+func New_server() *Server {
+	return &Server{}
 }
 
 //TODO: variable
@@ -48,22 +49,22 @@ var default_server = New_server()
 var invalidRequest = struct{}{}
 
 //TODO: function
-func (server *Server) searchService(serviceMethod string) (services *service.Service, methodType *service.ServiceType, Error error) {
+func (server *Server) searchService(serviceMethod string) (services *service.Service, methods *service.Method, err error) {
 	splitIndex := strings.LastIndex(serviceMethod, ".")
 	if splitIndex < 0 {
-		Error = errors.New("Server - searchService error: " + serviceMethod + " ill-formed invalid.")
+		err = errors.New("Server - searchService error: " + serviceMethod + " ill-formed invalid.")
 		return
 	}
 	serviceName, methodName := serviceMethod[:splitIndex], serviceMethod[splitIndex+1:]
-	input, isServiceStatus := server.serviceMap.Load(serviceName)
-	if !isServiceStatus {
-		Error = errors.New("Server - searchService error: " + serviceName + " serviceName didn't exist")
+	input, serviceStatus := server.serviceMap.Load(serviceName)
+	if !serviceStatus {
+		err = errors.New("Server - searchService error: " + serviceName + " serviceName didn't exist")
 		return
 	}
 	services = input.(*service.Service)
-	methodType = services.ServiceMethod[methodName]
-	if methodType == nil {
-		Error = errors.New("Server - searchService error: " + methodName + " methodName didn't exist")
+	methods = services.ServiceMethod[methodName]
+	if methods == nil {
+		err = errors.New("Server - searchService error: " + methodName + " methodName didn't exist")
 	}
 	return
 }
@@ -126,23 +127,23 @@ func (server *Server) read_header(message coder.Coder) (*coder.Header, error) {
 	return &h, nil
 }
 
-func (server *Server) read_request(message coder.Coder) (*request, error) {
+func (server *Server) read_request(message coder.Coder) (*Request, error) {
 	header, Error := server.read_header(message)
 	if Error != nil {
 		return nil, Error
 	}
-	requests := &request{header: header}
+	requests := &Request{header: header}
 
-	requests.service, requests.serviceType, Error = server.searchService(header.ServiceMethod)
+	requests.service, requests.method, Error = server.searchService(header.ServiceMethod)
 	if Error != nil {
 		return requests, Error
 	}
-	requests.argv = requests.serviceType.GetInput()
-	requests.replyv = requests.serviceType.GetOutput()
+	requests.input = requests.method.CreateInput()
+	requests.output = requests.method.CreateOutput()
 
-	input := requests.argv.Interface()
-	if requests.argv.Type().Kind() != reflect.Pointer {
-		input = requests.argv.Addr().Interface()
+	input := requests.input.Interface()
+	if requests.input.Type().Kind() != reflect.Pointer {
+		input = requests.input.Addr().Interface()
 	}
 
 	Error = message.DecodeMessageBody(input)
@@ -156,27 +157,27 @@ func (server *Server) read_request(message coder.Coder) (*request, error) {
 
 func (server *Server) send_response(message coder.Coder, header *coder.Header, body interface{}, sending *sync.Mutex) {
 	sending.Lock()
-	errors := message.EncodeMessageHeaderAndBody(header, body)
-	if errors != nil {
-		log.Println("Server - write response error:", errors)
+	err := message.EncodeMessageHeaderAndBody(header, body)
+	if err != nil {
+		log.Println("Server - write response error:", err)
 	}
 	defer sending.Unlock()
 }
 
-func (server *Server) request_handle(message coder.Coder, request *request, sending *sync.Mutex, waitGroup *sync.WaitGroup) {
-	Error := request.service.Call(request.serviceType, request.argv, request.replyv)
+func (server *Server) request_handle(message coder.Coder, request *Request, sending *sync.Mutex, waitGroup *sync.WaitGroup) {
+	Error := request.service.Call(request.method, request.input, request.output)
 	if Error != nil {
 		request.header.Error = Error.Error()
 		server.send_response(message, request.header, invalidRequest, sending)
 		return
 	}
-	server.send_response(message, request.header, request.replyv.Interface(), sending)
+	server.send_response(message, request.header, request.output.Interface(), sending)
 	defer waitGroup.Done()
 }
 
 func Connection_handle(lis net.Listener) { default_server.Connection_handle(lis) }
 
-func (server *Server) ServerRegistry(serviceValue interface{}) error {
+func (server *Server) ServerRegister(serviceValue interface{}) error {
 	newService := service.CreateService(serviceValue)
 	_, duplicate := server.serviceMap.LoadOrStore(newService.ServiceName, newService)
 	if duplicate {
@@ -185,6 +186,6 @@ func (server *Server) ServerRegistry(serviceValue interface{}) error {
 	return nil
 }
 
-func ServerRegistry(serviceValue interface{}) error {
-	return default_server.ServerRegistry(serviceValue)
+func ServerRegister(serviceValue interface{}) error {
+	return default_server.ServerRegister(serviceValue)
 }
