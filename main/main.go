@@ -32,7 +32,7 @@ func createServer(address chan string) {
 	if err != nil {
 		log.Fatal("Server Network issue:", err)
 	}
-	log.Println("Created RPC server on port", listener.Addr())
+	log.Println("RPC server -> createServer: RPC server created and hosting on port", listener.Addr())
 	address <- listener.Addr().String()
 	server.Connection_handle(listener)
 }
@@ -59,7 +59,7 @@ func main() {
 	time.Sleep(time.Second)
 	var waitGroup sync.WaitGroup
 	n := 0
-	for n < 5 {
+	for n < 2 {
 		clientCallRPC(testClient, n, &waitGroup)
 		n++
 	}

@@ -29,7 +29,7 @@ func TestJsonCoder(test *testing.T) {
 	time.Sleep(time.Second)
 	_ = json.NewEncoder(connection).Encode(server.DefaultConnectionInfo)
 	TestJsonCoder := coder.NewJsonCoder(connection)
-	requestHeader := &coder.Header{
+	requestHeader := &coder.Message{
 		ServiceDotMethod: "Test.Echo",
 		SequenceNumber:   uint64(0),
 	}
@@ -45,7 +45,7 @@ func TestJsonCoder(test *testing.T) {
 
 	test.Run("DecodeMessageHeader", func(t *testing.T) {
 		var err error
-		responseHeader := &coder.Header{}
+		responseHeader := &coder.Message{}
 		err = TestJsonCoder.DecodeMessageHeader(responseHeader)
 		if err != nil {
 			test.Errorf("DecodeMessageHeader Error: %s", err)
