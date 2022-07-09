@@ -31,14 +31,14 @@ func TestServer(test *testing.T) {
 	defer func() { _ = connection.Close() }()
 
 	time.Sleep(time.Second)
-	_ = json.NewEncoder(connection).Encode(server.DefaultOption)
+	_ = json.NewEncoder(connection).Encode(server.DefaultConnectionInfo)
 	communication := coder.NewJsonCoder(connection)
 
 	n := 0
 	for n < 5 {
 		header := &coder.Header{
-			ServiceMethod:  "Test.Echo",
-			SequenceNumber: uint64(n),
+			ServiceDotMethod: "Test.Echo",
+			SequenceNumber:   uint64(n),
 		}
 		request := "RPC Sequence Number " + strconv.Itoa(n)
 		log.Println("Request:", request)

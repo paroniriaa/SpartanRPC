@@ -29,7 +29,7 @@ type Request struct {
 	service *service.Service
 }
 
-type Option struct {
+type ConnectionInfo struct {
 	IDNumber  int
 	CoderType coder.CoderType
 }
@@ -39,7 +39,7 @@ func New_server() *Server {
 }
 
 //TODO: variable
-var DefaultOption = &Option{
+var DefaultConnectionInfo = &ConnectionInfo{
 	IDNumber:  MagicNumber,
 	CoderType: coder.Json,
 }
@@ -78,7 +78,7 @@ func (server *Server) Connection_handle(listening net.Listener) {
 		}
 
 		defer func() { _ = connection.Close() }()
-		var option Option
+		var option ConnectionInfo
 		errors := json.NewDecoder(connection).Decode(&option)
 		switch {
 		case errors != nil:
@@ -134,7 +134,7 @@ func (server *Server) read_request(message coder.Coder) (*Request, error) {
 	}
 	requests := &Request{header: header}
 
-	requests.service, requests.method, Error = server.searchService(header.ServiceMethod)
+	requests.service, requests.method, Error = server.searchService(header.ServiceDotMethod)
 	if Error != nil {
 		return requests, Error
 	}

@@ -14,83 +14,66 @@ import (
 
 // TODO: struct
 type Call struct {
-	SeqNumber     uint64
-	ServiceMethod string
-	Args          interface{}
-	Reply         interface{}
-	Error         error
-	Done          chan *Call
+	SequenceNumber   uint64
+	ServiceDotMethod string
+	Inputs           interface{}
+	Output           interface{}
+	Error            error
+	Complete         chan *Call
 }
 
 type Client struct {
-	message      coder.Coder
-	option       *server.Option
-	sending      sync.Mutex
-	header       coder.Header
-	locker       sync.Mutex
-	seqNumber    uint64
-	pending_Pool map[uint64]*Call
-	IsClosed     bool
-	IsShutdown   bool
+	coder          coder.Coder
+	connectionInfo *server.ConnectionInfo
+	sendingMutex   sync.Mutex
+	header         coder.Header
+	entityMutex    sync.Mutex
+	sequenceNumber uint64
+	callMap        map[uint64]*Call
+	isClosed       bool
+	isShutdown     bool
 }
 
 //TODO: variable
 var _ io.Closer = (*Client)(nil)
 
 //TODO: function
-func (call *Call) done() {
-	call.Done <- call
-}
-
-func (client *Client) Close() error {
-	defer client.locker.Unlock()
-	client.locker.Lock()
-	if client.IsClosed {
-		return errors.New("RPC client - close error: connection is closed")
-	} else {
-		client.IsClosed = true
-		return client.message.Close()
-	}
-}
-
-func (client *Client) IsAvailable() bool {
-	defer client.locker.Unlock()
-	client.locker.Lock()
-	return !client.IsShutdown && !client.IsClosed
+func (call *Call) complete() {
+	call.Complete <- call
 }
 
 func (client *Client) addCall(call *Call) (uint64, error) {
-	client.locker.Lock()
-	defer client.locker.Unlock()
-	if client.IsClosed {
-		return 0, errors.New("RPC client - addCall error: client is closed")
+	client.entityMutex.Lock()
+	defer client.entityMutex.Unlock()
+	if client.isClosed {
+		return 0, errors.New("RPC client -> addCall error: client is closed")
 	}
-	if client.IsShutdown {
-		return 0, errors.New("RPC client - addCall error: client is shutdown")
+	if client.isShutdown {
+		return 0, errors.New("RPC client -> addCall error: client is shutdown")
 	}
-	call.SeqNumber = client.seqNumber
-	client.pending_Pool[call.SeqNumber] = call
-	client.seqNumber++
-	return call.SeqNumber, nil
+	call.SequenceNumber = client.sequenceNumber
+	client.callMap[call.SequenceNumber] = call
+	client.sequenceNumber++
+	return call.SequenceNumber, nil
 }
 
-func (client *Client) deleteCall(seqNumber uint64) *Call {
-	client.locker.Lock()
-	defer client.locker.Unlock()
-	call := client.pending_Pool[seqNumber]
-	delete(client.pending_Pool, seqNumber)
+func (client *Client) deleteCall(sequenceNumber uint64) *Call {
+	client.entityMutex.Lock()
+	defer client.entityMutex.Unlock()
+	call := client.callMap[sequenceNumber]
+	delete(client.callMap, sequenceNumber)
 	return call
 }
 
 func (client *Client) terminateCalls(Error error) {
-	client.sending.Lock()
-	defer client.sending.Unlock()
-	client.locker.Lock()
-	defer client.locker.Unlock()
-	client.IsShutdown = true
-	for _, call := range client.pending_Pool {
+	client.sendingMutex.Lock()
+	defer client.sendingMutex.Unlock()
+	client.entityMutex.Lock()
+	defer client.entityMutex.Unlock()
+	client.isShutdown = true
+	for _, call := range client.callMap {
 		call.Error = Error
-		call.done()
+		call.complete()
 	}
 }
 
@@ -98,128 +81,142 @@ func (client *Client) receiveCall() {
 	var Error error
 	for Error == nil {
 		var h coder.Header
-		if Error = client.message.DecodeMessageHeader(&h); Error != nil {
+		if Error = client.coder.DecodeMessageHeader(&h); Error != nil {
 			break
 		}
 		call := client.deleteCall(h.SequenceNumber)
 		if call == nil {
-			Error = client.message.DecodeMessageBody(nil)
+			Error = client.coder.DecodeMessageBody(nil)
 		} else if h.Error != "" {
 			call.Error = fmt.Errorf(h.Error)
-			Error = client.message.DecodeMessageBody(nil)
-			call.done()
+			Error = client.coder.DecodeMessageBody(nil)
+			call.complete()
 		} else {
-			Error = client.message.DecodeMessageBody(call.Reply)
+			Error = client.coder.DecodeMessageBody(call.Output)
 			if Error != nil {
-				call.Error = errors.New("RPC Client - receiveCall error: reading body " + Error.Error())
+				call.Error = errors.New("RPC Client -> receiveCall error: cannot decode message body " + Error.Error())
 			}
-			call.done()
+			call.complete()
 		}
 	}
 	client.terminateCalls(Error)
 }
 
-func CreateClient(connection net.Conn, option *server.Option) (*Client, error) {
-	functionMap := coder.CoderFunctionMap[option.CoderType]
-	errors := json.NewEncoder(connection).Encode(option)
+func CreateClient(connection net.Conn, connectionInfo *server.ConnectionInfo) (*Client, error) {
+	coderFunction := coder.CoderFunctionMap[connectionInfo.CoderType]
+	Error := json.NewEncoder(connection).Encode(connectionInfo)
 	switch {
-	case functionMap == nil:
-		err := fmt.Errorf("RPC Client - createClient error: %s coderType is invalid", option.CoderType)
-		log.Println("RPC Client - coder error:", err)
+	case coderFunction == nil:
+		err := fmt.Errorf("RPC Client -> createClient error: %s coderType is invalid", connectionInfo.CoderType)
+		log.Println("RPC Client -> coder error:", err)
 		return nil, err
-	case errors != nil:
-		log.Println("RPC Client - option error: ", errors)
+	case Error != nil:
+		log.Println("RPC Client -> connectionInfo error: ", Error)
 		_ = connection.Close()
-		return nil, errors
+		return nil, Error
 	default:
-		return newClientCoder(functionMap(connection), option), nil
-	}
-}
-
-func newClientCoder(message coder.Coder, option *server.Option) *Client {
-	client := &Client{
-		seqNumber:    1,
-		message:      message,
-		option:       option,
-		pending_Pool: make(map[uint64]*Call),
-	}
-	go client.receiveCall()
-	return client
-}
-
-func parseOptions(options ...*server.Option) (*server.Option, error) {
-	switch {
-	case len(options) == 0 || options[0] == nil:
-		return server.DefaultOption, nil
-	case len(options) != 1:
-		return nil, errors.New("RPC Client - parseOptions error: options should be lower than 2")
-	default:
-		opt := options[0]
-		opt.IDNumber = server.DefaultOption.IDNumber
-		if opt.CoderType == "" {
-			opt.CoderType = server.DefaultOption.CoderType
+		mappedCoder := coderFunction(connection)
+		client := &Client{
+			sequenceNumber: 1,
+			coder:          mappedCoder,
+			connectionInfo: connectionInfo,
+			callMap:        make(map[uint64]*Call),
 		}
-		return opt, nil
+		go client.receiveCall()
+		return client, nil
 	}
 }
 
-func MakeDial(protocol, serverAddress string, options ...*server.Option) (client *Client, err error) {
-	opt, err := parseOptions(options...)
-	if err != nil {
-		return nil, err
+func parseConnectionInfo(connectionInfos ...*server.ConnectionInfo) (*server.ConnectionInfo, error) {
+	switch {
+	case len(connectionInfos) == 0 || connectionInfos[0] == nil:
+		return server.DefaultConnectionInfo, nil
+	case len(connectionInfos) != 1:
+		return nil, errors.New("RPC Client -> parseConnectionInfo error: connectionInfos should be in length 1")
+	default:
+		connectionInfo := connectionInfos[0]
+		connectionInfo.IDNumber = server.DefaultConnectionInfo.IDNumber
+		if connectionInfo.CoderType == "" {
+			connectionInfo.CoderType = server.DefaultConnectionInfo.CoderType
+		}
+		return connectionInfo, nil
 	}
-	conn, err := net.Dial(protocol, serverAddress)
-	if err != nil {
-		return nil, err
+}
+
+func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
+	connectionInfo, Error := parseConnectionInfo(connectionInfos...)
+	if Error != nil {
+		return nil, Error
+	}
+	connection, Error := net.Dial(transportProtocol, serverAddress)
+	if Error != nil {
+		return nil, Error
 	}
 	defer func() {
 		if client == nil {
-			_ = conn.Close()
+			_ = connection.Close()
 		}
 	}()
-	return CreateClient(conn, opt)
+	return CreateClient(connection, connectionInfo)
 }
 
 func (client *Client) sendCall(call *Call) {
-	defer client.sending.Unlock()
-	client.sending.Lock()
-	seqNumber, err := client.addCall(call)
-	if err != nil {
-		call.Error = err
-		call.done()
+	defer client.sendingMutex.Unlock()
+	client.sendingMutex.Lock()
+	sequenceNumber, Error := client.addCall(call)
+	if Error != nil {
+		call.Error = Error
+		call.complete()
 		return
 	}
 
-	client.header.ServiceMethod = call.ServiceMethod
-	client.header.SequenceNumber = seqNumber
+	client.header.ServiceDotMethod = call.ServiceDotMethod
+	client.header.SequenceNumber = sequenceNumber
 	client.header.Error = ""
-	Error := client.message.EncodeMessageHeaderAndBody(&client.header, call.Args)
+	Error = client.coder.EncodeMessageHeaderAndBody(&client.header, call.Inputs)
 	if Error != nil {
-		if call := client.deleteCall(seqNumber); call != nil {
+		if call := client.deleteCall(sequenceNumber); call != nil {
 			call.Error = Error
-			call.done()
+			call.complete()
 		}
 	}
 }
 
-func (client *Client) Go(serviceMethod string, args, reply interface{}, done chan *Call) *Call {
+func (client *Client) Go(serviceDotMethod string, inputs, output interface{}, complete chan *Call) *Call {
 	switch {
-	case done == nil:
-		done = make(chan *Call, 10)
-	case cap(done) == 0:
-		log.Panic("RPC Client - Go error: unbuffered")
+	case complete == nil:
+		complete = make(chan *Call, 10)
+	case cap(complete) == 0:
+		log.Panic("RPC Client -> Go error: 'complete' channel is unbuffered")
 	}
 	call := &Call{
-		ServiceMethod: serviceMethod,
-		Args:          args,
-		Reply:         reply,
-		Done:          done,
+		ServiceDotMethod: serviceDotMethod,
+		Inputs:           inputs,
+		Output:           output,
+		Complete:         complete,
 	}
 	client.sendCall(call)
 	return call
 }
 
-func (client *Client) Call(serviceMethod string, args, reply interface{}) error {
-	call := <-client.Go(serviceMethod, args, reply, make(chan *Call, 1)).Done
+func (client *Client) Call(serviceDotMethod string, inputs, output interface{}) error {
+	call := <-client.Go(serviceDotMethod, inputs, output, make(chan *Call, 1)).Complete
 	return call.Error
+}
+
+func (client *Client) Close() error {
+	defer client.entityMutex.Unlock()
+	client.entityMutex.Lock()
+	if client.isClosed {
+		return errors.New("RPC client -> Close error: connection is shutdown")
+	} else {
+		client.isClosed = true
+		return client.coder.Close()
+	}
+}
+
+func (client *Client) IsAvailable() bool {
+	defer client.entityMutex.Unlock()
+	client.entityMutex.Lock()
+	return !client.isShutdown && !client.isClosed
 }
