@@ -148,7 +148,7 @@ func (server *Server) read_request(message coder.Coder) (*Request, error) {
 
 	Error = message.DecodeMessageBody(input)
 	if Error != nil {
-		log.Println("Server - read_request error:", Error)
+		log.Println("Server - DecodeMessageBody error:", Error)
 		return requests, Error
 	}
 	return requests, nil
