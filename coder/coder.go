@@ -5,14 +5,14 @@ import (
 )
 
 /*
-	ServiceMethod  is the format for specific service and method: "Service.Method"
+	ServiceDotMethod  is the format for specific service and method: "Service.Method"
 	SequenceNumber is the sequence number chosen by client
 	Error is the error message from server's response if the rpc call failed
 */
 type Header struct {
-	ServiceMethod  string
-	SequenceNumber uint64
-	Error          string
+	ServiceDotMethod string
+	SequenceNumber   uint64
+	Error            string
 }
 
 type Coder interface {

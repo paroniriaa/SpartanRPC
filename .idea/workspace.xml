@@ -6,6 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="client">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/client.go" beforeDir="false" afterPath="$PROJECT_DIR$/client/client.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/coder/coder.go" beforeDir="false" afterPath="$PROJECT_DIR$/coder/coder.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/json_coder_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/json_coder_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/server_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/server_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -127,7 +132,9 @@
       <option name="presentableId" value="Default" />
       <updated>1656660190663</updated>
       <workItem from="1656660195914" duration="4144000" />
-      <workItem from="1657065652952" duration="1822000" />
+      <workItem from="1657065652952" duration="2454000" />
+      <workItem from="1657157892304" duration="3280000" />
+      <workItem from="1657334649945" duration="3965000" />
     </task>
     <servers />
   </component>
