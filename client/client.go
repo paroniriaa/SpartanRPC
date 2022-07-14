@@ -28,8 +28,8 @@ type Client struct {
 	coder          coder.Coder            // the message coder for message encoding and decoding
 	connectionInfo *server.ConnectionInfo // the connection (between server and client ) info
 
-	requestMutex  sync.Mutex    // protects following
-	requestHeader coder.Message // the header of an RPC request
+	requestMutex  sync.Mutex          // protects following
+	requestHeader coder.MessageHeader // the header of an RPC request
 
 	entityMutex    sync.Mutex       // protects following
 	sequenceNumber uint64           // the sequence number that counts the RPC request
@@ -246,7 +246,7 @@ func (client *Client) receiveCall() {
 	var Error error
 	log.Printf("RPC client -> receiveCall: client %p start listeing on connection for all future RPC response...", client)
 	for Error == nil {
-		var response coder.Message
+		var response coder.MessageHeader
 		if Error = client.coder.DecodeMessageHeader(&response); Error != nil {
 			break
 		}

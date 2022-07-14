@@ -22,7 +22,7 @@ type Server struct {
 }
 
 type Request struct {
-	header  *coder.Message
+	header  *coder.MessageHeader
 	input   reflect.Value
 	output  reflect.Value
 	method  *service.Method
@@ -115,8 +115,8 @@ func (server *Server) server_coder(message coder.Coder) {
 	_ = message.Close()
 }
 
-func (server *Server) read_header(message coder.Coder) (*coder.Message, error) {
-	var h coder.Message
+func (server *Server) read_header(message coder.Coder) (*coder.MessageHeader, error) {
+	var h coder.MessageHeader
 	errors := message.DecodeMessageHeader(&h)
 	if errors != nil {
 		if errors != io.EOF && errors != io.ErrUnexpectedEOF {
@@ -155,7 +155,7 @@ func (server *Server) read_request(message coder.Coder) (*Request, error) {
 
 }
 
-func (server *Server) send_response(message coder.Coder, header *coder.Message, body interface{}, sending *sync.Mutex) {
+func (server *Server) send_response(message coder.Coder, header *coder.MessageHeader, body interface{}, sending *sync.Mutex) {
 	sending.Lock()
 	err := message.EncodeMessageHeaderAndBody(header, body)
 	if err != nil {
