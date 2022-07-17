@@ -32,14 +32,13 @@ func createServer(address chan string) {
 	if err != nil {
 		log.Fatal("Server Network issue:", err)
 	}
-	log.Println("Created RPC server on port", listener.Addr())
+	log.Println("RPC server -> createServer: RPC server created and hosting on port", listener.Addr())
 	address <- listener.Addr().String()
 	server.Connection_handle(listener)
 }
 
 func clientCallRPC(client *client.Client, number int, waitGroup *sync.WaitGroup) {
 	defer waitGroup.Done()
-	waitGroup.Add(1)
 	input := &Input{Number1: number, Number2: number ^ 2}
 	var output int
 	if err := client.Call("Demo.Sum", input, &output); err != nil {
@@ -59,8 +58,11 @@ func main() {
 	time.Sleep(time.Second)
 	var waitGroup sync.WaitGroup
 	n := 0
-	for n < 5 {
-		clientCallRPC(testClient, n, &waitGroup)
+	for n < 2 {
+		waitGroup.Add(1)
+		go func(n int) {
+			clientCallRPC(testClient, n, &waitGroup)
+		}(n)
 		n++
 	}
 	waitGroup.Wait()

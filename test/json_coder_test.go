@@ -27,11 +27,11 @@ func TestJsonCoder(test *testing.T) {
 	connection, _ := net.Dial("tcp", <-address)
 	defer func() { _ = connection.Close() }()
 	time.Sleep(time.Second)
-	_ = json.NewEncoder(connection).Encode(server.DefaultOption)
+	_ = json.NewEncoder(connection).Encode(server.DefaultConnectionInfo)
 	TestJsonCoder := coder.NewJsonCoder(connection)
-	requestHeader := &coder.Header{
-		ServiceMethod:  "Test.Echo",
-		SequenceNumber: uint64(0),
+	requestHeader := &coder.MessageHeader{
+		ServiceDotMethod: "Test.Echo",
+		SequenceNumber:   uint64(0),
 	}
 	requestBody := "Hello there! "
 
@@ -45,13 +45,13 @@ func TestJsonCoder(test *testing.T) {
 
 	test.Run("DecodeMessageHeader", func(t *testing.T) {
 		var err error
-		responseHeader := &coder.Header{}
+		responseHeader := &coder.MessageHeader{}
 		err = TestJsonCoder.DecodeMessageHeader(responseHeader)
 		if err != nil {
 			test.Errorf("DecodeMessageHeader Error: %s", err)
 		}
-		if responseHeader.ServiceMethod != requestHeader.ServiceMethod {
-			test.Errorf("DecodeMessageHeader Error: responseHeader.ServiceMethod expected to be %s, but got %s", requestHeader.ServiceMethod, responseHeader.ServiceMethod)
+		if responseHeader.ServiceDotMethod != requestHeader.ServiceDotMethod {
+			test.Errorf("DecodeMessageHeader Error: responseHeader.ServiceDotMethod expected to be %s, but got %s", requestHeader.ServiceDotMethod, responseHeader.ServiceDotMethod)
 		}
 		if responseHeader.SequenceNumber != requestHeader.SequenceNumber {
 			test.Errorf("DecodeMessageHeader Error: responseHeader.SequenceNumber expected to be %d, but got %d", requestHeader.SequenceNumber, responseHeader.SequenceNumber)

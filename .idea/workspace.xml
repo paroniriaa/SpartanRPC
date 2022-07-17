@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="client" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -19,7 +17,7 @@
       </list>
     </option>
   </component>
-  <component name="GOROOT" url="file://$PROJECT_DIR$/../../../../../Program Files/Go" />
+  <component name="GOROOT" url="file://$USER_HOME$/sdk/go1.18.3" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -51,7 +49,6 @@
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
-    <property name="settings.editor.selected.configurable" value="go.sdk" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
@@ -59,55 +56,72 @@
     </key>
   </component>
   <component name="RunManager" selected="Go Build.go build main.go">
+    <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="FILE" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
     <configuration name="go build main.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$" />
       <kind value="FILE" />
-      <filePath value="$PROJECT_DIR$/main/main.go" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/main/main.go" />
       <method v="2" />
     </configuration>
     <configuration name="TestClient in Distributed-RPC-Framework/client" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/client" />
-      <framework value="gotest" />
       <kind value="PACKAGE" />
       <package value="Distributed-RPC-Framework/client" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
       <pattern value="^\QTestClient\E$" />
       <method v="2" />
     </configuration>
     <configuration name="TestServer in Distributed-RPC-Framework/server" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/server" />
-      <framework value="gotest" />
       <kind value="PACKAGE" />
       <package value="Distributed-RPC-Framework/server" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
       <pattern value="^\QTestServer\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="DIRECTORY" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
       <method v="2" />
     </configuration>
     <configuration name="client_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/client" />
-      <framework value="gotest" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$/client/client_test.go" />
+      <framework value="gotest" />
       <method v="2" />
     </configuration>
     <configuration name="server_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/server" />
-      <framework value="gotest" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$/server/server_test.go" />
+      <framework value="gotest" />
       <method v="2" />
     </configuration>
     <recent_temporary>
@@ -128,6 +142,11 @@
       <option name="presentableId" value="Default" />
       <updated>1656660190663</updated>
       <workItem from="1656660195914" duration="4144000" />
+      <workItem from="1657065652952" duration="2454000" />
+      <workItem from="1657157892304" duration="3280000" />
+      <workItem from="1657334649945" duration="24796000" />
+      <workItem from="1657437084929" duration="6351000" />
+      <workItem from="1657499492746" duration="24486000" />
     </task>
     <servers />
   </component>
@@ -144,7 +163,6 @@
         </entry>
       </map>
     </option>
-    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="client" />
