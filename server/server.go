@@ -5,12 +5,14 @@ import (
 	"Distributed-RPC-Framework/service"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net"
 	"reflect"
 	"strings"
 	"sync"
+	"time"
 )
 
 // TODO: const
@@ -32,6 +34,8 @@ type Request struct {
 type ConnectionInfo struct {
 	IDNumber  int
 	CoderType coder.CoderType
+	Timeout_connection time.Duration
+	Timeout_handle  time.Duration
 }
 
 func New_server() *Server {
@@ -42,6 +46,7 @@ func New_server() *Server {
 var DefaultConnectionInfo = &ConnectionInfo{
 	IDNumber:  MagicNumber,
 	CoderType: coder.Json,
+	Timeout_connection: time.Second * 10,
 }
 
 var default_server = New_server()
@@ -92,11 +97,11 @@ func (server *Server) Connection_handle(listening net.Listener) {
 			return
 		}
 		coder_function_map := coder.CoderFunctionMap[option.CoderType]
-		server.server_coder(coder_function_map(connection))
+		server.server_coder(coder_function_map(connection), &option)
 	}
 }
 
-func (server *Server) server_coder(message coder.Coder) {
+func (server *Server) server_coder(message coder.Coder, option *ConnectionInfo) {
 	sending := new(sync.Mutex)
 	waitGroup := new(sync.WaitGroup)
 	for {
@@ -109,7 +114,7 @@ func (server *Server) server_coder(message coder.Coder) {
 			continue
 		}
 		waitGroup.Add(1)
-		go server.request_handle(message, requests, sending, waitGroup)
+		go server.request_handle(message, requests, sending, waitGroup,option.Timeout_handle)
 	}
 	waitGroup.Wait()
 	_ = message.Close()
@@ -164,6 +169,8 @@ func (server *Server) send_response(message coder.Coder, header *coder.Header, b
 	defer sending.Unlock()
 }
 
+//old handleRequest
+/*
 func (server *Server) request_handle(message coder.Coder, request *Request, sending *sync.Mutex, waitGroup *sync.WaitGroup) {
 	Error := request.service.Call(request.method, request.input, request.output)
 	if Error != nil {
@@ -174,6 +181,39 @@ func (server *Server) request_handle(message coder.Coder, request *Request, send
 	server.send_response(message, request.header, request.output.Interface(), sending)
 	defer waitGroup.Done()
 }
+*/
+
+func (server *Server) request_handle(message coder.Coder, request *Request, sending *sync.Mutex, waitGroup *sync.WaitGroup, timeout time.Duration) {
+	defer waitGroup.Done()
+	called := make(chan struct{})
+	sent := make(chan struct{})
+	go func() {
+		err := request.service.Call(request.method, request.input, request.output)
+		called <- struct{}{}
+		if err != nil {
+			request.header.Error = err.Error()
+			server.send_response(message, request.header, invalidRequest, sending)
+			sent <- struct{}{}
+			return
+		}
+		server.send_response(message, request.header, request.output.Interface(), sending)
+		sent <- struct{}{}
+	}()
+
+	if timeout == 0 {
+		<-called
+		<-sent
+		return
+	}
+	select {
+	case <-time.After(timeout):
+		request.header.Error = fmt.Sprintf("rpc server: request handle timeout: expect within %s", timeout)
+		server.send_response(message, request.header, invalidRequest, sending)
+	case <-called:
+		<-sent
+	}
+}
+
 
 func Connection_handle(lis net.Listener) { default_server.Connection_handle(lis) }
 

@@ -3,6 +3,7 @@ package client
 import (
 	"Distributed-RPC-Framework/coder"
 	"Distributed-RPC-Framework/server"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"log"
 	"net"
 	"sync"
+	"time"
 )
 
 // TODO: struct
@@ -33,6 +35,14 @@ type Client struct {
 	isClosed       bool
 	isShutdown     bool
 }
+
+type clientInfo struct {
+	client *Client
+	err    error
+}
+
+type timeoutClient func(connection net.Conn, option *server.ConnectionInfo) (client *Client, err error)
+
 
 //TODO: variable
 var _ io.Closer = (*Client)(nil)
@@ -143,6 +153,7 @@ func parseConnectionInfo(connectionInfos ...*server.ConnectionInfo) (*server.Con
 	}
 }
 
+
 func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
 	connectionInfo, Error := parseConnectionInfo(connectionInfos...)
 	if Error != nil {
@@ -159,6 +170,43 @@ func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*serve
 	}()
 	return CreateClient(connection, connectionInfo)
 }
+// new dialtimeout
+func MakeDialTiemout(f timeoutClient, transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
+	connectionInfo, Error := parseConnectionInfo(connectionInfos...)
+	if Error != nil {
+		return nil, Error
+	}
+	connection, Error := net.DialTimeout(transportProtocol, serverAddress,connectionInfo.Timeout_connection)
+	if Error != nil {
+		return nil, Error
+	}
+	defer func() {
+		if client == nil {
+			_ = connection.Close()
+		}
+	}()
+	ch := make(chan clientInfo)
+	go func() {
+		client, err := f(connection, connectionInfo)
+		ch <- clientInfo{client: client, err: err}
+	}()
+	if connectionInfo.Timeout_connection == 0 {
+		result := <-ch
+		return result.client, result.err
+	}
+	select {
+	case <-time.After(connectionInfo.Timeout_connection):
+		return nil, fmt.Errorf("client - MakeDialTiemout: connection timeout: expect within %s", connectionInfo.Timeout_connection)
+	case result := <-ch:
+		return result.client, result.err
+	}
+}
+
+func Dial(network, address string, opts ...*server.ConnectionInfo) (*Client, error) {
+	return MakeDialTiemout(CreateClient, network, address, opts...)
+}
+
+
 
 func (client *Client) sendCall(call *Call) {
 	defer client.sendingMutex.Unlock()
@@ -199,10 +247,25 @@ func (client *Client) Go(serviceDotMethod string, inputs, output interface{}, co
 	return call
 }
 
+// old call
+/*
 func (client *Client) Call(serviceDotMethod string, inputs, output interface{}) error {
 	call := <-client.Go(serviceDotMethod, inputs, output, make(chan *Call, 1)).Complete
 	return call.Error
 }
+*/
+func (client *Client) Call(ctx context.Context, serviceMethod string, args, reply interface{}) error {
+	call := client.Go(serviceMethod, args, reply, make(chan *Call, 1))
+	select {
+	case <-ctx.Done():
+		client.deleteCall(call.SequenceNumber)
+		return errors.New("rpc client: call failed: " + ctx.Err().Error())
+	case call := <-call.Complete:
+		return call.Error
+	}
+}
+
+
 
 func (client *Client) Close() error {
 	defer client.entityMutex.Unlock()

@@ -6,7 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/client.go" beforeDir="false" afterPath="$PROJECT_DIR$/client/client.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/server_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/server_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,26 +63,8 @@
       <recent name="K:\github_repo\Distributed-RPC-Framework\main" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Build.go build main.go">
-    <configuration name="go build main.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
-      <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$" />
-      <kind value="FILE" />
-      <filePath value="$PROJECT_DIR$/main/main.go" />
-      <package value="Distributed-RPC-Framework" />
-      <directory value="$PROJECT_DIR$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="go build server.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
-      <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$" />
-      <kind value="FILE" />
-      <filePath value="$PROJECT_DIR$/server/server.go" />
-      <package value="Distributed-RPC-Framework" />
-      <directory value="$PROJECT_DIR$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="TestJsonCoder in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Go Test.TestClient_dialTimeout/timeout in Distributed-RPC-Framework/test">
+    <configuration name="TestClient_dialTimeout in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/test" />
       <framework value="gotest" />
@@ -88,20 +72,43 @@
       <package value="Distributed-RPC-Framework/test" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestJsonCoder\E$" />
+      <pattern value="^\QTestClient_dialTimeout\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="coder_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestClient_dialTimeout/0 in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/test" />
       <framework value="gotest" />
-      <kind value="FILE" />
-      <package value="Distributed-RPC-Framework" />
+      <kind value="PACKAGE" />
+      <package value="Distributed-RPC-Framework/test" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/test/coder_test.go" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTestClient_dialTimeout\E$/^\Q0\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="server_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestClient_dialTimeout/timeout in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/test" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="Distributed-RPC-Framework/test" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTestClient_dialTimeout\E$/^\Qtimeout\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestServer in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/test" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="Distributed-RPC-Framework/test" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTestServer\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="server_test.go (1)" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/test" />
       <framework value="gotest" />
@@ -113,11 +120,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Build.go build main.go" />
-        <item itemvalue="Go Test.server_test.go" />
-        <item itemvalue="Go Test.coder_test.go" />
-        <item itemvalue="Go Build.go build server.go" />
-        <item itemvalue="Go Test.TestJsonCoder in Distributed-RPC-Framework/test" />
+        <item itemvalue="Go Test.TestClient_dialTimeout/timeout in Distributed-RPC-Framework/test" />
+        <item itemvalue="Go Test.TestClient_dialTimeout/0 in Distributed-RPC-Framework/test" />
+        <item itemvalue="Go Test.TestClient_dialTimeout in Distributed-RPC-Framework/test" />
+        <item itemvalue="Go Test.TestServer in Distributed-RPC-Framework/test" />
+        <item itemvalue="Go Test.server_test.go (1)" />
       </list>
     </recent_temporary>
   </component>
