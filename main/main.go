@@ -3,6 +3,7 @@ package main
 import (
 	"Distributed-RPC-Framework/client"
 	"Distributed-RPC-Framework/server"
+	"context"
 	"log"
 	"net"
 	"sync"
@@ -42,7 +43,8 @@ func clientCallRPC(client *client.Client, number int, waitGroup *sync.WaitGroup)
 	waitGroup.Add(1)
 	input := &Input{Number1: number, Number2: number ^ 2}
 	var output int
-	if err := client.Call("Demo.Sum", input, &output); err != nil {
+	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	if err := client.Call(ctx,"Demo.Sum", input, &output); err != nil {
 		log.Fatal("Client RPC call Demo.Sum error:", err)
 	}
 	log.Printf("%d + %d = %d", input.Number1, input.Number2, output)

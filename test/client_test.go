@@ -3,6 +3,7 @@ package test
 import (
 	"Distributed-RPC-Framework/client"
 	"Distributed-RPC-Framework/server"
+	"context"
 	"log"
 	"net"
 	"reflect"
@@ -30,7 +31,8 @@ type BuiltinTypeCase struct {
 //helper function to create concrete Arithmetic test case
 func createArithmeticTestCase(t *testing.T, c *client.Client, ac *ArithmeticCase) {
 	t.Helper()
-	err := c.Call(ac.ServiceDotMethod, ac.Input, ac.Output)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	err := c.Call(ctx,ac.ServiceDotMethod, ac.Input, ac.Output)
 	es1 := ac.ServiceDotMethod + ":" + " expected no error, but got error %q"
 	es2 := ac.ServiceDotMethod + ":" + " %d " + ac.ArithmeticSymbol + " %d " + "expected output %d, but got %d"
 	if err != nil {
@@ -43,7 +45,8 @@ func createArithmeticTestCase(t *testing.T, c *client.Client, ac *ArithmeticCase
 
 func createBuiltinTypeTestCase(t *testing.T, c *client.Client, btc *BuiltinTypeCase) {
 	t.Helper()
-	err := c.Call(btc.ServiceDotMethod, btc.Input, btc.Output)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	err := c.Call(ctx,btc.ServiceDotMethod, btc.Input, btc.Output)
 	es1 := btc.ServiceDotMethod + ":" + " expected no error, but got error %q"
 	es2 := btc.ServiceDotMethod + ":" + " expected output %v, but got %v"
 	if err != nil {
