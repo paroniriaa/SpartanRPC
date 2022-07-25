@@ -2,16 +2,9 @@ package test
 
 import (
 	"Distributed-RPC-Framework/service"
-	"log"
 	"reflect"
 	"testing"
 )
-
-func _assert(condition bool, msg string, v ...interface{}) {
-	if !condition {
-		log.Fatalf("assertion failed: "+msg, v...)
-	}
-}
 
 func TestCreateService(t *testing.T) {
 	var arithmetic Arithmetic

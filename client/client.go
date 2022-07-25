@@ -143,11 +143,11 @@ func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*serve
 */
 // MakeDial enable client to connect to an RPC server
 func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
-	return makeDialWithTimeout(CreateClient, transportProtocol, serverAddress, connectionInfos...)
+	return MakeDialWithTimeout(CreateClient, transportProtocol, serverAddress, connectionInfos...)
 }
 
-// makeDialWithTimeout enable client to connect to an RPC server within the configured timeout period
-func makeDialWithTimeout(createClient newCreateClient, transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
+// MakeDialWithTimeout enable client to connect to an RPC server within the configured timeout period
+func MakeDialWithTimeout(createClient newCreateClient, transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
 	connectionInfo, Error := parseConnectionInfo(connectionInfos...)
 	if Error != nil {
 		return nil, Error
@@ -204,7 +204,7 @@ func parseConnectionInfo(connectionInfos ...*server.ConnectionInfo) (*server.Con
 // CreateClient create RPC client based on connection info
 func CreateClient(connection net.Conn, connectionInfo *server.ConnectionInfo) (*Client, error) {
 	//log.Printf("RPC client -> CreateClient: creating an RPC client...")
-	coderFunction := coder.CoderFunctionMap[connectionInfo.CoderType]
+	coderFunction := coder.CoderInitializerMap[connectionInfo.CoderType]
 	Error := json.NewEncoder(connection).Encode(connectionInfo)
 	switch {
 	case coderFunction == nil:
