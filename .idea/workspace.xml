@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="client" />
+    <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="client">
+      <change beforePath="$PROJECT_DIR$/service/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/coder_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/coder_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/json_coder_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/json_coder_test.go" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -26,6 +30,9 @@
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectId" id="2BKBKQ4swMCaP1RF4F0ZI3cenMC" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
@@ -49,6 +56,7 @@
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="nodejs_package_manager_path" value="npm" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
