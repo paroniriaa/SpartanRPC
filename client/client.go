@@ -3,6 +3,7 @@ package client
 import (
 	"Distributed-RPC-Framework/coder"
 	"Distributed-RPC-Framework/server"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"net"
 	"reflect"
 	"sync"
+	"time"
 )
 
 // Call represents an active RPC.
@@ -37,6 +39,13 @@ type Client struct {
 	isClosed       bool             // close by client
 	isShutdown     bool             // close by runtime error
 }
+
+type clientTimeout struct {
+	client *Client
+	err    error
+}
+
+type newCreateClient func(connection net.Conn, connectionInfo *server.ConnectionInfo) (client *Client, err error)
 
 // implement IO's closer interface
 var _ io.Closer = (*Client)(nil)
@@ -111,10 +120,91 @@ func (client *Client) terminateCalls(Error error) {
 	//log.Printf("RPC client -> terminateCalls: client %p terminated all calls in its pending call list", client)
 }
 
+// MakeDial enable client to connect to an RPC server
+/*
+func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
+	//log.Printf("RPC client -> MakeDial: dialing and connecting to server %s...", serverAddress)
+	connectionInfo, Error := parseConnectionInfo(connectionInfos...)
+	if Error != nil {
+		return nil, Error
+	}
+	connection, Error := net.Dial(transportProtocol, serverAddress)
+	if Error != nil {
+		return nil, Error
+	}
+	defer func() {
+		if client == nil {
+			_ = connection.Close()
+		}
+	}()
+	//log.Printf("RPC client -> MakeDial: http handler %p successfully dialed and connected to server %s in protocol %s", connection, serverAddress, transportProtocol)
+	return CreateClient(connection, connectionInfo)
+}
+*/
+// MakeDial enable client to connect to an RPC server
+func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
+	return MakeDialWithTimeout(CreateClient, transportProtocol, serverAddress, connectionInfos...)
+}
+
+// MakeDialWithTimeout enable client to connect to an RPC server within the configured timeout period
+func MakeDialWithTimeout(createClient newCreateClient, transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
+	connectionInfo, Error := parseConnectionInfo(connectionInfos...)
+	if Error != nil {
+		return nil, Error
+	}
+	connection, Error := net.DialTimeout(transportProtocol, serverAddress, connectionInfo.ConnectionTimeout)
+	if Error != nil {
+		return nil, Error
+	}
+	// close the connection immediately if there is any error
+	defer func() {
+		if Error != nil {
+			_ = connection.Close()
+		}
+	}()
+	//use go routine to create client
+	timeoutChannel := make(chan clientTimeout)
+	go func() {
+		client, Error := createClient(connection, connectionInfo)
+		timeoutChannel <- clientTimeout{client, Error}
+	}()
+	if connectionInfo.ConnectionTimeout == 0 {
+		timeoutResult := <-timeoutChannel
+		return timeoutResult.client, timeoutResult.err
+	}
+	//if time.After() channel receive message first, then createClient() operation is timeout, return error
+	select {
+	case <-time.After(connectionInfo.ConnectionTimeout):
+		return nil, fmt.Errorf("RPC Client -> makeDialWithTimeout error: expect to connect server within %s, but connection timeout", connectionInfo.ConnectionTimeout)
+	case timeoutResult := <-timeoutChannel:
+		return timeoutResult.client, timeoutResult.err
+	}
+}
+
+// parseConnectionInfo parse the input connection info to form proper connection info
+func parseConnectionInfo(connectionInfos ...*server.ConnectionInfo) (*server.ConnectionInfo, error) {
+	//log.Printf("RPC client -> parseConnectionInfo: parsing connectionInfo...")
+	switch {
+	case len(connectionInfos) == 0 || connectionInfos[0] == nil:
+		//log.Printf("RPC client -> parseConnectionInfo: parsed nil...use server default connectionInfo")
+		return server.DefaultConnectionInfo, nil
+	case len(connectionInfos) != 1:
+		return nil, errors.New("RPC Client -> parseConnectionInfo error: connectionInfos should be in length 1")
+	default:
+		connectionInfo := connectionInfos[0]
+		connectionInfo.IDNumber = server.DefaultConnectionInfo.IDNumber
+		if connectionInfo.CoderType == "" {
+			connectionInfo.CoderType = server.DefaultConnectionInfo.CoderType
+		}
+		//log.Printf("RPC client -> parseConnectionInfo: parsed connectionInfo -> %+v", connectionInfo)
+		return connectionInfo, nil
+	}
+}
+
 // CreateClient create RPC client based on connection info
 func CreateClient(connection net.Conn, connectionInfo *server.ConnectionInfo) (*Client, error) {
 	//log.Printf("RPC client -> CreateClient: creating an RPC client...")
-	coderFunction := coder.CoderFunctionMap[connectionInfo.CoderType]
+	coderFunction := coder.CoderInitializerMap[connectionInfo.CoderType]
 	Error := json.NewEncoder(connection).Encode(connectionInfo)
 	switch {
 	case coderFunction == nil:
@@ -139,52 +229,20 @@ func CreateClient(connection net.Conn, connectionInfo *server.ConnectionInfo) (*
 	}
 }
 
-// parseConnectionInfo parse the input connection info to form proper connection info
-func parseConnectionInfo(connectionInfos ...*server.ConnectionInfo) (*server.ConnectionInfo, error) {
-	//log.Printf("RPC client -> parseConnectionInfo: parsing connectionInfo...")
-	switch {
-	case len(connectionInfos) == 0 || connectionInfos[0] == nil:
-		//log.Printf("RPC client -> parseConnectionInfo: parsed nil...use server default connectionInfo")
-		return server.DefaultConnectionInfo, nil
-	case len(connectionInfos) != 1:
-		return nil, errors.New("RPC Client -> parseConnectionInfo error: connectionInfos should be in length 1")
-	default:
-		connectionInfo := connectionInfos[0]
-		connectionInfo.IDNumber = server.DefaultConnectionInfo.IDNumber
-		if connectionInfo.CoderType == "" {
-			connectionInfo.CoderType = server.DefaultConnectionInfo.CoderType
-		}
-		//log.Printf("RPC client -> parseConnectionInfo: parsed connectionInfo -> %+v", connectionInfo)
-		return connectionInfo, nil
-	}
-}
-
-// MakeDial enable client to connect to an RPC server
-func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
-	//log.Printf("RPC client -> MakeDial: dialing and connecting to server %s...", serverAddress)
-	connectionInfo, Error := parseConnectionInfo(connectionInfos...)
-	if Error != nil {
-		return nil, Error
-	}
-	connection, Error := net.Dial(transportProtocol, serverAddress)
-	if Error != nil {
-		return nil, Error
-	}
-	defer func() {
-		if client == nil {
-			_ = connection.Close()
-		}
-	}()
-	//log.Printf("RPC client -> MakeDial: http handler %p successfully dialed and connected to server %s in protocol %s", connection, serverAddress, transportProtocol)
-	return CreateClient(connection, connectionInfo)
-}
-
 // Call invokes the named function, waits for it to be finished, and returns its error status.
-func (client *Client) Call(serviceDotMethod string, inputs, output interface{}) error {
+// Call also included timeout handling mechanism, which realized using context, so user can configure it themselves
+// client-side timeout configure usage: context, _ := context.WithTimeout(context.Background(), time.Second)
+func (client *Client) Call(serviceDotMethod string, inputs, output interface{}, context context.Context) error {
 	log.Printf("RPC client -> Call: client %p invoking RPC request on function %s with inputs -> %v", client, serviceDotMethod, inputs)
-	call := <-client.StartGo(serviceDotMethod, inputs, output, make(chan *Call, 1)).Finish
-	//log.Printf("RPC client -> Call: client %p finished RPC request on function %s with inputs -> %v", client, serviceDotMethod, inputs)
-	return call.Error
+	call := client.StartGo(serviceDotMethod, inputs, output, make(chan *Call, 1))
+	select {
+	case <-context.Done():
+		client.deleteCall(call.SequenceNumber)
+		return errors.New("RPC Client -> Call: client fail to finish the RPC request within the timeout period due to error: " + context.Err().Error())
+	case call := <-call.Finish:
+		//log.Printf("RPC client -> Call: client %p finished RPC request on function %s with inputs -> %v", client, serviceDotMethod, inputs)
+		return call.Error
+	}
 }
 
 // finishGo finish the RPC call and end the Go channel

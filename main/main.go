@@ -3,25 +3,12 @@ package main
 import (
 	"Distributed-RPC-Framework/client"
 	"Distributed-RPC-Framework/server"
+	"context"
 	"log"
 	"net"
 	"sync"
 	"time"
 )
-
-/*
-type Demo int
-
-type Input struct {
-	Number1 int
-	Number2 int
-}
-
-func (function Demo) Sum(input Input, output *int) error {
-	*output = input.Number1 + input.Number2
-	return nil
-}
-*/
 
 type Input struct {
 	A, B int
@@ -51,14 +38,15 @@ func createServer(address chan string) {
 	}
 	//log.Println("RPC server -> createServer: RPC server created and hosting on port", listener.Addr())
 	address <- listener.Addr().String()
-	server.Connection_handle(listener)
+	server.AcceptConnection(listener)
 }
 
 func clientCallRPC(client *client.Client, number int, waitGroup *sync.WaitGroup) {
 	defer waitGroup.Done()
 	input := &Input{A: number, B: number ^ 2}
 	output := &Output{}
-	if err := client.Call("Arithmetic.Addition", input, output); err != nil {
+	timeOutContext, _ := context.WithTimeout(context.Background(), time.Second*5)
+	if err := client.Call("Arithmetic.Addition", input, output, timeOutContext); err != nil {
 		log.Fatal("Client RPC call Demo.Sum error:", err)
 	}
 	log.Printf("%d + %d = %d", input.A, input.B, output.C)
@@ -66,10 +54,10 @@ func clientCallRPC(client *client.Client, number int, waitGroup *sync.WaitGroup)
 
 func main() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
-	address := make(chan string)
-	go createServer(address)
-
-	testClient, _ := client.MakeDial("tcp", <-address)
+	addressChannel := make(chan string)
+	go createServer(addressChannel)
+	address := <-addressChannel
+	testClient, _ := client.MakeDial("tcp", address)
 	defer func() { _ = testClient.Close() }()
 
 	time.Sleep(time.Second)
