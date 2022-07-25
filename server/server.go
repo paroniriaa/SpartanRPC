@@ -5,12 +5,14 @@ import (
 	"Distributed-RPC-Framework/service"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net"
 	"reflect"
 	"strings"
 	"sync"
+	"time"
 )
 
 // TODO: const
@@ -30,8 +32,10 @@ type Request struct {
 }
 
 type ConnectionInfo struct {
-	IDNumber  int
-	CoderType coder.CoderType
+	IDNumber          int
+	CoderType         coder.CoderType
+	ConnectionTimeout time.Duration
+	HandlingTimeout   time.Duration
 }
 
 func New_server() *Server {
@@ -40,8 +44,9 @@ func New_server() *Server {
 
 //TODO: variable
 var DefaultConnectionInfo = &ConnectionInfo{
-	IDNumber:  MagicNumber,
-	CoderType: coder.Json,
+	IDNumber:          MagicNumber,
+	CoderType:         coder.Json,
+	ConnectionTimeout: time.Second * 10,
 }
 
 var default_server = New_server()
@@ -78,25 +83,25 @@ func (server *Server) Connection_handle(listening net.Listener) {
 		}
 
 		defer func() { _ = connection.Close() }()
-		var option ConnectionInfo
-		errors := json.NewDecoder(connection).Decode(&option)
+		var connectionInfo ConnectionInfo
+		errors := json.NewDecoder(connection).Decode(&connectionInfo)
 		switch {
 		case errors != nil:
-			log.Println("Server - option error: ", errors)
+			log.Println("Server - connectionInfo error: ", errors)
 			return
-		case option.IDNumber != MagicNumber:
-			log.Printf("Server - ID number error: %x is invalid", option.IDNumber)
+		case connectionInfo.IDNumber != MagicNumber:
+			log.Printf("Server - ID number error: %x is invalid", connectionInfo.IDNumber)
 			return
-		case coder.CoderFunctionMap[option.CoderType] == nil:
-			log.Printf("Server - invalid coder type error: %s", option.CoderType)
+		case coder.CoderFunctionMap[connectionInfo.CoderType] == nil:
+			log.Printf("Server - invalid coder type error: %s", connectionInfo.CoderType)
 			return
 		}
-		coder_function_map := coder.CoderFunctionMap[option.CoderType]
-		server.server_coder(coder_function_map(connection))
+		coder_function_map := coder.CoderFunctionMap[connectionInfo.CoderType]
+		server.server_coder(coder_function_map(connection), &connectionInfo)
 	}
 }
 
-func (server *Server) server_coder(message coder.Coder) {
+func (server *Server) server_coder(message coder.Coder, connectioninfo *ConnectionInfo) {
 	sending := new(sync.Mutex)
 	waitGroup := new(sync.WaitGroup)
 	for {
@@ -109,7 +114,7 @@ func (server *Server) server_coder(message coder.Coder) {
 			continue
 		}
 		waitGroup.Add(1)
-		go server.request_handle(message, requests, sending, waitGroup)
+		go server.request_handle(message, requests, sending, waitGroup, connectioninfo.HandlingTimeout)
 	}
 	waitGroup.Wait()
 	_ = message.Close()
@@ -157,21 +162,42 @@ func (server *Server) read_request(message coder.Coder) (*Request, error) {
 
 func (server *Server) send_response(message coder.Coder, header *coder.MessageHeader, body interface{}, sending *sync.Mutex) {
 	sending.Lock()
-	err := message.EncodeMessageHeaderAndBody(header, body)
-	if err != nil {
-		log.Println("Server - write response error:", err)
+	Error := message.EncodeMessageHeaderAndBody(header, body)
+	if Error != nil {
+		log.Println("Server - write response error:", Error)
 	}
 	defer sending.Unlock()
 }
 
-func (server *Server) request_handle(message coder.Coder, request *Request, sending *sync.Mutex, waitGroup *sync.WaitGroup) {
-	Error := request.service.Call(request.method, request.input, request.output)
-	if Error != nil {
-		request.header.Error = Error.Error()
-		server.send_response(message, request.header, invalidRequest, sending)
+func (server *Server) request_handle(message coder.Coder, request *Request, sending *sync.Mutex, waitGroup *sync.WaitGroup, handlingTimeout time.Duration) {
+	serviceCallTimeoutChannel := make(chan struct{})
+	responseSendTimeoutChannel := make(chan struct{})
+	go func() {
+		Error := request.service.Call(request.method, request.input, request.output)
+		serviceCallTimeoutChannel <- struct{}{}
+		if Error != nil {
+			request.header.Error = Error.Error()
+			server.send_response(message, request.header, invalidRequest, sending)
+			responseSendTimeoutChannel <- struct{}{}
+			return
+		}
+		server.send_response(message, request.header, request.output.Interface(), sending)
+		responseSendTimeoutChannel <- struct{}{}
+	}()
+	if handlingTimeout == 0 {
+		<-serviceCallTimeoutChannel
+		<-responseSendTimeoutChannel
 		return
 	}
-	server.send_response(message, request.header, request.output.Interface(), sending)
+	//if time.After() receive message first (before serviceCallTimeoutChannel receive message), it indicates that RPC request handling hsa timeout
+	//which means both serviceCallTimeoutChannel and responseSendTimeoutChannel will be blocked, so we need to send response right after.
+	select {
+	case <-time.After(handlingTimeout):
+		request.header.Error = fmt.Sprintf("RPC Server -> request_handle error: expect to handle RPC request within %s, but handling timeout", handlingTimeout)
+		server.send_response(message, request.header, invalidRequest, sending)
+	case <-serviceCallTimeoutChannel:
+		<-responseSendTimeoutChannel
+	}
 	defer waitGroup.Done()
 }
 
