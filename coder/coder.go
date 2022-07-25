@@ -5,14 +5,14 @@ import (
 )
 
 /*
-	ServiceMethod  is the format for specific service and method: "Service.Method"
+	ServiceDotMethod  is the format for specific service and method: "Service.Method"
 	SequenceNumber is the sequence number chosen by client
 	Error is the error message from server's response if the rpc call failed
 */
-type Header struct {
-	ServiceMethod  string
-	SequenceNumber uint64
-	Error          string
+type MessageHeader struct {
+	ServiceDotMethod string
+	SequenceNumber   uint64
+	Error            string
 }
 
 type Coder interface {
@@ -23,9 +23,9 @@ type Coder interface {
 		Encoder() *json.Encoder
 		Decoder() *json.Decoder
 	*/
-	DecodeMessageHeader(*Header) error
+	DecodeMessageHeader(*MessageHeader) error
 	DecodeMessageBody(interface{}) error
-	EncodeMessageHeaderAndBody(*Header, interface{}) error
+	EncodeMessageHeaderAndBody(*MessageHeader, interface{}) error
 }
 
 type CoderFunction func(io.ReadWriteCloser) Coder

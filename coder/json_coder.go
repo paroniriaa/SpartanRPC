@@ -26,25 +26,7 @@ func NewJsonCoder(connection io.ReadWriteCloser) Coder {
 	}
 }
 
-/*
-func (coder *JsonCoder) Connection() (connection io.ReadWriteCloser) {
-	return coder.connection
-}
-
-func (coder *JsonCoder) Buffer() (buffer *bufio.Writer) {
-	return coder.buffer
-}
-
-func (coder *JsonCoder) Encoder() (decoder *json.Encoder) {
-	return coder.encoder
-}
-
-func (coder *JsonCoder) Decoder() (decoder *json.Decoder) {
-	return coder.decoder
-}
-*/
-
-func (coder *JsonCoder) DecodeMessageHeader(header *Header) error {
+func (coder *JsonCoder) DecodeMessageHeader(header *MessageHeader) error {
 	return coder.decoder.Decode(header)
 }
 
@@ -52,7 +34,7 @@ func (coder *JsonCoder) DecodeMessageBody(body interface{}) error {
 	return coder.decoder.Decode(body)
 }
 
-func (coder *JsonCoder) EncodeMessageHeaderAndBody(header *Header, body interface{}) (error error) {
+func (coder *JsonCoder) EncodeMessageHeaderAndBody(header *MessageHeader, body interface{}) (error error) {
 	if error = coder.encoder.Encode(header); error != nil {
 		log.Fatal("Coder Error when encoding header:", error)
 		return error
