@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-/*
 type Demo int
 
 type Input struct {
@@ -21,26 +20,10 @@ func (function Demo) Sum(input Input, output *int) error {
 	*output = input.Number1 + input.Number2
 	return nil
 }
-*/
-
-type Input struct {
-	A, B int
-}
-
-type Output struct {
-	C int
-}
-
-type Arithmetic int
-
-func (t *Arithmetic) Addition(input *Input, output *Output) error {
-	output.C = input.A + input.B
-	return nil
-}
 
 func createServer(address chan string) {
-	var arithmetic Arithmetic
-	err := server.ServerRegister(&arithmetic)
+	var demo Demo
+	err := server.ServerRegister(&demo)
 	if err != nil {
 		log.Fatal("Server register error:", err)
 	}
@@ -49,19 +32,20 @@ func createServer(address chan string) {
 	if err != nil {
 		log.Fatal("Server Network issue:", err)
 	}
-	//log.Println("RPC server -> createServer: RPC server created and hosting on port", listener.Addr())
+	log.Println("Created RPC server on port", listener.Addr())
 	address <- listener.Addr().String()
 	server.Connection_handle(listener)
 }
 
 func clientCallRPC(client *client.Client, number int, waitGroup *sync.WaitGroup) {
 	defer waitGroup.Done()
-	input := &Input{A: number, B: number ^ 2}
-	output := &Output{}
-	if err := client.Call("Arithmetic.Addition", input, output); err != nil {
+	waitGroup.Add(1)
+	input := &Input{Number1: number, Number2: number ^ 2}
+	var output int
+	if err := client.Call("Demo.Sum", input, &output); err != nil {
 		log.Fatal("Client RPC call Demo.Sum error:", err)
 	}
-	log.Printf("%d + %d = %d", input.A, input.B, output.C)
+	log.Printf("%d + %d = %d", input.Number1, input.Number2, output)
 }
 
 func main() {
@@ -75,11 +59,8 @@ func main() {
 	time.Sleep(time.Second)
 	var waitGroup sync.WaitGroup
 	n := 0
-	for n < 2 {
-		waitGroup.Add(1)
-		go func(n int) {
-			clientCallRPC(testClient, n, &waitGroup)
-		}(n)
+	for n < 5 {
+		clientCallRPC(testClient, n, &waitGroup)
 		n++
 	}
 	waitGroup.Wait()

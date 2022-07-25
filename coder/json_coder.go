@@ -26,7 +26,8 @@ func NewJsonCoder(connection io.ReadWriteCloser) Coder {
 	}
 }
 
-func (coder *JsonCoder) DecodeMessageHeader(header *MessageHeader) error {
+
+func (coder *JsonCoder) DecodeMessageHeader(header *Header) error {
 	return coder.decoder.Decode(header)
 }
 
@@ -34,7 +35,7 @@ func (coder *JsonCoder) DecodeMessageBody(body interface{}) error {
 	return coder.decoder.Decode(body)
 }
 
-func (coder *JsonCoder) EncodeMessageHeaderAndBody(header *MessageHeader, body interface{}) (error error) {
+func (coder *JsonCoder) EncodeMessageHeaderAndBody(header *Header, body interface{}) (error error) {
 	if error = coder.encoder.Encode(header); error != nil {
 		log.Fatal("Coder Error when encoding header:", error)
 		return error

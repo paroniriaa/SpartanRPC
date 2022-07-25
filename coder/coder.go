@@ -9,7 +9,7 @@ import (
 	SequenceNumber is the sequence number chosen by client
 	Error is the error message from server's response if the rpc call failed
 */
-type MessageHeader struct {
+type Header struct {
 	ServiceDotMethod string
 	SequenceNumber   uint64
 	Error            string
@@ -23,9 +23,9 @@ type Coder interface {
 		Encoder() *json.Encoder
 		Decoder() *json.Decoder
 	*/
-	DecodeMessageHeader(*MessageHeader) error
+	DecodeMessageHeader(*Header) error
 	DecodeMessageBody(interface{}) error
-	EncodeMessageHeaderAndBody(*MessageHeader, interface{}) error
+	EncodeMessageHeaderAndBody(*Header, interface{}) error
 }
 
 type CoderFunction func(io.ReadWriteCloser) Coder

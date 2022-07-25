@@ -36,7 +36,7 @@ func TestServer(test *testing.T) {
 
 	n := 0
 	for n < 5 {
-		header := &coder.MessageHeader{
+		header := &coder.Header{
 			ServiceDotMethod: "Test.Echo",
 			SequenceNumber:   uint64(n),
 		}
