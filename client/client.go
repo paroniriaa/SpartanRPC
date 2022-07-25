@@ -3,58 +3,73 @@ package client
 import (
 	"Distributed-RPC-Framework/coder"
 	"Distributed-RPC-Framework/server"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net"
+	"reflect"
 	"sync"
-	"time"
 )
 
-// TODO: struct
+// Call represents an active RPC.
 type Call struct {
-	SequenceNumber   uint64
-	ServiceDotMethod string
-	Inputs           interface{}
-	Output           interface{}
-	Error            error
-	Complete         chan *Call
+	SequenceNumber   uint64      // the sequence number of the RPC call
+	ServiceDotMethod string      // the service and method to call (format: service.method)
+	Inputs           interface{} // the inputs to the function (*struct)
+	Output           interface{} // The output from the function (*struct).
+	Error            error       // After completion, the error status.
+	Finish           chan *Call  // Receives *Call when the call that Go channels handle is finished
 }
 
+// Client represents an RPC Client.
 type Client struct {
-	coder          coder.Coder
-	connectionInfo *server.ConnectionInfo
-	sendingMutex   sync.Mutex
-	header         coder.Header
-	entityMutex    sync.Mutex
-	sequenceNumber uint64
-	callMap        map[uint64]*Call
-	isClosed       bool
-	isShutdown     bool
+	coder          coder.Coder            // the message coder for message encoding and decoding
+	connectionInfo *server.ConnectionInfo // the connection (between server and client ) info
+
+	requestMutex  sync.Mutex          // protects following
+	requestHeader coder.MessageHeader // the header of an RPC request
+
+	entityMutex    sync.Mutex       // protects following
+	sequenceNumber uint64           // the sequence number that counts the RPC request
+	pendingCalls   map[uint64]*Call // the map that store all pending RPC calls, key is Call.SequenceNumber, value is Call
+	isClosed       bool             // close by client
+	isShutdown     bool             // close by runtime error
 }
 
-type clientInfo struct {
-	client *Client
-	err    error
-}
-
-type timeoutClient func(connection net.Conn, option *server.ConnectionInfo) (client *Client, err error)
-
-
-//TODO: variable
+// implement IO's closer interface
 var _ io.Closer = (*Client)(nil)
 
-//TODO: function
-func (call *Call) complete() {
-	call.Complete <- call
+// Close the connection
+func (client *Client) Close() error {
+	defer client.entityMutex.Unlock()
+	client.entityMutex.Lock()
+	//log.Printf("RPC client -> Close: client %p is closing...", client)
+	if client.isClosed {
+		return errors.New("RPC client -> Close error: connection is already closed")
+	} else {
+		client.isClosed = true
+		//log.Printf("RPC client -> Close: client %p is closed", client)
+		return client.coder.Close()
+	}
 }
 
-func (client *Client) addCall(call *Call) (uint64, error) {
-	client.entityMutex.Lock()
+// IsAvailable check if the client still available
+func (client *Client) IsAvailable() bool {
 	defer client.entityMutex.Unlock()
+	client.entityMutex.Lock()
+	//log.Printf("RPC client -> IsAvailable: checking if client %p is available...", client)
+	available := !client.isShutdown && !client.isClosed
+	//log.Printf("RPC client -> IsAvailable: checked. client %p is available -> %t", client, available)
+	return available
+}
+
+// addCall add new RPC call into the pendingCalls map
+func (client *Client) addCall(call *Call) (uint64, error) {
+	defer client.entityMutex.Unlock()
+	client.entityMutex.Lock()
+	//log.Printf("RPC client -> addCall: client %p is adding call %p...", client, call)
 	if client.isClosed {
 		return 0, errors.New("RPC client -> addCall error: client is closed")
 	}
@@ -62,66 +77,52 @@ func (client *Client) addCall(call *Call) (uint64, error) {
 		return 0, errors.New("RPC client -> addCall error: client is shutdown")
 	}
 	call.SequenceNumber = client.sequenceNumber
-	client.callMap[call.SequenceNumber] = call
+	client.pendingCalls[call.SequenceNumber] = call
 	client.sequenceNumber++
+
+	//actualStruct := reflect.ValueOf(call).Elem()
+	//log.Printf("RPC client -> addCall: client %p added call %p with struct -> %+v to its pending call list", client, call, actualStruct)
 	return call.SequenceNumber, nil
 }
 
+// deleteCall delete specific RPC call from pendingCalls map
 func (client *Client) deleteCall(sequenceNumber uint64) *Call {
-	client.entityMutex.Lock()
 	defer client.entityMutex.Unlock()
-	call := client.callMap[sequenceNumber]
-	delete(client.callMap, sequenceNumber)
+	client.entityMutex.Lock()
+	call := client.pendingCalls[sequenceNumber]
+	//log.Printf("RPC client -> deleteCall: client %p is deleting call %p from its pending call list...", client, call)
+	delete(client.pendingCalls, sequenceNumber)
+	//log.Printf("RPC client -> deleteCall: client %p deleted call %p from its pending call list", client, call)
 	return call
 }
 
+// terminateCalls terminate all ROC calls in the pendingCalls map
 func (client *Client) terminateCalls(Error error) {
-	client.sendingMutex.Lock()
-	defer client.sendingMutex.Unlock()
-	client.entityMutex.Lock()
 	defer client.entityMutex.Unlock()
+	defer client.requestMutex.Unlock()
+	client.requestMutex.Lock()
+	client.entityMutex.Lock()
+	//log.Printf("RPC client -> terminateCalls: client %p is terminating all calls in its pending call list...", client)
 	client.isShutdown = true
-	for _, call := range client.callMap {
+	for _, call := range client.pendingCalls {
 		call.Error = Error
-		call.complete()
+		call.finishGo()
 	}
+	//log.Printf("RPC client -> terminateCalls: client %p terminated all calls in its pending call list", client)
 }
 
-func (client *Client) receiveCall() {
-	var Error error
-	for Error == nil {
-		var h coder.Header
-		if Error = client.coder.DecodeMessageHeader(&h); Error != nil {
-			break
-		}
-		call := client.deleteCall(h.SequenceNumber)
-		if call == nil {
-			Error = client.coder.DecodeMessageBody(nil)
-		} else if h.Error != "" {
-			call.Error = fmt.Errorf(h.Error)
-			Error = client.coder.DecodeMessageBody(nil)
-			call.complete()
-		} else {
-			Error = client.coder.DecodeMessageBody(call.Output)
-			if Error != nil {
-				call.Error = errors.New("RPC Client -> receiveCall error: cannot decode message body " + Error.Error())
-			}
-			call.complete()
-		}
-	}
-	client.terminateCalls(Error)
-}
-
+// CreateClient create RPC client based on connection info
 func CreateClient(connection net.Conn, connectionInfo *server.ConnectionInfo) (*Client, error) {
+	//log.Printf("RPC client -> CreateClient: creating an RPC client...")
 	coderFunction := coder.CoderFunctionMap[connectionInfo.CoderType]
 	Error := json.NewEncoder(connection).Encode(connectionInfo)
 	switch {
 	case coderFunction == nil:
-		err := fmt.Errorf("RPC Client -> createClient error: %s coderType is invalid", connectionInfo.CoderType)
-		log.Println("RPC Client -> coder error:", err)
+		err := fmt.Errorf("RPC Client -> CreateClient -> coderFunction error: %s coderType is invalid", connectionInfo.CoderType)
+		//log.Println("RPC Client -> coder error:", err)
 		return nil, err
 	case Error != nil:
-		log.Println("RPC Client -> connectionInfo error: ", Error)
+		//log.Println("RPC Client -> CreateClient -> connectionInfo error: ", Error)
 		_ = connection.Close()
 		return nil, Error
 	default:
@@ -130,16 +131,20 @@ func CreateClient(connection net.Conn, connectionInfo *server.ConnectionInfo) (*
 			sequenceNumber: 1,
 			coder:          mappedCoder,
 			connectionInfo: connectionInfo,
-			callMap:        make(map[uint64]*Call),
+			pendingCalls:   make(map[uint64]*Call),
 		}
+		//log.Printf("RPC client -> CreateClient: RPC client %p created", client)
 		go client.receiveCall()
 		return client, nil
 	}
 }
 
+// parseConnectionInfo parse the input connection info to form proper connection info
 func parseConnectionInfo(connectionInfos ...*server.ConnectionInfo) (*server.ConnectionInfo, error) {
+	//log.Printf("RPC client -> parseConnectionInfo: parsing connectionInfo...")
 	switch {
 	case len(connectionInfos) == 0 || connectionInfos[0] == nil:
+		//log.Printf("RPC client -> parseConnectionInfo: parsed nil...use server default connectionInfo")
 		return server.DefaultConnectionInfo, nil
 	case len(connectionInfos) != 1:
 		return nil, errors.New("RPC Client -> parseConnectionInfo error: connectionInfos should be in length 1")
@@ -149,12 +154,14 @@ func parseConnectionInfo(connectionInfos ...*server.ConnectionInfo) (*server.Con
 		if connectionInfo.CoderType == "" {
 			connectionInfo.CoderType = server.DefaultConnectionInfo.CoderType
 		}
+		//log.Printf("RPC client -> parseConnectionInfo: parsed connectionInfo -> %+v", connectionInfo)
 		return connectionInfo, nil
 	}
 }
 
-
+// MakeDial enable client to connect to an RPC server
 func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
+	//log.Printf("RPC client -> MakeDial: dialing and connecting to server %s...", serverAddress)
 	connectionInfo, Error := parseConnectionInfo(connectionInfos...)
 	if Error != nil {
 		return nil, Error
@@ -168,118 +175,96 @@ func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*serve
 			_ = connection.Close()
 		}
 	}()
+	//log.Printf("RPC client -> MakeDial: http handler %p successfully dialed and connected to server %s in protocol %s", connection, serverAddress, transportProtocol)
 	return CreateClient(connection, connectionInfo)
 }
-// new dialtimeout
-func MakeDialTiemout(f timeoutClient, transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
-	connectionInfo, Error := parseConnectionInfo(connectionInfos...)
-	if Error != nil {
-		return nil, Error
-	}
-	connection, Error := net.DialTimeout(transportProtocol, serverAddress,connectionInfo.Timeout_connection)
-	if Error != nil {
-		return nil, Error
-	}
-	defer func() {
-		if client == nil {
-			_ = connection.Close()
-		}
-	}()
-	ch := make(chan clientInfo)
-	go func() {
-		client, err := f(connection, connectionInfo)
-		ch <- clientInfo{client: client, err: err}
-	}()
-	if connectionInfo.Timeout_connection == 0 {
-		result := <-ch
-		return result.client, result.err
-	}
-	select {
-	case <-time.After(connectionInfo.Timeout_connection):
-		return nil, fmt.Errorf("client - MakeDialTiemout: connection timeout: expect within %s", connectionInfo.Timeout_connection)
-	case result := <-ch:
-		return result.client, result.err
-	}
+
+// Call invokes the named function, waits for it to be finished, and returns its error status.
+func (client *Client) Call(serviceDotMethod string, inputs, output interface{}) error {
+	log.Printf("RPC client -> Call: client %p invoking RPC request on function %s with inputs -> %v", client, serviceDotMethod, inputs)
+	call := <-client.StartGo(serviceDotMethod, inputs, output, make(chan *Call, 1)).Finish
+	//log.Printf("RPC client -> Call: client %p finished RPC request on function %s with inputs -> %v", client, serviceDotMethod, inputs)
+	return call.Error
 }
 
-func Dial(network, address string, opts ...*server.ConnectionInfo) (*Client, error) {
-	return MakeDialTiemout(CreateClient, network, address, opts...)
+// finishGo finish the RPC call and end the Go channel
+func (call *Call) finishGo() {
+	//log.Printf("RPC client -> finishGo: go channel %p finished the assigned call %p and destroyed", call.Finish, call)
+	call.Finish <- call
 }
 
-
-
-func (client *Client) sendCall(call *Call) {
-	defer client.sendingMutex.Unlock()
-	client.sendingMutex.Lock()
-	sequenceNumber, Error := client.addCall(call)
-	if Error != nil {
-		call.Error = Error
-		call.complete()
-		return
-	}
-
-	client.header.ServiceDotMethod = call.ServiceDotMethod
-	client.header.SequenceNumber = sequenceNumber
-	client.header.Error = ""
-	Error = client.coder.EncodeMessageHeaderAndBody(&client.header, call.Inputs)
-	if Error != nil {
-		if call := client.deleteCall(sequenceNumber); call != nil {
-			call.Error = Error
-			call.complete()
-		}
-	}
-}
-
-func (client *Client) Go(serviceDotMethod string, inputs, output interface{}, complete chan *Call) *Call {
+// StartGo invokes the function asynchronously.
+// It returns the Call structure representing the invocation
+func (client *Client) StartGo(serviceDotMethod string, inputs, output interface{}, finish chan *Call) *Call {
 	switch {
-	case complete == nil:
-		complete = make(chan *Call, 10)
-	case cap(complete) == 0:
-		log.Panic("RPC Client -> Go error: 'complete' channel is unbuffered")
+	case finish == nil:
+		finish = make(chan *Call, 10)
+	case cap(finish) == 0:
+		log.Panic("RPC Client -> StartGo error: 'finishGo' channel is unbuffered")
 	}
 	call := &Call{
 		ServiceDotMethod: serviceDotMethod,
 		Inputs:           inputs,
 		Output:           output,
-		Complete:         complete,
+		Finish:           finish,
 	}
+	//log.Printf("RPC client -> StartGo: go channel %p created and handling client %p call %p...", finish, client, call)
 	client.sendCall(call)
 	return call
 }
 
-// old call
-/*
-func (client *Client) Call(serviceDotMethod string, inputs, output interface{}) error {
-	call := <-client.Go(serviceDotMethod, inputs, output, make(chan *Call, 1)).Complete
-	return call.Error
-}
-*/
-func (client *Client) Call(ctx context.Context, serviceMethod string, args, reply interface{}) error {
-	call := client.Go(serviceMethod, args, reply, make(chan *Call, 1))
-	select {
-	case <-ctx.Done():
-		client.deleteCall(call.SequenceNumber)
-		return errors.New("rpc client: call failed: " + ctx.Err().Error())
-	case call := <-call.Complete:
-		return call.Error
+// sendCall add RPC call to client's pending call list and send it to server
+func (client *Client) sendCall(call *Call) {
+	defer client.requestMutex.Unlock()
+	client.requestMutex.Lock()
+	//log.Printf("RPC client -> sendCall: client %p sending RPC request %p...", client, call)
+	sequenceNumber, Error := client.addCall(call)
+	if Error != nil {
+		call.Error = Error
+		call.finishGo()
+		return
+	}
+
+	client.requestHeader.ServiceDotMethod = call.ServiceDotMethod
+	client.requestHeader.SequenceNumber = sequenceNumber
+	client.requestHeader.Error = ""
+	requestHeader := &client.requestHeader
+	requestBody := call.Inputs
+	Error = client.coder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
+	//log.Printf("RPC client -> sendCall: client %p sent RPC request %p", client, call)
+	if Error != nil {
+		if call := client.deleteCall(sequenceNumber); call != nil {
+			call.Error = Error
+			call.finishGo()
+		}
 	}
 }
 
-
-
-func (client *Client) Close() error {
-	defer client.entityMutex.Unlock()
-	client.entityMutex.Lock()
-	if client.isClosed {
-		return errors.New("RPC client -> Close error: connection is shutdown")
-	} else {
-		client.isClosed = true
-		return client.coder.Close()
+// receiveCall receive and decode any RPC response sent from server, and delete corresponding RPC call from client's pending call list
+func (client *Client) receiveCall() {
+	var Error error
+	//log.Printf("RPC client -> receiveCall: client %p start listing on connection for all future RPC response...", client)
+	for Error == nil {
+		var response coder.MessageHeader
+		if Error = client.coder.DecodeMessageHeader(&response); Error != nil {
+			break
+		}
+		call := client.deleteCall(response.SequenceNumber)
+		if call == nil {
+			Error = client.coder.DecodeMessageBody(nil)
+		} else if response.Error != "" {
+			call.Error = fmt.Errorf(response.Error)
+			Error = client.coder.DecodeMessageBody(nil)
+			call.finishGo()
+		} else {
+			Error = client.coder.DecodeMessageBody(call.Output)
+			if Error != nil {
+				call.Error = errors.New("RPC Client -> receiveCall error: cannot decode message body" + Error.Error())
+			}
+			actualOutput := reflect.ValueOf(call.Output).Elem()
+			log.Printf("RPC client -> receiveCall: client %p received call %p response -> %v", client, call, actualOutput)
+			call.finishGo()
+		}
 	}
-}
-
-func (client *Client) IsAvailable() bool {
-	defer client.entityMutex.Unlock()
-	client.entityMutex.Lock()
-	return !client.isShutdown && !client.isClosed
+	client.terminateCalls(Error)
 }
