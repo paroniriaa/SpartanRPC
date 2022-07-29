@@ -6,6 +6,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -25,20 +26,71 @@ func (t *Arithmetic) Addition(input *Input, output *Output) error {
 	return nil
 }
 
-func createServer(address chan string) {
+func createServer(addressChannel chan string) {
 	var arithmetic Arithmetic
 	err := server.ServerRegister(&arithmetic)
 	if err != nil {
 		log.Fatal("Server register error:", err)
 	}
-
-	listener, err := net.Listen("tcp", ":80")
+	listener, err := net.Listen("tcp", ":6666")
 	if err != nil {
 		log.Fatal("Server Network issue:", err)
 	}
 	//log.Println("RPC server -> createServer: RPC server created and hosting on port", listener.Addr())
-	address <- listener.Addr().String()
+	addressChannel <- listener.Addr().String()
 	server.AcceptConnection(listener)
+}
+
+func createServerHTTP(addressChannel chan string) {
+	var arithmetic Arithmetic
+	err := server.ServerRegister(&arithmetic)
+	if err != nil {
+		log.Fatal("Server register error:", err)
+	}
+	listener, err := net.Listen("tcp", ":7777")
+	if err != nil {
+		log.Fatal("Server Network issue:", err)
+	}
+	server.RegisterHandlerHTTP()
+	//log.Println("RPC server -> createServer: RPC server created and hosting on port", listener.Addr())
+	addressChannel <- listener.Addr().String()
+	_ = http.Serve(listener, nil)
+	//server.AcceptConnection(listener)
+}
+
+func createClientAndCall(addressChannel chan string) {
+	testClient, _ := client.MakeDial("tcp", <-addressChannel)
+	defer func() { _ = testClient.Close() }()
+
+	time.Sleep(time.Second)
+	var waitGroup sync.WaitGroup
+	n := 0
+	for n < 2 {
+		waitGroup.Add(1)
+		go func(n int) {
+			clientCallRPC(testClient, n, &waitGroup)
+		}(n)
+		n++
+	}
+	waitGroup.Wait()
+}
+
+func createClientAndCallHTTP(addressChannel chan string) {
+	testClient, _ := client.MakeDialHTTP("tcp", <-addressChannel)
+	defer func() { _ = testClient.Close() }()
+
+	time.Sleep(time.Second)
+	var waitGroup sync.WaitGroup
+	n := 0
+	for n < 2 {
+		waitGroup.Add(1)
+		//
+		go func(n int) {
+			clientCallRPC(testClient, n, &waitGroup)
+		}(n)
+		n++
+	}
+	waitGroup.Wait()
 }
 
 func clientCallRPC(client *client.Client, number int, waitGroup *sync.WaitGroup) {
@@ -55,20 +107,12 @@ func clientCallRPC(client *client.Client, number int, waitGroup *sync.WaitGroup)
 func main() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
 	addressChannel := make(chan string)
-	go createServer(addressChannel)
-	address := <-addressChannel
-	testClient, _ := client.MakeDial("tcp", address)
-	defer func() { _ = testClient.Close() }()
 
-	time.Sleep(time.Second)
-	var waitGroup sync.WaitGroup
-	n := 0
-	for n < 2 {
-		waitGroup.Add(1)
-		go func(n int) {
-			clientCallRPC(testClient, n, &waitGroup)
-		}(n)
-		n++
-	}
-	waitGroup.Wait()
+	//TCP (normal), server address 6666
+	//go createServer(addressChannel)
+	//createClientAndCall(addressChannel)
+
+	//HTTP, server address 7777
+	go createClientAndCallHTTP(addressChannel)
+	createServerHTTP(addressChannel)
 }

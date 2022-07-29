@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"reflect"
 	"strings"
 	"sync"
@@ -20,7 +21,7 @@ const MagicNumber = 0x3bef5c
 
 // TODO: struct
 type Server struct {
-	serviceMap sync.Map
+	ServiceMap sync.Map
 }
 
 type Request struct {
@@ -61,7 +62,7 @@ func ServerRegister(serviceValue interface{}) error {
 
 func (server *Server) ServerRegister(serviceValue interface{}) error {
 	newService := service.CreateService(serviceValue)
-	_, duplicate := server.serviceMap.LoadOrStore(newService.ServiceName, newService)
+	_, duplicate := server.ServiceMap.LoadOrStore(newService.ServiceName, newService)
 	if duplicate {
 		return errors.New("Server - AcceptConnection error: Service has already been defined: " + newService.ServiceName)
 	}
@@ -215,7 +216,7 @@ func (server *Server) searchService(serviceMethod string) (services *service.Ser
 		return
 	}
 	serviceName, methodName := serviceMethod[:splitIndex], serviceMethod[splitIndex+1:]
-	input, serviceStatus := server.serviceMap.Load(serviceName)
+	input, serviceStatus := server.ServiceMap.Load(serviceName)
 	if !serviceStatus {
 		err = errors.New("Server - searchService error: " + serviceName + " serviceName didn't exist")
 		return
@@ -267,4 +268,37 @@ func (server *Server) request_handle(message coder.Coder, request *Request, send
 		<-responseSendTimeoutChannel
 	}
 	defer waitGroup.Done()
+}
+
+const (
+	ConnectedMessage = "200 Connected to Spartan RPC"
+	DefaultRPCPath   = "/_srpc_"
+	DefaultDebugPath = "/debug/srpc"
+)
+
+func (server *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != "CONNECT" {
+		writer.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		writer.WriteHeader(http.StatusMethodNotAllowed)
+		_, _ = io.WriteString(writer, "405 must CONNECT\n")
+		return
+	}
+	connection, _, err := writer.(http.Hijacker).Hijack()
+	if err != nil {
+		log.Print("RPC hijacking ", request.RemoteAddr, ": ", err.Error())
+		return
+	}
+	_, _ = io.WriteString(connection, "HTTP/1.0 "+ConnectedMessage+"\n\n")
+	server.ServeConnection(connection)
+}
+
+func (server *Server) registerHandlerHTTP() {
+	http.Handle(DefaultRPCPath, server)
+	http.Handle(DefaultDebugPath, HTTPDebug{server})
+	log.Println("RPC server -> registerHandlerHTTP: registered debug path:", DefaultDebugPath)
+}
+
+// RegisterHandlerHTTP is a convenient approach for default server to register HTTP handlers
+func RegisterHandlerHTTP() {
+	default_server.registerHandlerHTTP()
 }

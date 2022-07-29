@@ -11,7 +11,7 @@ import (
 )
 
 func StartServer(address chan string) {
-	listener, err := net.Listen("tcp", ":0")
+	listener, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		log.Fatal("Network error:", err)
 	}
@@ -28,7 +28,7 @@ func TestJsonCoder(test *testing.T) {
 	defer func() { _ = connection.Close() }()
 	time.Sleep(time.Second)
 	_ = json.NewEncoder(connection).Encode(server.DefaultConnectionInfo)
-	TestJsonCoder := coder.NewJsonCoder(connection)
+	testJsonCoder := coder.NewJsonCoder(connection)
 	requestHeader := &coder.MessageHeader{
 		ServiceDotMethod: "Test.Echo",
 		SequenceNumber:   uint64(0),
@@ -37,7 +37,7 @@ func TestJsonCoder(test *testing.T) {
 
 	test.Run("EncodeMessageHeaderAndBody", func(t *testing.T) {
 		var err error
-		err = TestJsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
+		err = testJsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
 		if err != nil {
 			test.Errorf("EncodeMessageHeaderAndBody Error: %s", err)
 		}
@@ -46,7 +46,7 @@ func TestJsonCoder(test *testing.T) {
 	test.Run("DecodeMessageHeader", func(t *testing.T) {
 		var err error
 		responseHeader := &coder.MessageHeader{}
-		err = TestJsonCoder.DecodeMessageHeader(responseHeader)
+		err = testJsonCoder.DecodeMessageHeader(responseHeader)
 		if err != nil {
 			test.Errorf("DecodeMessageHeader Error: %s", err)
 		}
@@ -61,7 +61,7 @@ func TestJsonCoder(test *testing.T) {
 	test.Run("DecodeMessageBody", func(t *testing.T) {
 		var err error
 		var responseBody string
-		err = TestJsonCoder.DecodeMessageBody(&responseBody)
+		err = testJsonCoder.DecodeMessageBody(&responseBody)
 		if err != nil {
 			test.Errorf("DecodeMessageBody Error: %s", err)
 		}
