@@ -123,6 +123,7 @@ func (server *Server) server_coder(message coder.Coder, option *ConnectionInfo) 
 func (server *Server) read_header(message coder.Coder) (*coder.Header, error) {
 	var h coder.Header
 	errors := message.DecodeMessageHeader(&h)
+	//log.Println(&h)
 	if errors != nil {
 		if errors != io.EOF && errors != io.ErrUnexpectedEOF {
 			log.Println("Server - read header error:", errors)

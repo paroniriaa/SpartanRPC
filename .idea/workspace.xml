@@ -6,9 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/client_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/client_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/coder/coder.go" beforeDir="false" afterPath="$PROJECT_DIR$/coder/coder.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/server_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/server_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/service_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/service_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/struct_and_function.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/struct_and_function.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,7 +52,7 @@
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="F:/sjsu/7days-golang-master" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
@@ -63,7 +65,7 @@
       <recent name="K:\github_repo\Distributed-RPC-Framework\main" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.client_test.go">
+  <component name="RunManager" selected="Go Test.service_test.go">
     <configuration name="go build Distributed-RPC-Framework/main" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$" />
@@ -73,37 +75,14 @@
       <directory value="$PROJECT_DIR$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestClient_dialTimeout in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="client_test.go (1)" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/test" />
       <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="Distributed-RPC-Framework/test" />
+      <kind value="FILE" />
+      <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestClient_dialTimeout\E$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="TestClient_dialTimeout/0 in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$/test" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="Distributed-RPC-Framework/test" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestClient_dialTimeout\E$/^\Q0\E$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="TestClient_dialTimeout/timeout in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$/test" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="Distributed-RPC-Framework/test" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestClient_dialTimeout\E$/^\Qtimeout\E$" />
+      <filePath value="$PROJECT_DIR$/test/client_test.go" />
       <method v="2" />
     </configuration>
     <configuration name="client_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
@@ -116,13 +95,33 @@
       <filePath value="$PROJECT_DIR$/test/client_test.go" />
       <method v="2" />
     </configuration>
+    <configuration name="server_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/test" />
+      <framework value="gotest" />
+      <kind value="FILE" />
+      <package value="Distributed-RPC-Framework" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/test/server_test.go" />
+      <method v="2" />
+    </configuration>
+    <configuration name="service_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/test" />
+      <framework value="gotest" />
+      <kind value="FILE" />
+      <package value="Distributed-RPC-Framework" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/test/service_test.go" />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Test.service_test.go" />
+        <item itemvalue="Go Test.server_test.go" />
+        <item itemvalue="Go Test.client_test.go (1)" />
         <item itemvalue="Go Test.client_test.go" />
         <item itemvalue="Go Build.go build Distributed-RPC-Framework/main" />
-        <item itemvalue="Go Test.TestClient_dialTimeout/timeout in Distributed-RPC-Framework/test" />
-        <item itemvalue="Go Test.TestClient_dialTimeout/0 in Distributed-RPC-Framework/test" />
-        <item itemvalue="Go Test.TestClient_dialTimeout in Distributed-RPC-Framework/test" />
       </list>
     </recent_temporary>
   </component>

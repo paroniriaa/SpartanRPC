@@ -4,12 +4,30 @@ import (
 	"Distributed-RPC-Framework/coder"
 	"Distributed-RPC-Framework/server"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net"
-	"strconv"
 	"testing"
 	"time"
 )
+
+// TODO: struct
+type Args struct {
+	A, B int
+}
+
+type Reply struct {
+	C int
+}
+
+type ArithAddResp struct {
+	Id     any   `json:"id"`
+	Result Reply `json:"result"`
+	Error  any   `json:"error"`
+}
+
+type Arith int
+
 
 func startServer(address chan string) {
 	portNumber, err := net.Listen("tcp", ":80")
@@ -20,7 +38,7 @@ func startServer(address chan string) {
 	address <- portNumber.Addr().String()
 	server.Connection_handle(portNumber)
 }
-
+/*
 func TestServer(test *testing.T) {
 	test.Helper()
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
@@ -34,20 +52,115 @@ func TestServer(test *testing.T) {
 	_ = json.NewEncoder(connection).Encode(server.DefaultConnectionInfo)
 	communication := coder.NewJsonCoder(connection)
 
-	n := 0
-	for n < 5 {
-		header := &coder.Header{
-			ServiceDotMethod: "Test.Echo",
-			SequenceNumber:   uint64(n),
+	header := &coder.Header{
+		ServiceDotMethod: "Test.Echo",
+		SequenceNumber:   uint64(1),
+	}
+	request := "RPC Sequence Number " + strconv.Itoa(1)
+	log.Println("Request:", request)
+	_ = communication.EncodeMessageHeaderAndBody(header, request)
+	_ = communication.DecodeMessageHeader(header)
+	var response string
+	_ = communication.DecodeMessageBody(&response)
+	log.Println("Response:", response)
+
+}
+*/
+
+func TestServer(test *testing.T) {
+	test.Helper()
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
+	addr := make(chan string)
+	go startServer(addr)
+
+	// in fact, following code is like a simple geerpc client
+	conn, _ := net.Dial("tcp", <-addr)
+	defer func() { _ = conn.Close() }()
+
+	time.Sleep(time.Second)
+	// send options
+	_ = json.NewEncoder(conn).Encode(server.DefaultConnectionInfo)
+	cc := coder.NewJsonCoder(conn)
+	// send request & receive response
+	for i := 0; i < 5; i++ {
+		h := &coder.Header{
+			ServiceDotMethod: "Foo.Sum",
+			SequenceNumber:   uint64(i),
 		}
-		request := "RPC Sequence Number " + strconv.Itoa(n)
-		log.Println("Request:", request)
-		_ = communication.EncodeMessageHeaderAndBody(header, request)
-		_ = communication.DecodeMessageHeader(header)
-		var response string
-		_ = communication.DecodeMessageBody(&response)
-		log.Println("Response:", response)
-		n++
+		_ = cc.EncodeMessageHeaderAndBody(h, fmt.Sprintf("geerpc req %d", h.SequenceNumber))
+		_ = cc.DecodeMessageHeader(h)
+		var reply string
+		_ = cc.DecodeMessageBody(&reply)
+		log.Println("reply:", reply)
 	}
 }
 
+
+/*
+func TestServerNoParams(t *testing.T) {
+	cli, srv := net.Pipe()
+	defer cli.Close()
+	address := make(chan string)
+	go createServer(srv.LocalAddr())
+	dec := coder.Coder(cli)
+
+	fmt.Fprintf(cli, `{"method": "Arith.Add", "id": "123"}`)
+	var resp ArithAddResp
+	if err := dec.Decode(&resp); err != nil {
+		t.Fatalf("Decode after no params: %s", err)
+	}
+	if resp.Error == nil {
+		t.Fatalf("Expected error, got nil")
+	}
+}
+
+
+func TestServerEmptyMessage(t *testing.T) {
+	cli, srv := net.Pipe()
+	defer cli.Close()
+	go ServeConn(srv)
+	dec := json.NewDecoder(cli)
+
+	fmt.Fprintf(cli, "{}")
+	var resp ArithAddResp
+	if err := dec.Decode(&resp); err != nil {
+		t.Fatalf("Decode after empty: %s", err)
+	}
+	if resp.Error == nil {
+		t.Fatalf("Expected error, got nil")
+	}
+}
+
+func TestServerErrorHasNullResult(t *testing.T) {
+	var out bytes.Buffer
+	sc := NewServerCodec(struct {
+		io.Reader
+		io.Writer
+		io.Closer
+	}{
+		Reader: strings.NewReader(`{"method": "Arith.Add", "id": "123", "params": []}`),
+		Writer: &out,
+		Closer: io.NopCloser(nil),
+	})
+	r := new(rpc.Request)
+	if err := sc.ReadRequestHeader(r); err != nil {
+		t.Fatal(err)
+	}
+	const valueText = "the value we don't want to see"
+	const errorText = "some error"
+	err := sc.WriteResponse(&rpc.Response{
+		ServiceMethod: "Method",
+		Seq:           1,
+		Error:         errorText,
+	}, valueText)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.String(), errorText) {
+		t.Fatalf("Response didn't contain expected error %q: %s", errorText, &out)
+	}
+	if strings.Contains(out.String(), valueText) {
+		t.Errorf("Response contains both an error and value: %s", &out)
+	}
+}
+*/
