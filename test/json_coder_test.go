@@ -17,7 +17,7 @@ func StartServer(address chan string) {
 	}
 	log.Println("Start RPC server on port:", listener.Addr())
 	address <- listener.Addr().String()
-	server.Connection_handle(listener)
+	server.AcceptConnection(listener)
 }
 
 func TestJsonCoder(test *testing.T) {

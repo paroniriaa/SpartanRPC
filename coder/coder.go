@@ -28,7 +28,7 @@ type Coder interface {
 	EncodeMessageHeaderAndBody(*MessageHeader, interface{}) error
 }
 
-type CoderFunction func(io.ReadWriteCloser) Coder
+type CoderInitializer func(io.ReadWriteCloser) Coder
 
 type CoderType string
 
@@ -36,9 +36,9 @@ const (
 	Json CoderType = "application/json"
 )
 
-var CoderFunctionMap map[CoderType]CoderFunction
+var CoderInitializerMap map[CoderType]CoderInitializer
 
 func init() {
-	CoderFunctionMap = make(map[CoderType]CoderFunction)
-	CoderFunctionMap[Json] = NewJsonCoder
+	CoderInitializerMap = make(map[CoderType]CoderInitializer)
+	CoderInitializerMap[Json] = NewJsonCoder
 }

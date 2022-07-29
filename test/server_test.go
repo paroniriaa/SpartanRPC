@@ -18,7 +18,7 @@ func startServer(address chan string) {
 	}
 	log.Println("startServer RPC server on port", portNumber.Addr())
 	address <- portNumber.Addr().String()
-	server.Connection_handle(portNumber)
+	server.AcceptConnection(portNumber)
 }
 
 func TestServer(test *testing.T) {
