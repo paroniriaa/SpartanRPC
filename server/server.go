@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"reflect"
 	"strings"
 	"sync"
@@ -267,4 +268,37 @@ func (server *Server) request_handle(message coder.Coder, request *Request, send
 		<-responseSendTimeoutChannel
 	}
 	defer waitGroup.Done()
+}
+
+const (
+	httpConnect = "200 Connected to RPC OK"
+	rpcPath     = "/_rpc_"
+	debugPath   = "/debug/rpc"
+)
+
+func (server *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != "CONNECT" {
+		writer.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		writer.WriteHeader(http.StatusMethodNotAllowed)
+		_, _ = io.WriteString(writer, "405 must CONNECT\n")
+		return
+	}
+	connection, _, err := writer.(http.Hijacker).Hijack()
+	if err != nil {
+		log.Print("RPC hijacking ", request.RemoteAddr, ": ", err.Error())
+		return
+	}
+	_, _ = io.WriteString(connection, "HTTP/1.0 "+httpConnect+"\n\n")
+	server.ServeConnection(connection)
+}
+
+func (server *Server) registerHandler() {
+	http.Handle(rpcPath, server)
+	http.Handle(debugPath, debugHTTP{server})
+	log.Println("rpc server debug path:", debugPath)
+}
+
+// HandleHTTP is a convenient approach for default server to register HTTP handlers
+func HandleHTTP() {
+	default_server.registerHandler()
 }
