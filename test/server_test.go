@@ -17,14 +17,14 @@ type Method1 int
 
 type Method2 int
 
-type Input struct{ A, B int }
+type Innerput struct{ A, B int }
 
-func (f Method1) TestSum(input Input, output *int) error {
+func (f Method1) TestSum(input Innerput, output *int) error {
 	*output = input.A + input.B
 	return nil
 }
 
-func (f Method2) TestEcho(input Input, output *int) error {
+func (f Method2) TestEcho(input Innerput, output *int) error {
 	*output = input.A - input.B
 	return nil
 }
@@ -74,7 +74,7 @@ func TestServer_client_connection(test *testing.T) {
 
 		time.Sleep(time.Second)
 		// send request & receive response
-		input := &Input{A: 1, B: 2 * 3}
+		input := &Innerput{A: 1, B: 2 * 3}
 		var output int
 		if err := client.Call("Method1.TestSum", input, &output,context.Background()); err != nil {
 			log.Fatal("call Foo.Sum error:", err)
