@@ -11,7 +11,12 @@ import (
 )
 
 func StartServer(address chan string) {
-	listener, err := net.Listen("tcp", ":8080")
+	var test Test
+	err := server.ServerRegister(&test)
+	if err != nil {
+		log.Fatal("Server register error:", err)
+	}
+	listener, err := net.Listen("tcp", ":0")
 	if err != nil {
 		log.Fatal("Network error:", err)
 	}
@@ -25,28 +30,37 @@ func TestJsonCoder(test *testing.T) {
 	address := make(chan string)
 	go StartServer(address)
 	connection, _ := net.Dial("tcp", <-address)
-	defer func() { _ = connection.Close() }()
+	//defer func() { _ = connection.Close() }()
 	time.Sleep(time.Second)
 	_ = json.NewEncoder(connection).Encode(server.DefaultConnectionInfo)
 	testJsonCoder := coder.NewJsonCoder(connection)
 	requestHeader := &coder.MessageHeader{
 		ServiceDotMethod: "Test.Echo",
-		SequenceNumber:   uint64(0),
+		SequenceNumber:   uint64(666),
 	}
 	requestBody := "Hello there! "
+	//log.Printf("requestHeader.ServiceDotMethod: %+v", requestHeader.ServiceDotMethod)
+	//log.Printf("requestHeader.SequenceNumber: %+v", requestHeader.SequenceNumber)
+	//log.Printf("requestBody: %+v", requestBody)
+
+	var err error
+	var responseBody string
+	responseHeader := &coder.MessageHeader{}
 
 	test.Run("EncodeMessageHeaderAndBody", func(t *testing.T) {
-		var err error
 		err = testJsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
+		_ = testJsonCoder.DecodeMessageHeader(responseHeader)
+		_ = testJsonCoder.DecodeMessageBody(&responseBody)
 		if err != nil {
 			test.Errorf("EncodeMessageHeaderAndBody Error: %s", err)
 		}
 	})
 
 	test.Run("DecodeMessageHeader", func(t *testing.T) {
-		var err error
-		responseHeader := &coder.MessageHeader{}
+		_ = testJsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
 		err = testJsonCoder.DecodeMessageHeader(responseHeader)
+		_ = testJsonCoder.DecodeMessageBody(&responseBody)
+		//log.Printf("responseHeader: %+v", responseHeader)
 		if err != nil {
 			test.Errorf("DecodeMessageHeader Error: %s", err)
 		}
@@ -59,14 +73,15 @@ func TestJsonCoder(test *testing.T) {
 	})
 
 	test.Run("DecodeMessageBody", func(t *testing.T) {
-		var err error
-		var responseBody string
+		_ = testJsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
+		_ = testJsonCoder.DecodeMessageHeader(responseHeader)
 		err = testJsonCoder.DecodeMessageBody(&responseBody)
+		//log.Printf("responseBody: %v", responseBody)
 		if err != nil {
 			test.Errorf("DecodeMessageBody Error: %s", err)
 		}
 		if responseBody != requestBody {
-			test.Errorf("DecodeMessageBody Error: responseBody expected to be %s, but got %s", responseBody, responseBody)
+			test.Errorf("DecodeMessageBody Error: responseBody expected to be %s, but got %s", requestBody, responseBody)
 		}
 	})
 
