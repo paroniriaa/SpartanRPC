@@ -104,6 +104,7 @@ func (server *Server) serveCoder(message coder.Coder, connectionInfo *Connection
 	sending := new(sync.Mutex)
 	waitGroup := new(sync.WaitGroup)
 	for {
+
 		requests, err := server.read_request(message)
 		if requests == nil && err != nil {
 			break
@@ -181,6 +182,7 @@ func (server *Server) read_header(message coder.Coder) (*coder.MessageHeader, er
 }
 
 func (server *Server) read_request(message coder.Coder) (*Request, error) {
+
 	header, Error := server.read_header(message)
 	if Error != nil {
 		return nil, Error

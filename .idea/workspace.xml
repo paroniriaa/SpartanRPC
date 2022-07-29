@@ -5,21 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/client.go" beforeDir="false" afterPath="$PROJECT_DIR$/client/client.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/coder/coder.go" beforeDir="false" afterPath="$PROJECT_DIR$/coder/coder.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/coder/json_coder.go" beforeDir="false" afterPath="$PROJECT_DIR$/coder/json_coder.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/client_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/client_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/coder_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/coder_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/json_coder_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/json_coder_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/server_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/server_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/service_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/service_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/test_utility.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/test_utility.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/timeout_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/timeout_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -74,8 +63,8 @@
       <recent name="K:\github_repo\Distributed-RPC-Framework\main" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.TestServer/TestServerEmpty in Distributed-RPC-Framework/test">
-    <configuration name="TestServer in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Go Test.TestServer_argv in Distributed-RPC-Framework/test">
+    <configuration name="TestServer_argv in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/test" />
       <framework value="gotest" />
@@ -83,10 +72,10 @@
       <package value="Distributed-RPC-Framework/test" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestServer\E$" />
+      <pattern value="^\QTestServer_argv\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestServer/TestServerEmpty in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestServer_argv/TestServerNormal in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/test" />
       <framework value="gotest" />
@@ -94,10 +83,10 @@
       <package value="Distributed-RPC-Framework/test" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestServer\E$/^\QTestServerEmpty\E$" />
+      <pattern value="^\QTestServer_argv\E$/^\QTestServerNormal\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestServer/TestServerNoParams in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestServer_client_connection in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/test" />
       <framework value="gotest" />
@@ -105,10 +94,10 @@
       <package value="Distributed-RPC-Framework/test" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestServer\E$/^\QTestServerNoParams\E$" />
+      <pattern value="^\QTestServer_client_connection\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestServer/request_loop in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestServer_client_connection/request_loop in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/test" />
       <framework value="gotest" />
@@ -116,26 +105,26 @@
       <package value="Distributed-RPC-Framework/test" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestServer\E$/^\Qrequest_loop\E$" />
+      <pattern value="^\QTestServer_client_connection\E$/^\Qrequest_loop\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="client_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="server_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/test" />
       <framework value="gotest" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/test/client_test.go" />
+      <filePath value="$PROJECT_DIR$/test/server_test.go" />
       <method v="2" />
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Test.TestServer/TestServerEmpty in Distributed-RPC-Framework/test" />
-        <item itemvalue="Go Test.TestServer/TestServerNoParams in Distributed-RPC-Framework/test" />
-        <item itemvalue="Go Test.TestServer/request_loop in Distributed-RPC-Framework/test" />
-        <item itemvalue="Go Test.TestServer in Distributed-RPC-Framework/test" />
-        <item itemvalue="Go Test.client_test.go" />
+        <item itemvalue="Go Test.TestServer_argv in Distributed-RPC-Framework/test" />
+        <item itemvalue="Go Test.TestServer_client_connection/request_loop in Distributed-RPC-Framework/test" />
+        <item itemvalue="Go Test.TestServer_client_connection in Distributed-RPC-Framework/test" />
+        <item itemvalue="Go Test.server_test.go" />
+        <item itemvalue="Go Test.TestServer_argv/TestServerNormal in Distributed-RPC-Framework/test" />
       </list>
     </recent_temporary>
   </component>
