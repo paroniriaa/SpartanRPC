@@ -1,6 +1,10 @@
 package test
 
-import "errors"
+import (
+	"errors"
+	"log"
+	"time"
+)
 
 type Input struct {
 	A, B int
@@ -10,13 +14,12 @@ type Output struct {
 	C int
 }
 
-type Demos int
+type Demo int
 
-func (t Demos) Addition_demo(input Input, output *int) error {
+func (t *Demo) Addition_demo(input Input, output *int) error {
 	*output = input.A + input.B
 	return nil
 }
-
 
 type Arithmetic int
 
@@ -67,4 +70,17 @@ func (t *BuiltinType) Array(input int, output *[1]int) error {
 func (t *BuiltinType) Map(input int, output *map[int]int) error {
 	(*output)[input] = input
 	return nil
+}
+
+type Timeout time.Duration
+
+func (p Timeout) SleepForTimeout(input int, output *int) error {
+	time.Sleep(time.Second * 5)
+	return nil
+}
+
+func _assert(condition bool, msg string, v ...interface{}) {
+	if !condition {
+		log.Fatalf("assertion failed: "+msg, v...)
+	}
 }

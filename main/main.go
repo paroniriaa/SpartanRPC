@@ -10,21 +10,24 @@ import (
 	"time"
 )
 
-type Demo int
-
 type Input struct {
-	Number1 int
-	Number2 int
+	A, B int
 }
 
-func (function Demo) Sum(input Input, output *int) error {
-	*output = input.Number1 + input.Number2
+type Output struct {
+	C int
+}
+
+type Arithmetic int
+
+func (t *Arithmetic) Addition(input *Input, output *Output) error {
+	output.C = input.A + input.B
 	return nil
 }
 
 func createServer(address chan string) {
-	var demo Demo
-	err := server.ServerRegister(&demo)
+	var arithmetic Arithmetic
+	err := server.ServerRegister(&arithmetic)
 	if err != nil {
 		log.Fatal("Server register error:", err)
 	}
@@ -33,36 +36,38 @@ func createServer(address chan string) {
 	if err != nil {
 		log.Fatal("Server Network issue:", err)
 	}
-	log.Println("Created RPC server on port", listener.Addr())
+	//log.Println("RPC server -> createServer: RPC server created and hosting on port", listener.Addr())
 	address <- listener.Addr().String()
-	server.Connection_handle(listener)
+	server.AcceptConnection(listener)
 }
 
 func clientCallRPC(client *client.Client, number int, waitGroup *sync.WaitGroup) {
 	defer waitGroup.Done()
-	waitGroup.Add(1)
-	input := &Input{Number1: number, Number2: number ^ 2}
-	var output int
-	ctx, _ := context.WithTimeout(context.Background(), time.Second)
-	if err := client.Call(ctx,"Demo.Sum", input, &output); err != nil {
+	input := &Input{A: number, B: number ^ 2}
+	output := &Output{}
+	timeOutContext, _ := context.WithTimeout(context.Background(), time.Second*5)
+	if err := client.Call("Arithmetic.Addition", input, output, timeOutContext); err != nil {
 		log.Fatal("Client RPC call Demo.Sum error:", err)
 	}
-	log.Printf("%d + %d = %d", input.Number1, input.Number2, output)
+	log.Printf("%d + %d = %d", input.A, input.B, output.C)
 }
 
 func main() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
-	address := make(chan string)
-	go createServer(address)
-
-	testClient, _ := client.MakeDial("tcp", <-address)
+	addressChannel := make(chan string)
+	go createServer(addressChannel)
+	address := <-addressChannel
+	testClient, _ := client.MakeDial("tcp", address)
 	defer func() { _ = testClient.Close() }()
 
 	time.Sleep(time.Second)
 	var waitGroup sync.WaitGroup
 	n := 0
-	for n < 5 {
-		clientCallRPC(testClient, n, &waitGroup)
+	for n < 2 {
+		waitGroup.Add(1)
+		go func(n int) {
+			clientCallRPC(testClient, n, &waitGroup)
+		}(n)
 		n++
 	}
 	waitGroup.Wait()
