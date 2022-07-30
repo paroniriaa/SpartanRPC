@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/server_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/server_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,7 +60,7 @@
       <recent name="K:\github_repo\Distributed-RPC-Framework\main" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.TestServer_argv in Distributed-RPC-Framework/test">
+  <component name="RunManager" selected="Go Test.TestXDial in Distributed-RPC-Framework/test">
     <configuration name="TestServer_argv in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/test" />
@@ -71,17 +70,6 @@
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <pattern value="^\QTestServer_argv\E$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="TestServer_argv/TestServerNormal in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$/test" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="Distributed-RPC-Framework/test" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestServer_argv\E$/^\QTestServerNormal\E$" />
       <method v="2" />
     </configuration>
     <configuration name="TestServer_client_connection in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
@@ -106,6 +94,17 @@
       <pattern value="^\QTestServer_client_connection\E$/^\Qrequest_loop\E$" />
       <method v="2" />
     </configuration>
+    <configuration name="TestXDial in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/test" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="Distributed-RPC-Framework/test" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTestXDial\E$" />
+      <method v="2" />
+    </configuration>
     <configuration name="server_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/test" />
@@ -118,11 +117,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Test.TestXDial in Distributed-RPC-Framework/test" />
         <item itemvalue="Go Test.TestServer_argv in Distributed-RPC-Framework/test" />
         <item itemvalue="Go Test.TestServer_client_connection/request_loop in Distributed-RPC-Framework/test" />
         <item itemvalue="Go Test.TestServer_client_connection in Distributed-RPC-Framework/test" />
         <item itemvalue="Go Test.server_test.go" />
-        <item itemvalue="Go Test.TestServer_argv/TestServerNormal in Distributed-RPC-Framework/test" />
       </list>
     </recent_temporary>
   </component>
