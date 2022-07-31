@@ -36,7 +36,7 @@ type ConnectionInfo struct {
 	IDNumber          int
 	CoderType         coder.CoderType
 	ConnectionTimeout time.Duration
-	HandlingTimeout   time.Duration
+	ProcessingTimeout time.Duration
 }
 
 func New_server() *Server {
@@ -114,7 +114,7 @@ func (server *Server) serveCoder(message coder.Coder, connectionInfo *Connection
 			continue
 		}
 		waitGroup.Add(1)
-		go server.request_handle(message, requests, sending, waitGroup, connectionInfo.HandlingTimeout)
+		go server.request_handle(message, requests, sending, waitGroup, connectionInfo.ProcessingTimeout)
 	}
 	waitGroup.Wait()
 	_ = message.Close()
@@ -161,7 +161,7 @@ func (server *Server) server_coder(message coder.Coder, connectionInfo *Connecti
 			continue
 		}
 		waitGroup.Add(1)
-		go server.request_handle(message, requests, sending, waitGroup, connectionInfo.HandlingTimeout)
+		go server.request_handle(message, requests, sending, waitGroup, connectionInfo.ProcessingTimeout)
 	}
 	waitGroup.Wait()
 	_ = message.Close()

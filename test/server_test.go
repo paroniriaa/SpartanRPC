@@ -12,7 +12,7 @@ import (
 )
 
 func startServer(address chan string) {
-	portNumber, err := net.Listen("tcp", ":80")
+	portNumber, err := net.Listen("tcp", "localhost:8002")
 	if err != nil {
 		log.Fatal("network issue:", err)
 	}
