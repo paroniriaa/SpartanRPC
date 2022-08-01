@@ -87,7 +87,7 @@ func createTimeoutDialTestCase(t *testing.T, tc *TimeoutCase) {
 		return nil, nil
 	}
 	_, err := client.MakeDialWithTimeout(fakeClientInitializer, "tcp", tc.Address, tc.ConnectionInfo)
-	log.Println(err)
+	//log.Println(err)
 	if tc.ConnectionInfo.ConnectionTimeout == 0 {
 		if err != nil {
 			es := tc.ServiceDotMethod + tc.TimeoutType + ":" + " expected nil timeout error but got error"
@@ -122,9 +122,10 @@ func registerService(service any) {
 	}
 }
 
-func TestClient_Call(t *testing.T) {
+func TestClient(t *testing.T) {
 	t.Helper()
 	//create service type
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
 	var arithmetic Arithmetic
 	var builtinType BuiltinType
 	var timeOut Timeout
