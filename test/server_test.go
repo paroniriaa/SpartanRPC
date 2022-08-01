@@ -1,132 +1,52 @@
 package test
 
 import (
-	"Distributed-RPC-Framework/client"
 	"Distributed-RPC-Framework/coder"
 	"Distributed-RPC-Framework/server"
-	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net"
+	"strconv"
 	"testing"
 	"time"
 )
 
-type Method1 int
-
-type Method2 int
-
-type Input1 struct {
-	A, B int
-}
-
-func (f Method1) TestSum(input Input1, output *int) error {
-	*output = input.A + input.B
-	return nil
-}
-
-func (f Method2) TestEcho(input Input1, output *int) error {
-	*output = input.A - input.B
-	return nil
-}
-
-
-func startTestServer(testMethod int, address chan string) {
-	var me1 Method1
-	var me2 Method2
-	if testMethod == 1 {
-		if err := server.ServerRegister(&me1); err != nil {
-			log.Fatal("register error:", err)
-		}
-		// pick a free port
-		l, err := net.Listen("tcp", ":0")
-		if err != nil {
-			log.Fatal("network error:", err)
-		}
-		log.Println("start rpc server on", l.Addr())
-		address <- l.Addr().String()
-		server.AcceptConnection(l)
-	} else {
-		if err := server.ServerRegister(&me2); err != nil {
-			log.Fatal("register error:", err)
-		}
-		// pick a free port
-		l, err := net.Listen("tcp", ":0")
-		if err != nil {
-			log.Fatal("network error:", err)
-		}
-		log.Println("start rpc server on", l.Addr())
-		address <- l.Addr().String()
-		server.AcceptConnection(l)
+func startServer(address chan string) {
+	portNumber, err := net.Listen("tcp", "localhost:8002")
+	if err != nil {
+		log.Fatal("network issue:", err)
 	}
-
-
+	log.Println("startServer RPC server on port", portNumber.Addr())
+	address <- portNumber.Addr().String()
+	server.AcceptConnection(portNumber)
 }
 
-func TestServer_client_connection(test *testing.T) {
+func TestServer(test *testing.T) {
 	test.Helper()
-	//test.Parallel()
-	test.Run("request loop", func(t *testing.T) {
-		log.SetFlags(0)
-		addr := make(chan string)
-		go startTestServer(1,addr)
-		client, _ := client.MakeDial("tcp", <-addr)
-		defer func() { _ = client.Close() }()
-
-		time.Sleep(time.Second)
-		// send request & receive response
-		input := &Input1{A: 1, B: 2 * 3}
-		var output int
-		if err := client.Call("Method1.TestSum", input, &output,context.Background()); err != nil {
-			log.Fatal("call Foo.Sum error:", err)
-		}
-	})
-}
-
-func TestServer_argv(test *testing.T) {
-	test.Helper()
-	//test.Parallel()
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
 	address := make(chan string)
-	go startTestServer(2,address)
-	socket, _ := net.Dial("tcp", <-address)
-	defer func() { _ = socket.Close() }()
+	go startServer(address)
+
+	connection, _ := net.Dial("tcp", <-address)
+	defer func() { _ = connection.Close() }()
 
 	time.Sleep(time.Second)
-	_ = json.NewEncoder(socket).Encode(server.DefaultConnectionInfo)
-	message := coder.NewJsonCoder(socket)
-	test.Run("TestServerNoParams", func(t *testing.T) {
-		header := &coder.MessageHeader{
-			ServiceDotMethod: "NoParams",
-			SequenceNumber:           uint64(1),
-		}
-		_ = message.EncodeMessageHeaderAndBody(header, fmt.Sprintf("geerpc req %d", header.SequenceNumber))
-		_ = message.DecodeMessageHeader(header)
-		var reply string
-		_ = message.DecodeMessageBody(&reply)
-		log.Println("reply:", reply)
-	})
+	_ = json.NewEncoder(connection).Encode(server.DefaultConnectionInfo)
+	communication := coder.NewJsonCoder(connection)
 
-	test.Run("TestServerEmpty", func(t *testing.T) {
-		header := &coder.MessageHeader{}
-		_ = message.EncodeMessageHeaderAndBody(header, fmt.Sprintf("geerpc req %d", header.SequenceNumber))
-		_ = message.DecodeMessageHeader(header)
-		var reply string
-		_ = message.DecodeMessageBody(&reply)
-		log.Println("reply:", reply)
-	})
-
-	test.Run("TestServerNormal", func(t *testing.T) {
+	n := 0
+	for n < 5 {
 		header := &coder.MessageHeader{
 			ServiceDotMethod: "Test.Echo",
-			SequenceNumber:   uint64(666),
+			SequenceNumber:   uint64(n),
 		}
-		_ = message.EncodeMessageHeaderAndBody(header, fmt.Sprintf("geerpc req %d", header.SequenceNumber))
-		_ = message.DecodeMessageHeader(header)
-		var reply string
-		_ = message.DecodeMessageBody(&reply)
-		log.Println("reply:", reply)
-	})
-
+		request := "RPC Sequence Number " + strconv.Itoa(n)
+		log.Println("Request:", request)
+		_ = communication.EncodeMessageHeaderAndBody(header, request)
+		_ = communication.DecodeMessageHeader(header)
+		var response string
+		_ = communication.DecodeMessageBody(&response)
+		log.Println("Response:", response)
+		n++
+	}
 }
-
