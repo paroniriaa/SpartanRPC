@@ -16,7 +16,7 @@ func StartServer(address chan string) {
 	if err != nil {
 		log.Fatal("Server register error:", err)
 	}
-	listener, err := net.Listen("tcp", ":0")
+	listener, err := net.Listen("tcp", "localhost:8003")
 	if err != nil {
 		log.Fatal("Network error:", err)
 	}

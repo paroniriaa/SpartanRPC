@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="">
+    <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="client">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/HTTP_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/HTTP_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/client_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/client_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -20,7 +20,7 @@
       </list>
     </option>
   </component>
-  <component name="GOROOT" url="file://$PROJECT_DIR$/../../Go/go1.18.3" />
+  <component name="GOROOT" url="file://$USER_HOME$/sdk/go1.18.3" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -29,6 +29,9 @@
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectId" id="2BKBKQ4swMCaP1RF4F0ZI3cenMC" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
@@ -50,78 +53,91 @@
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="node.js.detected.package.eslint" value="true" />
-    <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
-    <property name="node.js.path.for.package.tslint" value="project" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
-    <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="nodejs_package_manager_path" value="npm" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Local Project\Distributed-RPC-Framework\server" />
       <recent name="K:\github_repo\Distributed-RPC-Framework\main" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.TestXDial in Distributed-RPC-Framework/test (1)">
-    <configuration name="go build Distributed-RPC-Framework/main" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Go Build.go build main.go">
+    <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$" />
-      <kind value="PACKAGE" />
+      <kind value="FILE" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go build main.go" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="FILE" />
+      <package value="Distributed-RPC-Framework" />
+      <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$/main/main.go" />
-      <package value="Distributed-RPC-Framework/main" />
-      <directory value="$PROJECT_DIR$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestServer_argv in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestClient in Distributed-RPC-Framework/client" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$/test" />
-      <framework value="gotest" />
+      <working_directory value="$PROJECT_DIR$/client" />
       <kind value="PACKAGE" />
-      <package value="Distributed-RPC-Framework/test" />
+      <package value="Distributed-RPC-Framework/client" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestServer_argv\E$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestClient\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestServer_client_connection/request_loop in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestServer in Distributed-RPC-Framework/server" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$/test" />
-      <framework value="gotest" />
+      <working_directory value="$PROJECT_DIR$/server" />
       <kind value="PACKAGE" />
-      <package value="Distributed-RPC-Framework/test" />
+      <package value="Distributed-RPC-Framework/server" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestServer_client_connection\E$/^\Qrequest_loop\E$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestServer\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestXDial in Distributed-RPC-Framework/test (1)" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
       <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$/test" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="Distributed-RPC-Framework/test" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="DIRECTORY" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestXDial\E$" />
+      <framework value="gotest" />
       <method v="2" />
     </configuration>
-    <configuration name="TestXDial in Distributed-RPC-Framework/test" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="client_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$/test" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="Distributed-RPC-Framework/test" />
+      <working_directory value="$PROJECT_DIR$/client" />
+      <kind value="FILE" />
+      <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestXDial\E$" />
+      <filePath value="$PROJECT_DIR$/client/client_test.go" />
+      <framework value="gotest" />
+      <method v="2" />
+    </configuration>
+    <configuration name="server_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/server" />
+      <kind value="FILE" />
+      <package value="Distributed-RPC-Framework" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/server/server_test.go" />
+      <framework value="gotest" />
       <method v="2" />
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Test.TestXDial in Distributed-RPC-Framework/test (1)" />
-        <item itemvalue="Go Build.go build Distributed-RPC-Framework/main" />
-        <item itemvalue="Go Test.TestXDial in Distributed-RPC-Framework/test" />
-        <item itemvalue="Go Test.TestServer_argv in Distributed-RPC-Framework/test" />
-        <item itemvalue="Go Test.TestServer_client_connection/request_loop in Distributed-RPC-Framework/test" />
+        <item itemvalue="Go Test.client_test.go" />
+        <item itemvalue="Go Test.server_test.go" />
+        <item itemvalue="Go Test.TestClient in Distributed-RPC-Framework/client" />
+        <item itemvalue="Go Test.TestServer in Distributed-RPC-Framework/server" />
       </list>
     </recent_temporary>
   </component>
@@ -133,6 +149,19 @@
       <option name="presentableId" value="Default" />
       <updated>1656660190663</updated>
       <workItem from="1656660195914" duration="4144000" />
+      <workItem from="1657065652952" duration="2454000" />
+      <workItem from="1657157892304" duration="3280000" />
+      <workItem from="1657334649945" duration="24796000" />
+      <workItem from="1657437084929" duration="6351000" />
+      <workItem from="1657499492746" duration="24486000" />
+      <workItem from="1658711129953" duration="9672000" />
+      <workItem from="1658722774501" duration="20253000" />
+      <workItem from="1659055661449" duration="14148000" />
+      <workItem from="1659147552186" duration="3925000" />
+      <workItem from="1659222320742" duration="245000" />
+      <workItem from="1659222606544" duration="4521000" />
+      <workItem from="1659230782381" duration="1373000" />
+      <workItem from="1659392801108" duration="3394000" />
     </task>
     <servers />
   </component>
@@ -149,7 +178,6 @@
         </entry>
       </map>
     </option>
-    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="client" />

@@ -87,7 +87,7 @@ func createTimeoutDialTestCase(t *testing.T, tc *TimeoutCase) {
 		return nil, nil
 	}
 	_, err := client.MakeDialWithTimeout(fakeClientInitializer, "tcp", tc.Address, tc.ConnectionInfo)
-	log.Println(err)
+	//log.Println(err)
 	if tc.ConnectionInfo.ConnectionTimeout == 0 {
 		if err != nil {
 			es := tc.ServiceDotMethod + tc.TimeoutType + ":" + " expected nil timeout error but got error"
@@ -106,7 +106,7 @@ func createServer(address chan string, services []any) {
 		registerService(service)
 	}
 
-	listener, err := net.Listen("tcp", "localhost:8080")
+	listener, err := net.Listen("tcp", "localhost:8001")
 	if err != nil {
 		log.Fatal("Server Network issue:", err)
 	}
@@ -122,9 +122,10 @@ func registerService(service any) {
 	}
 }
 
-func TestClient_Call(t *testing.T) {
+func TestClient(t *testing.T) {
 	t.Helper()
 	//create service type
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
 	var arithmetic Arithmetic
 	var builtinType BuiltinType
 	var timeOut Timeout
@@ -169,10 +170,10 @@ func TestClient_Call(t *testing.T) {
 	//Range: from server sending the request to service(concrete method), to server receiving the response from service
 	//expected to fail because Timeout.SleepForTimeout takes 5 secs, and server-side time limit is 1 sec
 	noTimeoutContext := context.Background()
-	shortHandleTimeoutConnectionInfo := &server.ConnectionInfo{HandlingTimeout: time.Second}
+	shortProcessTimeoutConnectionInfo := &server.ConnectionInfo{ProcessingTimeout: time.Second}
 	timeoutCallCases := []TimeoutCase{
 		{"Timeout.SleepForTimeout", "Handling.Client-Side", input, &i, address, smallTimeoutContext, nil},
-		{"Timeout.SleepForTimeout", "Handling.Server-Side", input, &i, address, noTimeoutContext, shortHandleTimeoutConnectionInfo},
+		{"Timeout.SleepForTimeout", "Handling.Server-Side", input, &i, address, noTimeoutContext, shortProcessTimeoutConnectionInfo},
 	}
 	//Set 1 sec as timeout limit on the client-side (before connection)
 	//Range: from initializing a client, to returning a connected client
@@ -238,7 +239,7 @@ func TestClient_Call(t *testing.T) {
 	//Timeout dials test
 	prefix = "TimeoutCheckingDials."
 	time.Sleep(time.Second)
-	//loop through all timeoutCallCases in the table and create the concrete subtest
+	//loop through all timeoutDialCases in the table and create the concrete subtest
 	for _, testCase := range timeoutDialCases {
 		t.Run(prefix+testCase.TimeoutType, func(t *testing.T) {
 			createTimeoutDialTestCase(t, &testCase)
