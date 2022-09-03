@@ -3,6 +3,7 @@ package client
 import (
 	"Distributed-RPC-Framework/coder"
 	"Distributed-RPC-Framework/server"
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -10,7 +11,9 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 )
@@ -141,13 +144,57 @@ func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*serve
 	return CreateClient(connection, connectionInfo)
 }
 */
+
+// XMakeDial calls specific Dial function to connect to an RPC server based on the first parameter of rpcAddress.
+// rpcAddress is a general format (protocol@addr) to represent a rpc server
+// eg, http@10.0.0.1:6666, tcp@10.0.0.1:7777, unix@/tmp/srpc.sock
+func XMakeDial(rpcAddress string, connectionInfos ...*server.ConnectionInfo) (*Client, error) {
+	parts := strings.Split(rpcAddress, "@")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("RPC client -> XMakeDial err: wrong format for rpcAddress, expect 'protocol@addr', but got '%s'", rpcAddress)
+	}
+	protocol, addr := parts[0], parts[1]
+	switch protocol {
+	case "http":
+		return MakeDialHTTP("tcp", addr, connectionInfos...)
+	default:
+		// tcp, unix or other transport protocol
+		return MakeDial(protocol, addr, connectionInfos...)
+	}
+}
+
+func MakeDialHTTP(transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
+	//log.Printf("RPC client -> MakeDialHTTP: initializing HTTP dialing process...)
+	return MakeDialWithTimeout(CreateClientHTTP, transportProtocol, serverAddress, connectionInfos...)
+	//log.Printf("RPC client -> MakeDialHTTP: HTTP dialing process finished)
+}
+
+// CreateClientHTTP create a Client instance via HTTP transport protocol
+func CreateClientHTTP(connection net.Conn, connectionInfo *server.ConnectionInfo) (*Client, error) {
+	//log.Printf("RPC client -> CreateClientHTTP: creating an HTTP RPC client...")
+	_, _ = io.WriteString(connection, fmt.Sprintf("CONNECT %s HTTP/1.0\n\n", server.DefaultRPCPath))
+
+	// Require successful HTTP response before switching to RPC protocol.
+	response, err := http.ReadResponse(bufio.NewReader(connection), &http.Request{Method: "CONNECT"})
+	if err == nil && response.Status == server.ConnectedMessage {
+		return CreateClient(connection, connectionInfo)
+	}
+	if err == nil {
+		err = errors.New("RPC client -> CreateClientHTTP error: unexpected HTTP response: " + response.Status)
+	}
+	return nil, err
+}
+
 // MakeDial enable client to connect to an RPC server
 func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
+	//log.Printf("RPC client -> MakeDial: initializing default dialing process...)
 	return MakeDialWithTimeout(CreateClient, transportProtocol, serverAddress, connectionInfos...)
+	//log.Printf("RPC client -> MakeDial: default dialing process finished)
 }
 
 // MakeDialWithTimeout enable client to connect to an RPC server within the configured timeout period
 func MakeDialWithTimeout(createClient newCreateClient, transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
+	//log.Printf("RPC client -> MakeDialWithTimeout: dialing and connecting to server %s with timeout configuration %+v...", serverAddress, connectionInfos)
 	connectionInfo, Error := parseConnectionInfo(connectionInfos...)
 	if Error != nil {
 		return nil, Error
@@ -177,6 +224,7 @@ func MakeDialWithTimeout(createClient newCreateClient, transportProtocol, server
 	case <-time.After(connectionInfo.ConnectionTimeout):
 		return nil, fmt.Errorf("RPC Client -> makeDialWithTimeout error: expect to connect server within %s, but connection timeout", connectionInfo.ConnectionTimeout)
 	case timeoutResult := <-timeoutChannel:
+		//log.Printf("RPC client -> MakeDial: http handler %p successfully dialed and connected to server %s in protocol %s", connection, serverAddress, transportProtocol)
 		return timeoutResult.client, timeoutResult.err
 	}
 }

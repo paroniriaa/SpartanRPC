@@ -21,7 +21,7 @@ const MagicNumber = 0x3bef5c
 
 // TODO: struct
 type Server struct {
-	serviceMap sync.Map
+	ServiceMap sync.Map
 }
 
 type Request struct {
@@ -36,7 +36,7 @@ type ConnectionInfo struct {
 	IDNumber          int
 	CoderType         coder.CoderType
 	ConnectionTimeout time.Duration
-	HandlingTimeout   time.Duration
+	ProcessingTimeout time.Duration
 }
 
 func New_server() *Server {
@@ -62,7 +62,7 @@ func ServerRegister(serviceValue interface{}) error {
 
 func (server *Server) ServerRegister(serviceValue interface{}) error {
 	newService := service.CreateService(serviceValue)
-	_, duplicate := server.serviceMap.LoadOrStore(newService.ServiceName, newService)
+	_, duplicate := server.ServiceMap.LoadOrStore(newService.ServiceName, newService)
 	if duplicate {
 		return errors.New("Server - AcceptConnection error: Service has already been defined: " + newService.ServiceName)
 	}
@@ -105,6 +105,7 @@ func (server *Server) serveCoder(message coder.Coder, connectionInfo *Connection
 	sending := new(sync.Mutex)
 	waitGroup := new(sync.WaitGroup)
 	for {
+
 		requests, err := server.read_request(message)
 		if requests == nil && err != nil {
 			break
@@ -114,7 +115,7 @@ func (server *Server) serveCoder(message coder.Coder, connectionInfo *Connection
 			continue
 		}
 		waitGroup.Add(1)
-		go server.request_handle(message, requests, sending, waitGroup, connectionInfo.HandlingTimeout)
+		go server.request_handle(message, requests, sending, waitGroup, connectionInfo.ProcessingTimeout)
 	}
 	waitGroup.Wait()
 	_ = message.Close()
@@ -161,7 +162,7 @@ func (server *Server) server_coder(message coder.Coder, connectionInfo *Connecti
 			continue
 		}
 		waitGroup.Add(1)
-		go server.request_handle(message, requests, sending, waitGroup, connectionInfo.HandlingTimeout)
+		go server.request_handle(message, requests, sending, waitGroup, connectionInfo.ProcessingTimeout)
 	}
 	waitGroup.Wait()
 	_ = message.Close()
@@ -182,6 +183,7 @@ func (server *Server) read_header(message coder.Coder) (*coder.MessageHeader, er
 }
 
 func (server *Server) read_request(message coder.Coder) (*Request, error) {
+
 	header, Error := server.read_header(message)
 	if Error != nil {
 		return nil, Error
@@ -216,7 +218,7 @@ func (server *Server) searchService(serviceMethod string) (services *service.Ser
 		return
 	}
 	serviceName, methodName := serviceMethod[:splitIndex], serviceMethod[splitIndex+1:]
-	input, serviceStatus := server.serviceMap.Load(serviceName)
+	input, serviceStatus := server.ServiceMap.Load(serviceName)
 	if !serviceStatus {
 		err = errors.New("Server - searchService error: " + serviceName + " serviceName didn't exist")
 		return
@@ -271,9 +273,9 @@ func (server *Server) request_handle(message coder.Coder, request *Request, send
 }
 
 const (
-	httpConnect = "200 Connected to RPC OK"
-	rpcPath     = "/_rpc_"
-	debugPath   = "/debug/rpc"
+	ConnectedMessage = "200 Connected to Spartan RPC"
+	DefaultRPCPath   = "/_srpc_"
+	DefaultDebugPath = "/debug/srpc"
 )
 
 func (server *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
@@ -288,17 +290,17 @@ func (server *Server) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 		log.Print("RPC hijacking ", request.RemoteAddr, ": ", err.Error())
 		return
 	}
-	_, _ = io.WriteString(connection, "HTTP/1.0 "+httpConnect+"\n\n")
+	_, _ = io.WriteString(connection, "HTTP/1.0 "+ConnectedMessage+"\n\n")
 	server.ServeConnection(connection)
 }
 
-func (server *Server) registerHandler() {
-	http.Handle(rpcPath, server)
-	http.Handle(debugPath, debugHTTP{server})
-	log.Println("rpc server debug path:", debugPath)
+func (server *Server) registerHandlerHTTP() {
+	http.Handle(DefaultRPCPath, server)
+	http.Handle(DefaultDebugPath, HTTPDebug{server})
+	log.Println("RPC server -> registerHandlerHTTP: registered debug path:", DefaultDebugPath)
 }
 
-// HandleHTTP is a convenient approach for default server to register HTTP handlers
-func HandleHTTP() {
-	default_server.registerHandler()
+// RegisterHandlerHTTP is a convenient approach for default server to register HTTP handlers
+func RegisterHandlerHTTP() {
+	default_server.registerHandlerHTTP()
 }
