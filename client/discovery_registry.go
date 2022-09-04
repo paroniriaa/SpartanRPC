@@ -36,7 +36,7 @@ func (registry *DiscoveryRegistryDiscovery) RefreshRegistry() error {
 		log.Println("Distributed RPC Registry refresh err:", Error)
 		return Error
 	}
-	servers := strings.Split(response.Header.Get("X-Geerpc-Servers"), ",")
+	servers := strings.Split(response.Header.Get("RPC-Servers"), ",")
 	registry.serverList = make([]string, 0, len(servers))
 	for _, server := range servers {
 		if strings.TrimSpace(server) != "" {
