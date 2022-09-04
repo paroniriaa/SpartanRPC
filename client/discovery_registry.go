@@ -44,6 +44,7 @@ func (registry *DiscoveryRegistryDiscovery) RefreshRegistry() error {
 		}
 	}
 	registry.lastUpdate = time.Now()
+	log.Println(registry.serverList)
 	return nil
 }
 
@@ -58,7 +59,7 @@ func (registry *DiscoveryRegistryDiscovery) GetAllServers() ([]string, error) {
 	if Error := registry.RefreshRegistry(); Error != nil {
 		return nil, Error
 	}
-	return registry.DiscoveryMultiServers.GetServerList()
+	return registry.DiscoveryMultiServers.GetAllServers()
 }
 
 func NewDiscoveryRegistry(registerAddress string, timeout time.Duration) *DiscoveryRegistryDiscovery {

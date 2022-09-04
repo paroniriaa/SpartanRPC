@@ -67,21 +67,6 @@ func startServer(registryAddr string, wg *sync.WaitGroup) {
 	server.AcceptConnection(l)
 }
 
-func call(registry string) {
-	d := client.NewDiscoveryRegistry(registry, 0)
-	xc := client.CreateDiscoveryClient(d, client.RandomSelectMode, nil)
-	defer func() { _ = xc.Close() }()
-	// send request & receive response
-	var wg sync.WaitGroup
-	for i := 0; i < 5; i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-			foo(xc, context.Background(), "call", "Foo.Sum", &Args{Num1: i, Num2: i * i})
-		}(i)
-	}
-	wg.Wait()
-}
 
 func foo(xc *client.DiscoveryClient, ctx context.Context, typ, serviceMethod string, args *Args) {
 	var reply int
@@ -99,6 +84,21 @@ func foo(xc *client.DiscoveryClient, ctx context.Context, typ, serviceMethod str
 	}
 }
 
+func call(registry string) {
+	d := client.NewDiscoveryRegistry(registry, 0)
+	xc := client.CreateDiscoveryClient(d, client.RandomSelectMode, nil)
+	defer func() { _ = xc.Close() }()
+	// send request & receive response
+	var wg sync.WaitGroup
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			foo(xc, context.Background(), "call", "Foo.Sum", &Args{Num1: i, Num2: i * i})
+		}(i)
+	}
+	wg.Wait()
+}
 
 func broadcast(registry string) {
 	d := client.NewDiscoveryRegistry(registry, 0)
@@ -133,8 +133,9 @@ func main() {
 	wg.Wait()
 
 	time.Sleep(time.Second)
-	call(registryAddr)
 	broadcast(registryAddr)
+	call(registryAddr)
+	//broadcast(registryAddr)
 }
 
 /*
