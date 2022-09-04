@@ -73,7 +73,7 @@ func (reg *Registry) ServeHTTP(context http.ResponseWriter, request *http.Reques
 		}
 		reg.addServer(address)
 	} else if request.Method == "GET" {
-		context.Header().Set("X-Geerpc-Servers", strings.Join(reg.aliveServerList(), ","))
+		context.Header().Set("RPC-Servers", strings.Join(reg.aliveServerList(), ","))
 	} else {
 		context.WriteHeader(http.StatusMethodNotAllowed)
 	}
