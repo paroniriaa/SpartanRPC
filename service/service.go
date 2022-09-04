@@ -7,9 +7,6 @@ import (
 	"sync/atomic"
 )
 
-// TODO: const
-
-// TODO: struct
 type Method struct {
 	methodType reflect.Method
 	InputType  reflect.Type
@@ -23,8 +20,6 @@ type Service struct {
 	serviceValue  reflect.Value
 	ServiceMethod map[string]*Method
 }
-
-//TODO: function
 
 func (method *Method) CallCounts() uint64 {
 	return atomic.LoadUint64(&method.callCounts)
@@ -109,7 +104,7 @@ func (service *Service) Call(method *Method, input, output reflect.Value) error 
 	if errors != nil {
 		return errors.(error)
 	} else {
-		log.Printf("RPC servr -> Call: %s.%s finished RPC call with input %v and output %v", service.ServiceName, method.methodType.Name, input, output.Elem())
+		log.Printf("RPC server -> Call: %s.%s finished RPC call with input %v and output %v", service.ServiceName, method.methodType.Name, input, output.Elem())
 		return nil
 	}
 }

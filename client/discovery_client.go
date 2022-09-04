@@ -85,7 +85,7 @@ func (discoveryClient *DiscoveryClient) Broadcast(contextInfo context.Context, s
 	var mutex sync.Mutex // protect err and replyDone
 	var err error
 	replyDone := output == nil // if output is nil, no need to set value
-	contextInfo, cancel := context.WithCancel(contextInfo)
+	contextInfo, cancelContext := context.WithCancel(contextInfo)
 	for _, rpcServerAddress := range serverList {
 		waitGroup.Add(1)
 		go func(address string) {
@@ -96,9 +96,10 @@ func (discoveryClient *DiscoveryClient) Broadcast(contextInfo context.Context, s
 			}
 			Error := discoveryClient.call(address, contextInfo, serviceMethod, inputs, clonedReply)
 			mutex.Lock()
-			if Error != nil && err == nil {
+			// if Error != nil && err == nil
+			if Error != nil {
 				err = Error
-				cancel() // if any call failed, cancel unfinished calls
+				cancelContext() // if any call failed, cancel unfinished calls
 			}
 			if Error == nil && !replyDone {
 				reflect.ValueOf(output).Elem().Set(reflect.ValueOf(clonedReply).Elem())
@@ -107,7 +108,7 @@ func (discoveryClient *DiscoveryClient) Broadcast(contextInfo context.Context, s
 			mutex.Unlock()
 		}(rpcServerAddress)
 	}
+	cancelContext() //calling the cancel function returned will only cancel the context returned and any contexts that use it as a parent context. This does not prevent the parent context from being canceled, it just means that calling your own cancel function won’t do it.
 	waitGroup.Wait()
-	cancel() //calling the cancel function returned will only cancel the context returned and any contexts that use it as a parent context. This does not prevent the parent context from being canceled, it just means that calling your own cancel function won’t do it.
 	return err
 }
