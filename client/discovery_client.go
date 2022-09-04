@@ -8,97 +8,104 @@ import (
 	"sync"
 )
 
-type Discovery_Client struct {
-	discovery      Discovery
-	mode           LoadBalancingMode
-	connectionInfo *server.ConnectionInfo
-	mutex          sync.Mutex // protect following
-	clients        map[string]*Client
+type DiscoveryClient struct {
+	discovery                   Discovery
+	loadBalancingMode           LoadBalancingMode
+	connectionInfo              *server.ConnectionInfo
+	mutex                       sync.Mutex // protect following
+	rpcServerAddressToClientMap map[string]*Client
 }
 
-var _ io.Closer = (*Discovery_Client)(nil)
+var _ io.Closer = (*DiscoveryClient)(nil)
 
-func CreateDiscoveryClient(discovery Discovery, mode LoadBalancingMode, connectionInfo *server.ConnectionInfo) *Discovery_Client {
-	return &Discovery_Client{discovery: discovery, mode: mode, connectionInfo: connectionInfo, clients: make(map[string]*Client)}
+func CreateDiscoveryClient(discovery Discovery, loadBalancingMode LoadBalancingMode, connectionInfo *server.ConnectionInfo) *DiscoveryClient {
+	discoveryClient := &DiscoveryClient{
+		discovery:                   discovery,
+		loadBalancingMode:           loadBalancingMode,
+		connectionInfo:              connectionInfo,
+		rpcServerAddressToClientMap: make(map[string]*Client),
+	}
+	return discoveryClient
 }
 
-func (DiscoveryClient *Discovery_Client) Close() error {
-	DiscoveryClient.mutex.Lock()
-	defer DiscoveryClient.mutex.Unlock()
-	for key, client := range DiscoveryClient.clients {
+func (discoveryClient *DiscoveryClient) Close() error {
+	discoveryClient.mutex.Lock()
+	defer discoveryClient.mutex.Unlock()
+	for rpcServerAddress, client := range discoveryClient.rpcServerAddressToClientMap {
 		_ = client.Close()
-		delete(DiscoveryClient.clients, key)
+		delete(discoveryClient.rpcServerAddressToClientMap, rpcServerAddress)
 	}
 	return nil
 }
 
-func (DiscoveryClient *Discovery_Client) dial(address string) (*Client, error) {
-	DiscoveryClient.mutex.Lock()
-	defer DiscoveryClient.mutex.Unlock()
-	client, ok := DiscoveryClient.clients[address]
-	if ok && !client.IsAvailable() {
+func (discoveryClient *DiscoveryClient) dial(rpcServerAddress string) (*Client, error) {
+	discoveryClient.mutex.Lock()
+	defer discoveryClient.mutex.Unlock()
+	client, keyExists := discoveryClient.rpcServerAddressToClientMap[rpcServerAddress]
+	if keyExists && !client.IsAvailable() {
 		_ = client.Close()
-		delete(DiscoveryClient.clients, address)
+		delete(discoveryClient.rpcServerAddressToClientMap, rpcServerAddress)
 		client = nil
 	}
 	if client == nil {
 		var Error error
-		client, Error = XMakeDial(address, DiscoveryClient.connectionInfo)
+		client, Error = XMakeDial(rpcServerAddress, discoveryClient.connectionInfo)
 		if Error != nil {
 			return nil, Error
 		}
-		DiscoveryClient.clients[address] = client
+		discoveryClient.rpcServerAddressToClientMap[rpcServerAddress] = client
 	}
 	return client, nil
 }
 
-func (DiscoveryClient *Discovery_Client) call(address string, contextInfo context.Context, serviceMethod string, args, reply interface{}) error {
-	client, Error := DiscoveryClient.dial(address)
+func (discoveryClient *DiscoveryClient) call(rpcServerAddress string, contextInfo context.Context, serviceDotMethod string, inputs, output interface{}) error {
+	client, Error := discoveryClient.dial(rpcServerAddress)
 	if Error != nil {
 		return Error
 	}
-	return client.Call(serviceMethod, args, reply, contextInfo)
+	return client.Call(serviceDotMethod, inputs, output, contextInfo)
 }
 
-func (DiscoveryClient *Discovery_Client) Call(contextInfo context.Context, serviceMethod string, args, reply interface{}) error {
-	address, err := DiscoveryClient.discovery.GetServer(DiscoveryClient.mode)
+func (discoveryClient *DiscoveryClient) Call(contextInfo context.Context, serviceMethod string, inputs, output interface{}) error {
+	rpcServerAddress, err := discoveryClient.discovery.GetServer(discoveryClient.loadBalancingMode)
 	if err != nil {
 		return err
 	}
-	return DiscoveryClient.call(address, contextInfo, serviceMethod, args, reply)
+	return discoveryClient.call(rpcServerAddress, contextInfo, serviceMethod, inputs, output)
 }
 
-func (DiscoveryClient *Discovery_Client) Broadcast(contextInfo context.Context, serviceMethod string, args, reply interface{}) error {
-	servers, Error := DiscoveryClient.discovery.GetAllServers()
+func (discoveryClient *DiscoveryClient) Broadcast(contextInfo context.Context, serviceMethod string, inputs, output interface{}) error {
+	serverList, Error := discoveryClient.discovery.GetServerList()
 	if Error != nil {
 		return Error
 	}
 	var waitGroup sync.WaitGroup
-	var mutex sync.Mutex // protect e and replyDone
-	var e error
-	replyDone := reply == nil // if reply is nil, don't need to set value
+	var mutex sync.Mutex // protect err and replyDone
+	var err error
+	replyDone := output == nil // if output is nil, no need to set value
 	contextInfo, cancel := context.WithCancel(contextInfo)
-	for _, address := range servers {
+	for _, rpcServerAddress := range serverList {
 		waitGroup.Add(1)
 		go func(address string) {
 			defer waitGroup.Done()
 			var clonedReply interface{}
-			if reply != nil {
-				clonedReply = reflect.New(reflect.ValueOf(reply).Elem().Type()).Interface()
+			if output != nil {
+				clonedReply = reflect.New(reflect.ValueOf(output).Elem().Type()).Interface()
 			}
-			Error := DiscoveryClient.call(address, contextInfo, serviceMethod, args, clonedReply)
+			Error := discoveryClient.call(address, contextInfo, serviceMethod, inputs, clonedReply)
 			mutex.Lock()
-			if Error != nil && e == nil {
-				e = Error
+			if Error != nil && err == nil {
+				err = Error
 				cancel() // if any call failed, cancel unfinished calls
 			}
 			if Error == nil && !replyDone {
-				reflect.ValueOf(reply).Elem().Set(reflect.ValueOf(clonedReply).Elem())
+				reflect.ValueOf(output).Elem().Set(reflect.ValueOf(clonedReply).Elem())
 				replyDone = true
 			}
 			mutex.Unlock()
-		}(address)
+		}(rpcServerAddress)
 	}
 	waitGroup.Wait()
-	return e
+	cancel() //calling the cancel function returned will only cancel the context returned and any contexts that use it as a parent context. This does not prevent the parent context from being canceled, it just means that calling your own cancel function won’t do it.
+	return err
 }

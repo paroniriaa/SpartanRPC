@@ -19,7 +19,7 @@ const (
 
 type Discovery interface {
 	GetServer(loadBalancingMode LoadBalancingMode) (string, error)
-	GetAllServers() ([]string, error)
+	GetServerList() ([]string, error)
 	RefreshServerList() error
 	UpdateServerList(serverList []string) error
 }
@@ -33,8 +33,8 @@ type DiscoveryMultiServers struct {
 
 var _ Discovery = (*DiscoveryMultiServers)(nil)
 
-// NewDiscoveryMultiServer creates a DiscoveryMultiServers instance
-func NewDiscoveryMultiServer(serverList []string) *DiscoveryMultiServers {
+// CreateDiscoveryMultiServer creates a DiscoveryMultiServers instance
+func CreateDiscoveryMultiServer(serverList []string) *DiscoveryMultiServers {
 	discovery := &DiscoveryMultiServers{
 		serverList:   serverList,
 		randomNumber: rand.New(rand.NewSource(time.Now().UnixNano())),
@@ -43,7 +43,7 @@ func NewDiscoveryMultiServer(serverList []string) *DiscoveryMultiServers {
 	return discovery
 }
 
-// GetServer get an available server based on the load balancing mode
+// GetServer get an available server based on the load balancing loadBalancingMode
 func (discovery *DiscoveryMultiServers) GetServer(loadBalancingMode LoadBalancingMode) (string, error) {
 	discovery.readWriteMutex.Lock()
 	defer discovery.readWriteMutex.Unlock()
@@ -63,8 +63,8 @@ func (discovery *DiscoveryMultiServers) GetServer(loadBalancingMode LoadBalancin
 	}
 }
 
-// GetAllServers get all available servers in discovery
-func (discovery *DiscoveryMultiServers) GetAllServers() ([]string, error) {
+// GetServerList get all available servers in discovery as list
+func (discovery *DiscoveryMultiServers) GetServerList() ([]string, error) {
 	discovery.readWriteMutex.RLock()
 	defer discovery.readWriteMutex.RUnlock()
 	// return a copy of discovery.serverList

@@ -146,12 +146,12 @@ func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*serve
 */
 
 // XMakeDial calls specific Dial function to connect to an RPC server based on the first parameter of rpcAddress.
-// rpcAddress is a general format (protocol@addr) to represent a rpc server
+// rpcServerAddress is a general format (protocol@addr) to represent a rpc server
 // eg, http@10.0.0.1:6666, tcp@10.0.0.1:7777, unix@/tmp/srpc.sock
-func XMakeDial(rpcAddress string, connectionInfos ...*server.ConnectionInfo) (*Client, error) {
-	parts := strings.Split(rpcAddress, "@")
+func XMakeDial(rpcServerAddress string, connectionInfos ...*server.ConnectionInfo) (*Client, error) {
+	parts := strings.Split(rpcServerAddress, "@")
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("RPC client -> XMakeDial err: wrong format for rpcAddress, expect 'protocol@addr', but got '%s'", rpcAddress)
+		return nil, fmt.Errorf("RPC client -> XMakeDial err: wrong format for rpcServerAddress, expect 'protocol@addr', but got '%s'", rpcServerAddress)
 	}
 	protocol, addr := parts[0], parts[1]
 	switch protocol {
