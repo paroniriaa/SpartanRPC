@@ -26,13 +26,19 @@ func (t *Arithmetic) Addition(input *Input, output *Output) error {
 	return nil
 }
 
-func createServer(addressChannel chan string) {
+func (t *Arithmetic) SleepThenAddition(input *Input, output *Output) error {
+	time.Sleep(time.Second * time.Duration(input.A))
+	output.C = input.A + input.B
+	return nil
+}
+
+func createServer(addressChannel chan string, addressPort string) {
 	var arithmetic Arithmetic
 	err := server.ServerRegister(&arithmetic)
 	if err != nil {
-		log.Fatal("Server register error:", err)
+		log.Println("Server register error:", err)
 	}
-	listener, err := net.Listen("tcp", ":6666")
+	listener, err := net.Listen("tcp", addressPort)
 	if err != nil {
 		log.Fatal("Server Network issue:", err)
 	}
@@ -41,13 +47,13 @@ func createServer(addressChannel chan string) {
 	server.AcceptConnection(listener)
 }
 
-func createServerHTTP(addressChannel chan string) {
+func createServerHTTP(addressChannel chan string, addressPort string) {
 	var arithmetic Arithmetic
 	err := server.ServerRegister(&arithmetic)
 	if err != nil {
-		log.Fatal("Server register error:", err)
+		log.Println("Server register error:", err)
 	}
-	listener, err := net.Listen("tcp", ":7777")
+	listener, err := net.Listen("tcp", addressPort)
 	if err != nil {
 		log.Fatal("Server Network issue:", err)
 	}
@@ -68,7 +74,8 @@ func createClientAndCall(addressChannel chan string) {
 	for n < 2 {
 		waitGroup.Add(1)
 		go func(n int) {
-			clientCallRPC(testClient, n, &waitGroup)
+			defer waitGroup.Done()
+			clientCallRPC(testClient, n)
 		}(n)
 		n++
 	}
@@ -84,35 +91,109 @@ func createClientAndCallHTTP(addressChannel chan string) {
 	n := 0
 	for n < 2 {
 		waitGroup.Add(1)
-		//
 		go func(n int) {
-			clientCallRPC(testClient, n, &waitGroup)
+			defer waitGroup.Done()
+			clientCallRPC(testClient, n)
 		}(n)
 		n++
 	}
 	waitGroup.Wait()
 }
 
-func clientCallRPC(client *client.Client, number int, waitGroup *sync.WaitGroup) {
-	defer waitGroup.Done()
-	input := &Input{A: number, B: number ^ 2}
+func clientCallRPC(client *client.Client, number int) {
+	input := &Input{A: number, B: number * number}
 	output := &Output{}
 	timeOutContext, _ := context.WithTimeout(context.Background(), time.Second*5)
 	if err := client.Call("Arithmetic.Addition", input, output, timeOutContext); err != nil {
-		log.Fatal("Client RPC call Demo.Sum error:", err)
+		log.Fatal("Client RPC call Arithmetic.Addition error: ", err)
 	}
 	log.Printf("%d + %d = %d", input.A, input.B, output.C)
 }
 
+func createDiscoveryClientAndCall(addressChannelA chan string, addressChannelB chan string) {
+	addressA := <-addressChannelA
+	addressB := <-addressChannelB
+	discovery := client.CreateDiscoveryMultiServer([]string{"tcp@" + addressA, "tcp@" + addressB})
+	testDiscoveryClient := client.CreateDiscoveryClient(discovery, client.RandomSelectMode, nil)
+	defer func() { _ = testDiscoveryClient.Close() }()
+
+	time.Sleep(time.Second)
+	var waitGroup sync.WaitGroup
+	n := 0
+	for n < 5 {
+		waitGroup.Add(1)
+		go func(n int) {
+			defer waitGroup.Done()
+			discoveryClientCallRPC(testDiscoveryClient, n)
+			discoveryClientBroadcastRPC(testDiscoveryClient, n)
+		}(n)
+		n++
+	}
+	waitGroup.Wait()
+}
+
+func createDiscoveryClientAndBroadcast(addressChannelA chan string, addressChannelB chan string) {
+	addressA := <-addressChannelA
+	addressB := <-addressChannelB
+	discovery := client.CreateDiscoveryMultiServer([]string{"tcp@" + addressA, "tcp@" + addressB})
+	testDiscoveryClient := client.CreateDiscoveryClient(discovery, client.RandomSelectMode, nil)
+	defer func() { _ = testDiscoveryClient.Close() }()
+
+	time.Sleep(time.Second)
+	var waitGroup sync.WaitGroup
+	n := 0
+	for n < 5 {
+		waitGroup.Add(1)
+		go func(n int) {
+			defer waitGroup.Done()
+			discoveryClientBroadcastRPC(testDiscoveryClient, n)
+		}(n)
+		n++
+	}
+	waitGroup.Wait()
+}
+
+func discoveryClientCallRPC(discoveryClient *client.DiscoveryClient, number int) {
+	input := &Input{A: number, B: number * number}
+	output := &Output{}
+	//expect no timeout
+	timeOutContext, _ := context.WithTimeout(context.Background(), time.Second*100)
+	if err := discoveryClient.Call(timeOutContext, "Arithmetic.Addition", input, output); err != nil {
+		log.Fatal("discoveryClient RPC call Arithmetic.Addition error: ", err)
+	}
+	log.Printf("%s %s success: %d + %d = %d", "call", "Arithmetic.Addition", input.A, input.B, output.C)
+}
+
+func discoveryClientBroadcastRPC(discoveryClient *client.DiscoveryClient, number int) {
+	input := &Input{A: number, B: number * number}
+	output := &Output{}
+	//expect 2-5 timeout
+	timeOutContext, _ := context.WithTimeout(context.Background(), time.Second*2)
+	if err := discoveryClient.Broadcast(timeOutContext, "Arithmetic.SleepThenAddition", input, output); err != nil {
+		log.Fatal("discoveryClient RPC call Arithmetic.SleepThenAddition error: ", err)
+	}
+	log.Printf("%s %s success: %d + %d = %d", "call", "Arithmetic.SleepThenAddition", input.A, input.B, output.C)
+}
+
 func main() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
-	addressChannel := make(chan string)
 
 	//TCP (normal), server address 6666
-	//go createServer(addressChannel)
+	//addressChannel := make(chan string)
+	//go createServer(addressChannel, ":6666")
 	//createClientAndCall(addressChannel)
 
 	//HTTP, server address 7777
-	go createClientAndCallHTTP(addressChannel)
-	createServerHTTP(addressChannel)
+	//addressChannel := make(chan string)
+	//go createClientAndCallHTTP(addressChannel)
+	//createServerHTTP(addressChannel, ":7777")
+
+	addressChannelA := make(chan string)
+	addressChannelB := make(chan string)
+	go createServer(addressChannelA, ":0")
+	go createServer(addressChannelB, ":0")
+	time.Sleep(time.Second)
+	createDiscoveryClientAndCall(addressChannelA, addressChannelB)
+	createDiscoveryClientAndBroadcast(addressChannelA, addressChannelB)
+
 }
