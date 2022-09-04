@@ -61,7 +61,7 @@ func (registry *DiscoveryRegistryDiscovery) GetAllServers() ([]string, error) {
 	return registry.DiscoveryMultiServers.GetAllServers()
 }
 
-func NewGeeRegistryDiscovery(registerAddress string, timeout time.Duration) *DiscoveryRegistryDiscovery {
+func NewDiscoveryRegistry(registerAddress string, timeout time.Duration) *DiscoveryRegistryDiscovery {
 	if timeout == 0 {
 		timeout = defaultTimeout
 	}
