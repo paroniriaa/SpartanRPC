@@ -76,7 +76,7 @@ func (discoveryClient *DiscoveryClient) Call(contextInfo context.Context, servic
 }
 
 func (discoveryClient *DiscoveryClient) Broadcast(contextInfo context.Context, serviceMethod string, inputs, output interface{}) error {
-	serverList, Error := discoveryClient.discovery.GetAllServers()
+	serverList, Error := discoveryClient.discovery.GetServerList()
 	log.Println(serverList)
 	if Error != nil {
 		return Error

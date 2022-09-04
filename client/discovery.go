@@ -19,7 +19,7 @@ const (
 
 type Discovery interface {
 	GetServer(loadBalancingMode LoadBalancingMode) (string, error)
-	GetAllServers() ([]string, error)
+	GetServerList() ([]string, error)
 	RefreshServerList() error
 	UpdateServerList(serverList []string) error
 }
@@ -64,7 +64,7 @@ func (discovery *DiscoveryMultiServers) GetServer(loadBalancingMode LoadBalancin
 }
 
 // GetServerList get all available servers in discovery as list
-func (discovery *DiscoveryMultiServers) GetAllServers() ([]string, error) {
+func (discovery *DiscoveryMultiServers) GetServerList() ([]string, error) {
 	discovery.readWriteMutex.RLock()
 	defer discovery.readWriteMutex.RUnlock()
 	// return a copy of discovery.serverList
