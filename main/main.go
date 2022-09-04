@@ -44,7 +44,7 @@ func createServer(addressChannel chan string) {
 	server.AcceptConnection(listener)
 }
 
-func arithmetic(cli *xclient.XClient, message context.Context, callingMethod, serviceName string, input *Input) {
+func arithmetic(cli *client.Discovery_Client, message context.Context, callingMethod, serviceName string, input *Input) {
 	var output int
 	var err error
 
