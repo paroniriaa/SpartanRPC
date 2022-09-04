@@ -58,7 +58,7 @@ func (registry *DiscoveryRegistryDiscovery) GetAllServers() ([]string, error) {
 	if Error := registry.RefreshRegistry(); Error != nil {
 		return nil, Error
 	}
-	return registry.DiscoveryMultiServers.GetAllServers()
+	return registry.DiscoveryMultiServers.GetServerList()
 }
 
 func NewDiscoveryRegistry(registerAddress string, timeout time.Duration) *DiscoveryRegistryDiscovery {
@@ -66,7 +66,7 @@ func NewDiscoveryRegistry(registerAddress string, timeout time.Duration) *Discov
 		timeout = defaultTimeout
 	}
 	discoveryRegistry := &DiscoveryRegistryDiscovery{
-		DiscoveryMultiServers: NewDiscoveryMultiServer(make([]string, 0)),
+		DiscoveryMultiServers: CreateDiscoveryMultiServer(make([]string, 0)),
 		registry:              registerAddress,
 		timeout:               timeout,
 	}

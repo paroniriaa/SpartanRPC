@@ -21,7 +21,7 @@ type ServerInformation struct {
 }
 
 const (
-	defaultPath    = "./registry"
+	defaultPath    = "/_rpc_/registry"
 	defaultTimeout = time.Minute * 5
 )
 
