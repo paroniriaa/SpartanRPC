@@ -64,7 +64,7 @@ func (discoveryClient *DiscoveryClient) call(rpcServerAddress string, contextInf
 	if Error != nil {
 		return Error
 	}
-	log.Printf("RPC discoveryClient -> Call: Client %p invoking RPC request to RPC server %s on function %s with inputs -> %v", client, rpcServerAddress, serviceDotMethod, inputs)
+	log.Printf("RPC discoveryClient -> Call: RPC client %p invoking RPC request to RPC server %s on function %s with inputs -> %v", client, rpcServerAddress, serviceDotMethod, inputs)
 	return client.Call(serviceDotMethod, inputs, output, contextInfo)
 }
 

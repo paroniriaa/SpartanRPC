@@ -234,7 +234,7 @@ func (server *Server) request_handle(message coder.Coder, request *Request, send
 	responseSendTimeoutChannel := make(chan struct{})
 	go func() {
 		//request.service.ServiceName, request.method.MethodName
-		log.Printf("RPC server -> requestHandle: server %s is handling and redircting RPC call %d to service %s with inputs -> %v", server.ServerAddress, request.header.SequenceNumber, request.header.ServiceDotMethod, request.input)
+		log.Printf("RPC server -> requestHandle: RPC server %s is handling and redircting RPC call %d to service %s with inputs -> %v", server.ServerAddress, request.header.SequenceNumber, request.header.ServiceDotMethod, request.input)
 		Error := request.service.Call(request.method, request.input, request.output)
 		serviceCallTimeoutChannel <- struct{}{}
 		if Error != nil {

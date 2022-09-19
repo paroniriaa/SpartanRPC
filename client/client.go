@@ -140,7 +140,7 @@ func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*serve
 			_ = connection.Close()
 		}
 	}()
-	//log.Printf("RPC client -> MakeDial: http handler %p successfully dialed and connected to server %s in protocol %s", connection, serverAddress, transportProtocol)
+	//log.Printf("RPC client -> MakeDial: HTTP handler %p successfully dialed and connected to server %s in protocol %s", connection, serverAddress, transportProtocol)
 	return CreateClient(connection, connectionInfo)
 }
 */
@@ -185,7 +185,7 @@ func CreateClientHTTP(connection net.Conn, connectionInfo *server.ConnectionInfo
 	return nil, err
 }
 
-// MakeDial enable client to connect to an RPC server
+// MakeDial enable RPC client to connect to an RPC server
 func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
 	//log.Printf("RPC client -> MakeDial: initializing default dialing process...)
 	return MakeDialWithTimeout(CreateClient, transportProtocol, serverAddress, connectionInfos...)
@@ -212,8 +212,8 @@ func MakeDialWithTimeout(createClient newCreateClient, transportProtocol, server
 	//use go routine to create client
 	timeoutChannel := make(chan clientTimeout)
 	go func() {
-		client, Error := createClient(connection, connectionInfo)
-		timeoutChannel <- clientTimeout{client, Error}
+		newClient, err := createClient(connection, connectionInfo)
+		timeoutChannel <- clientTimeout{newClient, err}
 	}()
 	if connectionInfo.ConnectionTimeout == 0 {
 		timeoutResult := <-timeoutChannel
@@ -224,7 +224,7 @@ func MakeDialWithTimeout(createClient newCreateClient, transportProtocol, server
 	case <-time.After(connectionInfo.ConnectionTimeout):
 		return nil, fmt.Errorf("RPC Client -> makeDialWithTimeout error: expect to connect server within %s, but connection timeout", connectionInfo.ConnectionTimeout)
 	case timeoutResult := <-timeoutChannel:
-		//log.Printf("RPC client -> MakeDial: http handler %p successfully dialed and connected to server %s in protocol %s", connection, serverAddress, transportProtocol)
+		//log.Printf("RPC client -> MakeDial: HTTP handler %p successfully dialed and connected to server %s in protocol %s", connection, serverAddress, transportProtocol)
 		return timeoutResult.client, timeoutResult.err
 	}
 }
@@ -295,7 +295,7 @@ func (client *Client) Call(serviceDotMethod string, inputs, output interface{}, 
 
 // finishGo finish the RPC call and end the Go channel
 func (call *Call) finishGo() {
-	//log.Printf("RPC client -> finishGo: go channel %p finished the assigned call %p and destroyed", call.Finish, call)
+	//log.Printf("RPC client -> finishGo: Go channel %p finished the assigned call %p and destroyed", call.Finish, call)
 	call.Finish <- call
 }
 
@@ -314,7 +314,7 @@ func (client *Client) StartGo(serviceDotMethod string, inputs, output interface{
 		Output:           output,
 		Finish:           finish,
 	}
-	//log.Printf("RPC client -> StartGo: go channel %p created and handling client %p call %p...", finish, client, call)
+	//log.Printf("RPC client -> StartGo: Go channel %p created and handling client %p call %p...", finish, client, call)
 	client.sendCall(call)
 	return call
 }
@@ -323,7 +323,7 @@ func (client *Client) StartGo(serviceDotMethod string, inputs, output interface{
 func (client *Client) sendCall(call *Call) {
 	defer client.requestMutex.Unlock()
 	client.requestMutex.Lock()
-	//log.Printf("RPC client -> sendCall: client %p sending RPC request %p...", client, call)
+	//log.Printf("RPC client -> sendCall: RPC client %p sending RPC request %p...", client, call)
 	sequenceNumber, Error := client.addCall(call)
 	if Error != nil {
 		call.Error = Error
@@ -337,7 +337,7 @@ func (client *Client) sendCall(call *Call) {
 	requestHeader := &client.requestHeader
 	requestBody := call.Inputs
 	Error = client.coder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
-	//log.Printf("RPC client -> sendCall: client %p sent RPC request %p", client, call)
+	//log.Printf("RPC client -> sendCall: RPC client %p sent RPC request %p", client, call)
 	if Error != nil {
 		if call := client.deleteCall(sequenceNumber); call != nil {
 			call.Error = Error
@@ -349,7 +349,7 @@ func (client *Client) sendCall(call *Call) {
 // receiveCall receive and decode any RPC response sent from server, and delete corresponding RPC call from client's pending call list
 func (client *Client) receiveCall() {
 	var Error error
-	//log.Printf("RPC client -> receiveCall: client %p start listing on connection for all future RPC response...", client)
+	//log.Printf("RPC client -> receiveCall: RPC client %p start listing on connection for all future RPC response...", client)
 	for Error == nil {
 		var response coder.MessageHeader
 		if Error = client.coder.DecodeMessageHeader(&response); Error != nil {
@@ -368,7 +368,7 @@ func (client *Client) receiveCall() {
 				call.Error = errors.New("RPC Client -> receiveCall error: cannot decode message body" + Error.Error())
 			}
 			actualOutput := reflect.ValueOf(call.Output).Elem()
-			log.Printf("RPC client -> receiveCall: client %p received call %p response -> %v", client, call, actualOutput)
+			log.Printf("RPC client -> receiveCall: RPC client %p received call %p response -> %v", client, call, actualOutput)
 			call.finishGo()
 		}
 	}

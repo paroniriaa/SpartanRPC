@@ -94,7 +94,7 @@ func (service *Service) createMethod() {
 				InputType:  inputType,
 				OutputType: outputType,
 			}
-			log.Printf("RPC service -> createMethod: %s.%s created and registered\n", service.ServiceName, method.Name)
+			log.Printf("RPC service -> createMethod: RPC service %s.%s created and registered\n", service.ServiceName, method.Name)
 		}
 	}
 }
@@ -107,7 +107,7 @@ func (service *Service) Call(method *Method, input, output reflect.Value) error 
 	if errors != nil {
 		return errors.(error)
 	} else {
-		log.Printf("RPC service -> Call: %s.%s finished RPC call with input %v and output %v", service.ServiceName, method.MethodName, input, output.Elem())
+		log.Printf("RPC service -> Call: RPC service %s.%s finished RPC call with input %v and output %v", service.ServiceName, method.MethodName, input, output.Elem())
 		return nil
 	}
 }
