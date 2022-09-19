@@ -21,7 +21,8 @@ const MagicNumber = 0x3bef5c
 
 // TODO: struct
 type Server struct {
-	ServiceMap sync.Map
+	ServerAddress net.Addr
+	ServiceMap    sync.Map
 }
 
 type Request struct {
@@ -39,37 +40,27 @@ type ConnectionInfo struct {
 	ProcessingTimeout time.Duration
 }
 
-func New_server() *Server {
-	return &Server{}
-}
-
-//TODO: variable
 var DefaultConnectionInfo = &ConnectionInfo{
 	IDNumber:          MagicNumber,
 	CoderType:         coder.Json,
 	ConnectionTimeout: time.Second * 10,
 }
 
-var default_server = New_server()
-
 var invalidRequest = struct{}{}
 
-//TODO: function
-
-func ServerRegister(serviceValue interface{}) error {
-	return default_server.ServerRegister(serviceValue)
+func CreateServer(serverAddress net.Addr) *Server {
+	return &Server{ServerAddress: serverAddress}
 }
 
 func (server *Server) ServerRegister(serviceValue interface{}) error {
 	newService := service.CreateService(serviceValue)
 	_, duplicate := server.ServiceMap.LoadOrStore(newService.ServiceName, newService)
 	if duplicate {
-		return errors.New("Server - AcceptConnection error: Service has already been defined: " + newService.ServiceName)
+		return errors.New("RPC Server > ServerRegister error: Service has already been defined: " + newService.ServiceName)
 	}
+	log.Printf("RPC server -> ServerRegister: RPC Server %p registerd service %+v and hosting on address %s", server, newService, server.ServerAddress)
 	return nil
 }
-
-func AcceptConnection(listener net.Listener) { default_server.AcceptConnection(listener) }
 
 func (server *Server) AcceptConnection(listener net.Listener) {
 	for {
@@ -242,6 +233,8 @@ func (server *Server) request_handle(message coder.Coder, request *Request, send
 	serviceCallTimeoutChannel := make(chan struct{})
 	responseSendTimeoutChannel := make(chan struct{})
 	go func() {
+		//request.service.ServiceName, request.method.MethodName
+		log.Printf("RPC server -> requestHandle: server %s is handling and redircting RPC call %d to service %s with inputs -> %v", server.ServerAddress, request.header.SequenceNumber, request.header.ServiceDotMethod, request.input)
 		Error := request.service.Call(request.method, request.input, request.output)
 		serviceCallTimeoutChannel <- struct{}{}
 		if Error != nil {
@@ -292,13 +285,9 @@ func (server *Server) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 	server.ServeConnection(connection)
 }
 
-func (server *Server) registerHandlerHTTP() {
+// RegisterHandlerHTTP is a convenient approach for default server to register HTTP handlers
+func (server *Server) RegisterHandlerHTTP() {
 	http.Handle(DefaultRPCPath, server)
 	http.Handle(DefaultDebugPath, HTTPDebug{server})
 	log.Println("RPC server -> registerHandlerHTTP: registered debug path:", DefaultDebugPath)
-}
-
-// RegisterHandlerHTTP is a convenient approach for default server to register HTTP handlers
-func RegisterHandlerHTTP() {
-	default_server.registerHandlerHTTP()
 }
