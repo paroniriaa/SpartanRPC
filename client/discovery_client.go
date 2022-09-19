@@ -76,14 +76,14 @@ func (discoveryClient *DiscoveryClient) Call(contextInfo context.Context, servic
 	return discoveryClient.call(rpcServerAddress, contextInfo, serviceDotMethod, inputs, output)
 }
 
-func (discoveryClient *DiscoveryClient) Broadcast(contextInfo context.Context, serviceMethod string, inputs, output interface{}) error {
+func (discoveryClient *DiscoveryClient) Broadcast(contextInfo context.Context, serviceDotMethod string, inputs, output interface{}) error {
 	serverList, Error := discoveryClient.discovery.GetServerList()
 	if Error != nil {
 		return Error
 	}
 	var waitGroup sync.WaitGroup
-	var mutex sync.Mutex // protect err and replyDone
-	var err error
+	var mutex sync.Mutex // protect broadcastError and replyDone
+	var broadcastError error
 	replyDone := output == nil // if output is nil, no need to set value
 	contextInfo, cancelContext := context.WithCancel(contextInfo)
 	for _, rpcServerAddress := range serverList {
@@ -94,14 +94,15 @@ func (discoveryClient *DiscoveryClient) Broadcast(contextInfo context.Context, s
 			if output != nil {
 				clonedReply = reflect.New(reflect.ValueOf(output).Elem().Type()).Interface()
 			}
-			Error := discoveryClient.call(address, contextInfo, serviceMethod, inputs, clonedReply)
+			err := discoveryClient.call(address, contextInfo, serviceDotMethod, inputs, clonedReply)
 			mutex.Lock()
-			if Error != nil && err == nil {
-				//if Error != nil {
-				err = Error
+			if err != nil && broadcastError == nil {
+				//if err != nil {
+				broadcastError = err
 				cancelContext() // if any call failed, cancel unfinished calls
 			}
-			if Error == nil && !replyDone {
+			if err == nil && !replyDone {
+				log.Printf("RPC DiscoveryClient -> Broadcast: DiscoveryClient %p recieved RPC response from RPC server %s first for RPC request invoking function %s with inputs -> %v", discoveryClient, address, serviceDotMethod, inputs)
 				reflect.ValueOf(output).Elem().Set(reflect.ValueOf(clonedReply).Elem())
 				replyDone = true
 			}
@@ -109,5 +110,5 @@ func (discoveryClient *DiscoveryClient) Broadcast(contextInfo context.Context, s
 		}(rpcServerAddress)
 	}
 	waitGroup.Wait()
-	return err
+	return broadcastError
 }
