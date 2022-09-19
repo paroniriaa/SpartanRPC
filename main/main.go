@@ -203,7 +203,7 @@ func main() {
 	addressA := <-addressChannelA
 	addressB := <-addressChannelB
 	time.Sleep(time.Second)
-	createDiscoveryClientAndCall(addressA, addressB)
-	//createDiscoveryClientAndBroadcast(addressA, addressB)
+	//createDiscoveryClientAndCall(addressA, addressB)
+	createDiscoveryClientAndBroadcast(addressA, addressB)
 
 }
