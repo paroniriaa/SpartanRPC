@@ -4,6 +4,7 @@ import (
 	"Distributed-RPC-Framework/server"
 	"context"
 	"io"
+	"log"
 	"reflect"
 	"sync"
 )
@@ -63,15 +64,16 @@ func (discoveryClient *DiscoveryClient) call(rpcServerAddress string, contextInf
 	if Error != nil {
 		return Error
 	}
+	log.Printf("RPC discoveryClient -> Call: Client %p invoking RPC request to RPC server %s on function %s with inputs -> %v", client, rpcServerAddress, serviceDotMethod, inputs)
 	return client.Call(serviceDotMethod, inputs, output, contextInfo)
 }
 
-func (discoveryClient *DiscoveryClient) Call(contextInfo context.Context, serviceMethod string, inputs, output interface{}) error {
+func (discoveryClient *DiscoveryClient) Call(contextInfo context.Context, serviceDotMethod string, inputs, output interface{}) error {
 	rpcServerAddress, err := discoveryClient.discovery.GetServer(discoveryClient.loadBalancingMode)
 	if err != nil {
 		return err
 	}
-	return discoveryClient.call(rpcServerAddress, contextInfo, serviceMethod, inputs, output)
+	return discoveryClient.call(rpcServerAddress, contextInfo, serviceDotMethod, inputs, output)
 }
 
 func (discoveryClient *DiscoveryClient) Broadcast(contextInfo context.Context, serviceMethod string, inputs, output interface{}) error {
@@ -94,8 +96,8 @@ func (discoveryClient *DiscoveryClient) Broadcast(contextInfo context.Context, s
 			}
 			Error := discoveryClient.call(address, contextInfo, serviceMethod, inputs, clonedReply)
 			mutex.Lock()
-			// if Error != nil && err == nil
-			if Error != nil {
+			if Error != nil && err == nil {
+				//if Error != nil {
 				err = Error
 				cancelContext() // if any call failed, cancel unfinished calls
 			}
@@ -106,7 +108,6 @@ func (discoveryClient *DiscoveryClient) Broadcast(contextInfo context.Context, s
 			mutex.Unlock()
 		}(rpcServerAddress)
 	}
-	cancelContext() //calling the cancel function returned will only cancel the context returned and any contexts that use it as a parent context. This does not prevent the parent context from being canceled, it just means that calling your own cancel function won’t do it.
 	waitGroup.Wait()
 	return err
 }
