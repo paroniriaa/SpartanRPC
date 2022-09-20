@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"reflect"
 	"strings"
 	"sync"
@@ -20,7 +21,8 @@ const MagicNumber = 0x3bef5c
 
 // TODO: struct
 type Server struct {
-	serviceMap sync.Map
+	ServerAddress net.Addr
+	ServiceMap    sync.Map
 }
 
 type Request struct {
@@ -35,40 +37,30 @@ type ConnectionInfo struct {
 	IDNumber          int
 	CoderType         coder.CoderType
 	ConnectionTimeout time.Duration
-	HandlingTimeout   time.Duration
+	ProcessingTimeout time.Duration
 }
 
-func New_server() *Server {
-	return &Server{}
-}
-
-//TODO: variable
 var DefaultConnectionInfo = &ConnectionInfo{
 	IDNumber:          MagicNumber,
 	CoderType:         coder.Json,
 	ConnectionTimeout: time.Second * 10,
 }
 
-var default_server = New_server()
-
 var invalidRequest = struct{}{}
 
-//TODO: function
-
-func ServerRegister(serviceValue interface{}) error {
-	return default_server.ServerRegister(serviceValue)
+func CreateServer(serverAddress net.Addr) *Server {
+	return &Server{ServerAddress: serverAddress}
 }
 
 func (server *Server) ServerRegister(serviceValue interface{}) error {
 	newService := service.CreateService(serviceValue)
-	_, duplicate := server.serviceMap.LoadOrStore(newService.ServiceName, newService)
+	_, duplicate := server.ServiceMap.LoadOrStore(newService.ServiceName, newService)
 	if duplicate {
-		return errors.New("Server - AcceptConnection error: Service has already been defined: " + newService.ServiceName)
+		return errors.New("RPC Server > ServerRegister error: Service has already been defined: " + newService.ServiceName)
 	}
+	log.Printf("RPC server -> ServerRegister: RPC Server %p registerd service %+v and hosting on address %s", server, newService, server.ServerAddress)
 	return nil
 }
-
-func AcceptConnection(listener net.Listener) { default_server.AcceptConnection(listener) }
 
 func (server *Server) AcceptConnection(listener net.Listener) {
 	for {
@@ -113,7 +105,7 @@ func (server *Server) serveCoder(message coder.Coder, connectionInfo *Connection
 			continue
 		}
 		waitGroup.Add(1)
-		go server.request_handle(message, requests, sending, waitGroup, connectionInfo.HandlingTimeout)
+		go server.request_handle(message, requests, sending, waitGroup, connectionInfo.ProcessingTimeout)
 	}
 	waitGroup.Wait()
 	_ = message.Close()
@@ -160,7 +152,7 @@ func (server *Server) server_coder(message coder.Coder, connectionInfo *Connecti
 			continue
 		}
 		waitGroup.Add(1)
-		go server.request_handle(message, requests, sending, waitGroup, connectionInfo.HandlingTimeout)
+		go server.request_handle(message, requests, sending, waitGroup, connectionInfo.ProcessingTimeout)
 	}
 	waitGroup.Wait()
 	_ = message.Close()
@@ -215,7 +207,7 @@ func (server *Server) searchService(serviceMethod string) (services *service.Ser
 		return
 	}
 	serviceName, methodName := serviceMethod[:splitIndex], serviceMethod[splitIndex+1:]
-	input, serviceStatus := server.serviceMap.Load(serviceName)
+	input, serviceStatus := server.ServiceMap.Load(serviceName)
 	if !serviceStatus {
 		err = errors.New("Server - searchService error: " + serviceName + " serviceName didn't exist")
 		return
@@ -241,6 +233,8 @@ func (server *Server) request_handle(message coder.Coder, request *Request, send
 	serviceCallTimeoutChannel := make(chan struct{})
 	responseSendTimeoutChannel := make(chan struct{})
 	go func() {
+		//request.service.ServiceName, request.method.MethodName
+		log.Printf("RPC server -> requestHandle: server %s is handling and redircting RPC call %d to service %s with inputs -> %v", server.ServerAddress, request.header.SequenceNumber, request.header.ServiceDotMethod, request.input)
 		Error := request.service.Call(request.method, request.input, request.output)
 		serviceCallTimeoutChannel <- struct{}{}
 		if Error != nil {
@@ -267,4 +261,33 @@ func (server *Server) request_handle(message coder.Coder, request *Request, send
 		<-responseSendTimeoutChannel
 	}
 	defer waitGroup.Done()
+}
+
+const (
+	ConnectedMessage = "200 Connected to Spartan RPC"
+	DefaultRPCPath   = "/_srpc_"
+	DefaultDebugPath = "/debug/srpc"
+)
+
+func (server *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != "CONNECT" {
+		writer.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		writer.WriteHeader(http.StatusMethodNotAllowed)
+		_, _ = io.WriteString(writer, "405 must CONNECT\n")
+		return
+	}
+	connection, _, err := writer.(http.Hijacker).Hijack()
+	if err != nil {
+		log.Print("RPC hijacking ", request.RemoteAddr, ": ", err.Error())
+		return
+	}
+	_, _ = io.WriteString(connection, "HTTP/1.0 "+ConnectedMessage+"\n\n")
+	server.ServeConnection(connection)
+}
+
+// RegisterHandlerHTTP is a convenient approach for default server to register HTTP handlers
+func (server *Server) RegisterHandlerHTTP() {
+	http.Handle(DefaultRPCPath, server)
+	http.Handle(DefaultDebugPath, HTTPDebug{server})
+	log.Println("RPC server -> registerHandlerHTTP: registered debug path:", DefaultDebugPath)
 }

@@ -7,10 +7,8 @@ import (
 	"sync/atomic"
 )
 
-// TODO: const
-
-// TODO: struct
 type Method struct {
+	MethodName string
 	methodType reflect.Method
 	InputType  reflect.Type
 	OutputType reflect.Type
@@ -23,8 +21,6 @@ type Service struct {
 	serviceValue  reflect.Value
 	ServiceMethod map[string]*Method
 }
-
-//TODO: function
 
 func (method *Method) CallCounts() uint64 {
 	return atomic.LoadUint64(&method.callCounts)
@@ -71,13 +67,14 @@ func (service *Service) createMethod() {
 	service.ServiceMethod = make(map[string]*Method)
 	for i := 0; i < service.serviceType.NumMethod(); i++ {
 		method := service.serviceType.Method(i)
+		methodName := method.Name
 		methodType := method.Type
 		switch {
 		case methodType.NumIn() != 3:
-			log.Printf("service - createMethod error: methodType.NumIn() != 1, got %d", methodType.NumIn())
+			log.Printf("service - createMethod error: methodType.NumIn() != 3, got %d", methodType.NumIn())
 			continue
 		case methodType.NumOut() != 1:
-			log.Printf("service - createMethod error: methodType.NumIn() != 3, got %d", methodType.NumIn())
+			log.Printf("service - createMethod error: methodType.NumIn() != 1, got %d", methodType.NumIn())
 			continue
 		case methodType.Out(0) != reflect.TypeOf((*error)(nil)).Elem():
 			log.Println("service - createMethod error: methodType.Out(0) != reflect.TypeOf((*error)(nil)).Elem()")
@@ -92,11 +89,12 @@ func (service *Service) createMethod() {
 				continue
 			}
 			service.ServiceMethod[method.Name] = &Method{
+				MethodName: methodName,
 				methodType: method,
 				InputType:  inputType,
 				OutputType: outputType,
 			}
-			log.Printf("RPC server -> createMethod: %s.%s created and registered\n", service.ServiceName, method.Name)
+			log.Printf("RPC service -> createMethod: %s.%s created and registered\n", service.ServiceName, method.Name)
 		}
 	}
 }
@@ -109,7 +107,7 @@ func (service *Service) Call(method *Method, input, output reflect.Value) error 
 	if errors != nil {
 		return errors.(error)
 	} else {
-		log.Printf("RPC servr -> Call: %s.%s finished RPC call with input %v and output %v", service.ServiceName, method.methodType.Name, input, output.Elem())
+		log.Printf("RPC service -> Call: %s.%s finished RPC call with input %v and output %v", service.ServiceName, method.MethodName, input, output.Elem())
 		return nil
 	}
 }

@@ -3,6 +3,7 @@ package client
 import (
 	"Distributed-RPC-Framework/coder"
 	"Distributed-RPC-Framework/server"
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -10,7 +11,9 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 )
@@ -54,12 +57,12 @@ var _ io.Closer = (*Client)(nil)
 func (client *Client) Close() error {
 	defer client.entityMutex.Unlock()
 	client.entityMutex.Lock()
-	//log.Printf("RPC client -> Close: client %p is closing...", client)
+	//log.Printf("RPC client -> Close: RPC client %p is closing...", client)
 	if client.isClosed {
 		return errors.New("RPC client -> Close error: connection is already closed")
 	} else {
 		client.isClosed = true
-		//log.Printf("RPC client -> Close: client %p is closed", client)
+		//log.Printf("RPC client -> Close: RPC client %p is closed", client)
 		return client.coder.Close()
 	}
 }
@@ -68,9 +71,9 @@ func (client *Client) Close() error {
 func (client *Client) IsAvailable() bool {
 	defer client.entityMutex.Unlock()
 	client.entityMutex.Lock()
-	//log.Printf("RPC client -> IsAvailable: checking if client %p is available...", client)
+	//log.Printf("RPC client -> IsAvailable: checking if RPC client %p is available...", client)
 	available := !client.isShutdown && !client.isClosed
-	//log.Printf("RPC client -> IsAvailable: checked. client %p is available -> %t", client, available)
+	//log.Printf("RPC client -> IsAvailable: checked. RPC client %p is available -> %t", client, available)
 	return available
 }
 
@@ -78,19 +81,19 @@ func (client *Client) IsAvailable() bool {
 func (client *Client) addCall(call *Call) (uint64, error) {
 	defer client.entityMutex.Unlock()
 	client.entityMutex.Lock()
-	//log.Printf("RPC client -> addCall: client %p is adding call %p...", client, call)
+	//log.Printf("RPC client -> addCall: RPC client %p is adding call %p...", client, call)
 	if client.isClosed {
-		return 0, errors.New("RPC client -> addCall error: client is closed")
+		return 0, errors.New("RPC client -> addCall error: RPC client is closed")
 	}
 	if client.isShutdown {
-		return 0, errors.New("RPC client -> addCall error: client is shutdown")
+		return 0, errors.New("RPC client -> addCall error: RPC client is shutdown")
 	}
 	call.SequenceNumber = client.sequenceNumber
 	client.pendingCalls[call.SequenceNumber] = call
 	client.sequenceNumber++
 
 	//actualStruct := reflect.ValueOf(call).Elem()
-	//log.Printf("RPC client -> addCall: client %p added call %p with struct -> %+v to its pending call list", client, call, actualStruct)
+	//log.Printf("RPC client -> addCall: RPC client %p added call %p with struct -> %+v to its pending call list", client, call, actualStruct)
 	return call.SequenceNumber, nil
 }
 
@@ -99,9 +102,9 @@ func (client *Client) deleteCall(sequenceNumber uint64) *Call {
 	defer client.entityMutex.Unlock()
 	client.entityMutex.Lock()
 	call := client.pendingCalls[sequenceNumber]
-	//log.Printf("RPC client -> deleteCall: client %p is deleting call %p from its pending call list...", client, call)
+	//log.Printf("RPC client -> deleteCall: RPC client %p is deleting call %p from its pending call list...", client, call)
 	delete(client.pendingCalls, sequenceNumber)
-	//log.Printf("RPC client -> deleteCall: client %p deleted call %p from its pending call list", client, call)
+	//log.Printf("RPC client -> deleteCall: RPC client %p deleted call %p from its pending call list", client, call)
 	return call
 }
 
@@ -111,13 +114,13 @@ func (client *Client) terminateCalls(Error error) {
 	defer client.requestMutex.Unlock()
 	client.requestMutex.Lock()
 	client.entityMutex.Lock()
-	//log.Printf("RPC client -> terminateCalls: client %p is terminating all calls in its pending call list...", client)
+	//log.Printf("RPC client -> terminateCalls: RPC client %p is terminating all calls in its pending call list...", client)
 	client.isShutdown = true
 	for _, call := range client.pendingCalls {
 		call.Error = Error
 		call.finishGo()
 	}
-	//log.Printf("RPC client -> terminateCalls: client %p terminated all calls in its pending call list", client)
+	//log.Printf("RPC client -> terminateCalls: RPC client %p terminated all calls in its pending call list", client)
 }
 
 // MakeDial enable client to connect to an RPC server
@@ -141,13 +144,57 @@ func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*serve
 	return CreateClient(connection, connectionInfo)
 }
 */
+
+// XMakeDial calls specific Dial function to connect to an RPC server based on the first parameter of rpcAddress.
+// rpcServerAddress is a general format (protocol@addr) to represent a rpc server
+// eg, http@10.0.0.1:6666, tcp@10.0.0.1:7777, unix@/tmp/srpc.sock
+func XMakeDial(rpcServerAddress string, connectionInfos ...*server.ConnectionInfo) (*Client, error) {
+	parts := strings.Split(rpcServerAddress, "@")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("RPC client -> XMakeDial err: wrong format for rpcServerAddress, expect 'protocol@addr', but got '%s'", rpcServerAddress)
+	}
+	protocol, addr := parts[0], parts[1]
+	switch protocol {
+	case "http":
+		return MakeDialHTTP("tcp", addr, connectionInfos...)
+	default:
+		// tcp, unix or other transport protocol
+		return MakeDial(protocol, addr, connectionInfos...)
+	}
+}
+
+func MakeDialHTTP(transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
+	//log.Printf("RPC client -> MakeDialHTTP: initializing HTTP dialing process...)
+	return MakeDialWithTimeout(CreateClientHTTP, transportProtocol, serverAddress, connectionInfos...)
+	//log.Printf("RPC client -> MakeDialHTTP: HTTP dialing process finished)
+}
+
+// CreateClientHTTP create a Client instance via HTTP transport protocol
+func CreateClientHTTP(connection net.Conn, connectionInfo *server.ConnectionInfo) (*Client, error) {
+	//log.Printf("RPC client -> CreateClientHTTP: creating an HTTP RPC client...")
+	_, _ = io.WriteString(connection, fmt.Sprintf("CONNECT %s HTTP/1.0\n\n", server.DefaultRPCPath))
+
+	// Require successful HTTP response before switching to RPC protocol.
+	response, err := http.ReadResponse(bufio.NewReader(connection), &http.Request{Method: "CONNECT"})
+	if err == nil && response.Status == server.ConnectedMessage {
+		return CreateClient(connection, connectionInfo)
+	}
+	if err == nil {
+		err = errors.New("RPC client -> CreateClientHTTP error: unexpected HTTP response: " + response.Status)
+	}
+	return nil, err
+}
+
 // MakeDial enable client to connect to an RPC server
 func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
+	//log.Printf("RPC client -> MakeDial: initializing default dialing process...)
 	return MakeDialWithTimeout(CreateClient, transportProtocol, serverAddress, connectionInfos...)
+	//log.Printf("RPC client -> MakeDial: default dialing process finished)
 }
 
 // MakeDialWithTimeout enable client to connect to an RPC server within the configured timeout period
 func MakeDialWithTimeout(createClient newCreateClient, transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
+	//log.Printf("RPC client -> MakeDialWithTimeout: dialing and connecting to server %s with timeout configuration %+v...", serverAddress, connectionInfos)
 	connectionInfo, Error := parseConnectionInfo(connectionInfos...)
 	if Error != nil {
 		return nil, Error
@@ -177,6 +224,7 @@ func MakeDialWithTimeout(createClient newCreateClient, transportProtocol, server
 	case <-time.After(connectionInfo.ConnectionTimeout):
 		return nil, fmt.Errorf("RPC Client -> makeDialWithTimeout error: expect to connect server within %s, but connection timeout", connectionInfo.ConnectionTimeout)
 	case timeoutResult := <-timeoutChannel:
+		//log.Printf("RPC client -> MakeDial: http handler %p successfully dialed and connected to server %s in protocol %s", connection, serverAddress, transportProtocol)
 		return timeoutResult.client, timeoutResult.err
 	}
 }
@@ -233,14 +281,14 @@ func CreateClient(connection net.Conn, connectionInfo *server.ConnectionInfo) (*
 // Call also included timeout handling mechanism, which realized using context, so user can configure it themselves
 // client-side timeout configure usage: context, _ := context.WithTimeout(context.Background(), time.Second)
 func (client *Client) Call(serviceDotMethod string, inputs, output interface{}, context context.Context) error {
-	log.Printf("RPC client -> Call: client %p invoking RPC request on function %s with inputs -> %v", client, serviceDotMethod, inputs)
+	log.Printf("RPC client -> Call: RPC client %p invoking RPC request on function %s with inputs -> %v", client, serviceDotMethod, inputs)
 	call := client.StartGo(serviceDotMethod, inputs, output, make(chan *Call, 1))
 	select {
 	case <-context.Done():
 		client.deleteCall(call.SequenceNumber)
-		return errors.New("RPC Client -> Call: client fail to finish the RPC request within the timeout period due to error: " + context.Err().Error())
+		return errors.New("RPC Client -> Call: RPC client fail to finish the RPC request within the timeout period due to error: " + context.Err().Error())
 	case call := <-call.Finish:
-		//log.Printf("RPC client -> Call: client %p finished RPC request on function %s with inputs -> %v", client, serviceDotMethod, inputs)
+		//log.Printf("RPC client -> Call: RPC client %p finished RPC request on function %s with inputs -> %v", client, serviceDotMethod, inputs)
 		return call.Error
 	}
 }

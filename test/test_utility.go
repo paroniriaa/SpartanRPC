@@ -14,6 +14,20 @@ type Output struct {
 	C int
 }
 
+type Demo int
+
+func (t *Demo) Addition_demo(input Input, output *int) error {
+	*output = input.A + input.B
+	return nil
+}
+
+type Test int
+
+func (t *Test) Echo(input string, output *string) error {
+	*output = input
+	return nil
+}
+
 type Arithmetic int
 
 func (t *Arithmetic) Addition(input *Input, output *Output) error {

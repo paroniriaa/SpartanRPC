@@ -7,17 +7,22 @@ import (
 )
 
 func TestCreateService(t *testing.T) {
-	var arithmetic Arithmetic
-	newService := service.CreateService(&arithmetic)
+	//var arithmetic Arithmetic
+	t.Helper()
+	var demo Demo
+	//newService := service.CreateService(&arithmetic)
+	newService := service.CreateService(&demo)
 	_assert(len(newService.ServiceMethod) == 1, "Wrong service method length, expect 1, but got %d", len(newService.ServiceMethod))
-	methodType := newService.ServiceMethod["Sum"]
+	methodType := newService.ServiceMethod["Addition_demo"]
 	_assert(methodType != nil, "Wrong service method type, Sum expected to be type Sum, but got type nil")
 }
 
 func TestMethodType_Call(t *testing.T) {
-	var arithmetic Arithmetic
-	newService := service.CreateService(&arithmetic)
-	methodType := newService.ServiceMethod["Addition"]
+	//var arithmetic Arithmetic
+	t.Helper()
+	var demo Demo
+	newService := service.CreateService(&demo)
+	methodType := newService.ServiceMethod["Addition_demo"]
 
 	input := methodType.CreateInput()
 	output := methodType.CreateOutput()
