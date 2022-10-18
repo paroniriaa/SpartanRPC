@@ -113,12 +113,12 @@ func clientCallRPC(client *client.Client, number int) {
 	log.Printf("%d + %d = %d", input.A, input.B, output.C)
 }
 
-func createDiscoveryClientAndCall(addressA string, addressB string) {
-	discovery := client.CreateDiscoveryMultiServer([]string{"tcp@" + addressA, "tcp@" + addressB})
-	testDiscoveryClient := client.CreateDiscoveryClient(discovery, client.RoundRobinSelectMode, nil)
-	log.Printf("discovery: %+v", discovery)
-	log.Printf("Before -> testDiscoveryClient: %+v", testDiscoveryClient)
-	defer func() { _ = testDiscoveryClient.Close() }()
+func createLoadBalancedClientAndCall(addressA string, addressB string) {
+	loadBalancer := client.CreateLoadBalancerClientSide([]string{"tcp@" + addressA, "tcp@" + addressB})
+	loadBalancedClient := client.CreateLoadBalancedClient(loadBalancer, client.RoundRobinSelectMode, nil)
+	log.Printf("loadBalancer: %+v", loadBalancer)
+	log.Printf("Before -> loadBalancedClient: %+v", loadBalancedClient)
+	defer func() { _ = loadBalancedClient.Close() }()
 
 	var waitGroup sync.WaitGroup
 	n := 0
@@ -126,18 +126,18 @@ func createDiscoveryClientAndCall(addressA string, addressB string) {
 		waitGroup.Add(1)
 		go func(n int) {
 			defer waitGroup.Done()
-			discoveryClientCallRPC(testDiscoveryClient, n)
+			loadBalancedClientCallRPC(loadBalancedClient, n)
 		}(n)
 		n++
 	}
 	waitGroup.Wait()
-	log.Printf("After -> testDiscoveryClient: %+v", testDiscoveryClient)
+	log.Printf("After -> loadBalancedClient: %+v", loadBalancedClient)
 }
 
-func createDiscoveryClientAndBroadcast(addressA string, addressB string) {
-	discovery := client.CreateDiscoveryMultiServer([]string{"tcp@" + addressA, "tcp@" + addressB})
-	testDiscoveryClient := client.CreateDiscoveryClient(discovery, client.RandomSelectMode, nil)
-	defer func() { _ = testDiscoveryClient.Close() }()
+func createLoadBalancedClientAndBroadcast(addressA string, addressB string) {
+	loadBalancer := client.CreateLoadBalancerClientSide([]string{"tcp@" + addressA, "tcp@" + addressB})
+	loadBalancedClient := client.CreateLoadBalancedClient(loadBalancer, client.RandomSelectMode, nil)
+	defer func() { _ = loadBalancedClient.Close() }()
 
 	var waitGroup sync.WaitGroup
 	n := 0
@@ -145,18 +145,18 @@ func createDiscoveryClientAndBroadcast(addressA string, addressB string) {
 		waitGroup.Add(1)
 		go func(n int) {
 			defer waitGroup.Done()
-			discoveryClientBroadcastRPC(testDiscoveryClient, n)
+			loadBalancedClientBroadcastRPC(loadBalancedClient, n)
 		}(n)
 		n++
 	}
 	waitGroup.Wait()
 }
 
-func discoveryClientCallRPC(discoveryClient *client.DiscoveryClient, number int) {
+func loadBalancedClientCallRPC(loadBalancedClient *client.LoadBalancedClient, number int) {
 	input := &Input{A: number, B: number * number}
 	output := &Output{}
 	//expect no timeout
-	err := discoveryClient.Call(context.Background(), "Arithmetic.Addition", input, output)
+	err := loadBalancedClient.Call(context.Background(), "Arithmetic.Addition", input, output)
 	if err != nil {
 		log.Println("RPC call Arithmetic.Addition error: ", err)
 	} else {
@@ -164,14 +164,14 @@ func discoveryClientCallRPC(discoveryClient *client.DiscoveryClient, number int)
 	}
 }
 
-func discoveryClientBroadcastRPC(discoveryClient *client.DiscoveryClient, number int) {
+func loadBalancedClientBroadcastRPC(loadBalancedClient *client.LoadBalancedClient, number int) {
 	input := &Input{A: number, B: number * number}
 	output := &Output{}
 	//expect 2-5 timeout
-	noTimeOutContext := context.Background()
-	err := discoveryClient.Broadcast(noTimeOutContext, "Arithmetic.SleepThenAddition", input, output)
-	//timeOutContext, _ := context.WithTimeout(context.Background(), time.Second*2)
-	//err := discoveryClient.Broadcast(timeOutContext, "Arithmetic.SleepThenAddition", input, output)
+	//noTimeOutContext := context.Background()
+	//err := loadBalancedClient.Broadcast(noTimeOutContext, "Arithmetic.SleepThenAddition", input, output)
+	timeOutContext, _ := context.WithTimeout(context.Background(), time.Second*2)
+	err := loadBalancedClient.Broadcast(timeOutContext, "Arithmetic.SleepThenAddition", input, output)
 	if err != nil {
 		log.Println("RPC call Arithmetic.SleepThenAddition error: ", err)
 	} else {
@@ -195,7 +195,6 @@ func main() {
 		createServerHTTP(addressChannel, ":7777")*/
 
 	//TCP, load balancing, server address random (:0), return 0
-
 	addressChannelA := make(chan string)
 	addressChannelB := make(chan string)
 	go createServer(addressChannelA, ":0")
@@ -203,7 +202,7 @@ func main() {
 	addressA := <-addressChannelA
 	addressB := <-addressChannelB
 	time.Sleep(time.Second)
-	//createDiscoveryClientAndCall(addressA, addressB)
-	createDiscoveryClientAndBroadcast(addressA, addressB)
+	createLoadBalancedClientAndCall(addressA, addressB)
+	createLoadBalancedClientAndBroadcast(addressA, addressB)
 
 }
