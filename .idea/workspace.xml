@@ -6,7 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="client">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/client_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/client_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/load_balanced_client.go" beforeDir="false" afterPath="$PROJECT_DIR$/client/load_balanced_client.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main/main.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,7 +68,8 @@
     <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$" />
-      <kind value="FILE" />
+      <kind value="PACKAGE" />
+      <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <method v="2" />
@@ -107,6 +109,7 @@
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$" />
       <kind value="DIRECTORY" />
+      <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
@@ -162,6 +165,13 @@
       <workItem from="1659222606544" duration="4521000" />
       <workItem from="1659230782381" duration="1373000" />
       <workItem from="1659392801108" duration="3394000" />
+      <workItem from="1662262503593" duration="5384000" />
+      <workItem from="1663471289571" duration="1563000" />
+      <workItem from="1663611878951" duration="10443000" />
+      <workItem from="1663706916845" duration="1705000" />
+      <workItem from="1663964807775" duration="640000" />
+      <workItem from="1666054724466" duration="3118000" />
+      <workItem from="1666057889802" duration="7138000" />
     </task>
     <servers />
   </component>
