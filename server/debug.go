@@ -38,7 +38,7 @@ type serviceDebug struct {
 	Method map[string]*service.Method
 }
 
-// Runs at /debug/srpc
+// ServeHTTP is the server HTTP endpoint that runs at /debug/srpc
 func (server HTTPDebug) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
 	// Build a sorted version of the data.
 	var services []serviceDebug

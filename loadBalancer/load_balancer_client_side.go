@@ -8,22 +8,6 @@ import (
 	"time"
 )
 
-type LoadBalancingMode int
-
-const (
-	// RandomSelectMode use random generator to randomly select a server from the list
-	RandomSelectMode LoadBalancingMode = iota
-	// RoundRobinSelectMode use round-robbin algorithm to select the least used server from the list
-	RoundRobinSelectMode
-)
-
-type LoadBalancer interface {
-	GetServer(loadBalancingMode LoadBalancingMode) (string, error)
-	GetServerList() ([]string, error)
-	RefreshServerList() error
-	UpdateServerList(serverList []string) error
-}
-
 type LoadBalancerClientSide struct {
 	randomNumber   *rand.Rand   // random number generated from math.Rand
 	readWriteMutex sync.RWMutex // mutex that protect when read and write, which protect the following
@@ -35,12 +19,13 @@ var _ LoadBalancer = (*LoadBalancerClientSide)(nil)
 
 // CreateLoadBalancerClientSide creates a LoadBalancerClientSide instance
 func CreateLoadBalancerClientSide(serverList []string) *LoadBalancerClientSide {
-	loadBalancerClientSide := &LoadBalancerClientSide{
+	//log.Println("RPC Load Balancer Client Side: creating client side load balancer...")
+	loadBalancerDiscovery := &LoadBalancerClientSide{
 		serverList:   serverList,
 		randomNumber: rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
-	loadBalancerClientSide.serverIndex = loadBalancerClientSide.randomNumber.Intn(math.MaxInt32 - 1)
-	return loadBalancerClientSide
+	loadBalancerDiscovery.serverIndex = loadBalancerDiscovery.randomNumber.Intn(math.MaxInt32 - 1)
+	return loadBalancerDiscovery
 }
 
 // GetServer get an available server based on the load balancing loadBalancingMode
