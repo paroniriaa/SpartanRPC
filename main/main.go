@@ -2,6 +2,7 @@ package main
 
 import (
 	"Distributed-RPC-Framework/client"
+	"Distributed-RPC-Framework/loadBalancer"
 	"Distributed-RPC-Framework/server"
 	"context"
 	"log"
@@ -114,9 +115,9 @@ func clientCallRPC(client *client.Client, number int) {
 }
 
 func createLoadBalancedClientAndCall(addressA string, addressB string) {
-	loadBalancer := client.CreateLoadBalancerClientSide([]string{"tcp@" + addressA, "tcp@" + addressB})
-	loadBalancedClient := client.CreateLoadBalancedClient(loadBalancer, client.RoundRobinSelectMode, nil)
-	log.Printf("loadBalancer: %+v", loadBalancer)
+	clientLoadBalancer := loadBalancer.CreateLoadBalancerClientSide([]string{"tcp@" + addressA, "tcp@" + addressB})
+	loadBalancedClient := client.CreateLoadBalancedClient(clientLoadBalancer, loadBalancer.RoundRobinSelectMode, nil)
+	log.Printf("clientLoadBalancer: %+v", clientLoadBalancer)
 	log.Printf("Before -> loadBalancedClient: %+v", loadBalancedClient)
 	defer func() { _ = loadBalancedClient.Close() }()
 
@@ -135,8 +136,8 @@ func createLoadBalancedClientAndCall(addressA string, addressB string) {
 }
 
 func createLoadBalancedClientAndBroadcast(addressA string, addressB string) {
-	loadBalancer := client.CreateLoadBalancerClientSide([]string{"tcp@" + addressA, "tcp@" + addressB})
-	loadBalancedClient := client.CreateLoadBalancedClient(loadBalancer, client.RandomSelectMode, nil)
+	clientLoadBalancer := loadBalancer.CreateLoadBalancerClientSide([]string{"tcp@" + addressA, "tcp@" + addressB})
+	loadBalancedClient := client.CreateLoadBalancedClient(clientLoadBalancer, loadBalancer.RandomSelectMode, nil)
 	defer func() { _ = loadBalancedClient.Close() }()
 
 	var waitGroup sync.WaitGroup
@@ -169,9 +170,9 @@ func loadBalancedClientBroadcastRPC(loadBalancedClient *client.LoadBalancedClien
 	output := &Output{}
 	//expect 2-5 timeout
 	//noTimeOutContext := context.Background()
-	//err := loadBalancedClient.Broadcast(noTimeOutContext, "Arithmetic.SleepThenAddition", input, output)
+	//err := loadBalancedClient.BroadcastCall(noTimeOutContext, "Arithmetic.SleepThenAddition", input, output)
 	timeOutContext, _ := context.WithTimeout(context.Background(), time.Second*2)
-	err := loadBalancedClient.Broadcast(timeOutContext, "Arithmetic.SleepThenAddition", input, output)
+	err := loadBalancedClient.BroadcastCall(timeOutContext, "Arithmetic.SleepThenAddition", input, output)
 	if err != nil {
 		log.Println("RPC call Arithmetic.SleepThenAddition error: ", err)
 	} else {

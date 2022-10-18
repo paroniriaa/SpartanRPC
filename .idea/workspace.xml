@@ -5,11 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="client">
-      <change afterPath="$PROJECT_DIR$/client/load_balanced_client.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/client/load_balancer.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/discovery.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/discovery_client.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/load_balanced_client.go" beforeDir="false" afterPath="$PROJECT_DIR$/client/load_balanced_client.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main/main.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -174,6 +171,7 @@
       <workItem from="1663706916845" duration="1705000" />
       <workItem from="1663964807775" duration="640000" />
       <workItem from="1666054724466" duration="3118000" />
+      <workItem from="1666057889802" duration="7138000" />
     </task>
     <servers />
   </component>

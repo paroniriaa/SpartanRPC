@@ -1,6 +1,7 @@
 package client
 
 import (
+	"Distributed-RPC-Framework/loadBalancer"
 	"Distributed-RPC-Framework/server"
 	"context"
 	"io"
@@ -10,8 +11,8 @@ import (
 )
 
 type LoadBalancedClient struct {
-	loadBalancer                LoadBalancer
-	loadBalancingMode           LoadBalancingMode
+	loadBalancer                loadBalancer.LoadBalancer
+	loadBalancingMode           loadBalancer.LoadBalancingMode
 	connectionInfo              *server.ConnectionInfo
 	mutex                       sync.Mutex // protect following
 	rpcServerAddressToClientMap map[string]*Client
@@ -19,7 +20,7 @@ type LoadBalancedClient struct {
 
 var _ io.Closer = (*LoadBalancedClient)(nil)
 
-func CreateLoadBalancedClient(loadBalancer LoadBalancer, loadBalancingMode LoadBalancingMode, connectionInfo *server.ConnectionInfo) *LoadBalancedClient {
+func CreateLoadBalancedClient(loadBalancer loadBalancer.LoadBalancer, loadBalancingMode loadBalancer.LoadBalancingMode, connectionInfo *server.ConnectionInfo) *LoadBalancedClient {
 	loadBalancedClient := &LoadBalancedClient{
 		loadBalancer:                loadBalancer,
 		loadBalancingMode:           loadBalancingMode,
@@ -76,7 +77,7 @@ func (loadBalancedClient *LoadBalancedClient) Call(contextInfo context.Context, 
 	return loadBalancedClient.call(rpcServerAddress, contextInfo, serviceDotMethod, inputs, output)
 }
 
-func (loadBalancedClient *LoadBalancedClient) Broadcast(contextInfo context.Context, serviceDotMethod string, inputs, output interface{}) error {
+func (loadBalancedClient *LoadBalancedClient) BroadcastCall(contextInfo context.Context, serviceDotMethod string, inputs, output interface{}) error {
 	serverList, Error := loadBalancedClient.loadBalancer.GetServerList()
 	if Error != nil {
 		return Error
@@ -102,7 +103,7 @@ func (loadBalancedClient *LoadBalancedClient) Broadcast(contextInfo context.Cont
 				cancelContext() // if any call failed, cancel unfinished calls
 			}
 			if err == nil && !replyDone {
-				log.Printf("RPC LoadBalancedClient -> Broadcast: LoadBalancedClient %p recieved RPC response from RPC server %s first for RPC request invoking function %s with inputs -> %v", loadBalancedClient, address, serviceDotMethod, inputs)
+				log.Printf("RPC LoadBalancedClient -> BroadcastCall: LoadBalancedClient %p recieved RPC response from RPC server %s first for RPC request invoking function %s with inputs -> %v", loadBalancedClient, address, serviceDotMethod, inputs)
 				reflect.ValueOf(output).Elem().Set(reflect.ValueOf(clonedReply).Elem())
 				replyDone = true
 			}
