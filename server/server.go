@@ -2,6 +2,7 @@ package server
 
 import (
 	"Distributed-RPC-Framework/coder"
+	"Distributed-RPC-Framework/registry"
 	"Distributed-RPC-Framework/service"
 	"encoding/json"
 	"errors"
@@ -21,7 +22,7 @@ const MagicNumber = 0x3bef5c
 
 // TODO: struct
 type Server struct {
-	ServerAddress net.Addr
+	ServerAddress string
 	ServiceMap    sync.Map
 }
 
@@ -49,7 +50,7 @@ var DefaultConnectionInfo = &ConnectionInfo{
 var invalidRequest = struct{}{}
 
 func CreateServer(serverAddress net.Addr) *Server {
-	return &Server{ServerAddress: serverAddress}
+	return &Server{ServerAddress: "tcp@" + serverAddress.String()}
 }
 
 func (server *Server) ServerRegister(serviceValue interface{}) error {
@@ -290,4 +291,36 @@ func (server *Server) RegisterHandlerHTTP() {
 	http.Handle(DefaultRPCPath, server)
 	http.Handle(DefaultDebugPath, HTTPDebug{server})
 	log.Println("RPC server -> registerHandlerHTTP: registered debug path:", DefaultDebugPath)
+}
+
+// Heartbeat send a heartbeat message every once in a while
+// it's a helper function for the RPC server to register or send heartbeat to the RPC registry
+func (server *Server) Heartbeat(registryAddress string, heartRate time.Duration) {
+	if heartRate == 0 {
+		// make sure there is enough time to send heart beat
+		// before it's removed from registryAddress
+		heartRate = registry.DefaultTimeout - time.Duration(1)*time.Minute
+	}
+	log.Printf("RPC Registry -> Heartbeat: RPC server %s hosted heartbeat service, and its heartbeat will be send to the RPC registry %s per %s...", server.ServerAddress, registryAddress, heartRate)
+	var err error
+	err = server.sendHeartbeat(registryAddress)
+	go func() {
+		heartRateTicker := time.NewTicker(heartRate)
+		for err == nil {
+			<-heartRateTicker.C
+			err = server.sendHeartbeat(registryAddress)
+		}
+	}()
+}
+
+func (server *Server) sendHeartbeat(registryAddress string) error {
+	log.Printf("RPC Server -> sendHeartbeat: RPC server %s sends heart beat to RPC registry %s...", server.ServerAddress, registryAddress)
+	httpClient := &http.Client{}
+	httpRequest, _ := http.NewRequest("POST", registryAddress, nil)
+	httpRequest.Header.Set("SpartanRPC-AliveServer", server.ServerAddress)
+	if _, err := httpClient.Do(httpRequest); err != nil {
+		log.Printf("RPC Server -> sendHeartbeat error: RPC server %s heart beat error %s", server.ServerAddress, err)
+		return err
+	}
+	return nil
 }

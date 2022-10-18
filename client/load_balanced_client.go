@@ -11,21 +11,21 @@ import (
 )
 
 type LoadBalancedClient struct {
-	loadBalancer                loadBalancer.LoadBalancer
-	loadBalancingMode           loadBalancer.LoadBalancingMode
-	connectionInfo              *server.ConnectionInfo
-	mutex                       sync.Mutex // protect following
-	rpcServerAddressToClientMap map[string]*Client
+	loadBalancer             loadBalancer.LoadBalancer
+	loadBalancingMode        loadBalancer.LoadBalancingMode
+	connectionInfo           *server.ConnectionInfo
+	mutex                    sync.Mutex // protect following
+	serverAddressToClientMap map[string]*Client
 }
 
 var _ io.Closer = (*LoadBalancedClient)(nil)
 
 func CreateLoadBalancedClient(loadBalancer loadBalancer.LoadBalancer, loadBalancingMode loadBalancer.LoadBalancingMode, connectionInfo *server.ConnectionInfo) *LoadBalancedClient {
 	loadBalancedClient := &LoadBalancedClient{
-		loadBalancer:                loadBalancer,
-		loadBalancingMode:           loadBalancingMode,
-		connectionInfo:              connectionInfo,
-		rpcServerAddressToClientMap: make(map[string]*Client),
+		loadBalancer:             loadBalancer,
+		loadBalancingMode:        loadBalancingMode,
+		connectionInfo:           connectionInfo,
+		serverAddressToClientMap: make(map[string]*Client),
 	}
 	return loadBalancedClient
 }
@@ -33,9 +33,9 @@ func CreateLoadBalancedClient(loadBalancer loadBalancer.LoadBalancer, loadBalanc
 func (loadBalancedClient *LoadBalancedClient) Close() error {
 	loadBalancedClient.mutex.Lock()
 	defer loadBalancedClient.mutex.Unlock()
-	for rpcServerAddress, client := range loadBalancedClient.rpcServerAddressToClientMap {
+	for rpcServerAddress, client := range loadBalancedClient.serverAddressToClientMap {
 		_ = client.Close()
-		delete(loadBalancedClient.rpcServerAddressToClientMap, rpcServerAddress)
+		delete(loadBalancedClient.serverAddressToClientMap, rpcServerAddress)
 	}
 	return nil
 }
@@ -43,10 +43,10 @@ func (loadBalancedClient *LoadBalancedClient) Close() error {
 func (loadBalancedClient *LoadBalancedClient) dial(rpcServerAddress string) (*Client, error) {
 	loadBalancedClient.mutex.Lock()
 	defer loadBalancedClient.mutex.Unlock()
-	client, keyExists := loadBalancedClient.rpcServerAddressToClientMap[rpcServerAddress]
+	client, keyExists := loadBalancedClient.serverAddressToClientMap[rpcServerAddress]
 	if keyExists && !client.IsAvailable() {
 		_ = client.Close()
-		delete(loadBalancedClient.rpcServerAddressToClientMap, rpcServerAddress)
+		delete(loadBalancedClient.serverAddressToClientMap, rpcServerAddress)
 		client = nil
 	}
 	if client == nil {
@@ -55,7 +55,7 @@ func (loadBalancedClient *LoadBalancedClient) dial(rpcServerAddress string) (*Cl
 		if Error != nil {
 			return nil, Error
 		}
-		loadBalancedClient.rpcServerAddressToClientMap[rpcServerAddress] = client
+		loadBalancedClient.serverAddressToClientMap[rpcServerAddress] = client
 	}
 	return client, nil
 }
