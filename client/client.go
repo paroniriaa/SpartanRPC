@@ -118,7 +118,7 @@ func (client *Client) terminateCalls(Error error) {
 	client.isShutdown = true
 	for _, call := range client.pendingCalls {
 		call.Error = Error
-		call.finishGo()
+		call.finishCall()
 	}
 	//log.Printf("RPC client -> terminateCalls: RPC client %p terminated all calls in its pending call list", client)
 }
@@ -282,7 +282,7 @@ func CreateClient(connection net.Conn, connectionInfo *server.ConnectionInfo) (*
 // client-side timeout configure usage: context, _ := context.WithTimeout(context.Background(), time.Second)
 func (client *Client) Call(serviceDotMethod string, inputs, output interface{}, context context.Context) error {
 	log.Printf("RPC client -> Call: RPC client %p invoking RPC request on function %s with inputs -> %v", client, serviceDotMethod, inputs)
-	call := client.StartGo(serviceDotMethod, inputs, output, make(chan *Call, 1))
+	call := client.StartCall(serviceDotMethod, inputs, output, make(chan *Call, 1))
 	select {
 	case <-context.Done():
 		client.deleteCall(call.SequenceNumber)
@@ -293,20 +293,20 @@ func (client *Client) Call(serviceDotMethod string, inputs, output interface{}, 
 	}
 }
 
-// finishGo finish the RPC call and end the Go channel
-func (call *Call) finishGo() {
-	//log.Printf("RPC client -> finishGo: Go channel %p finished the assigned call %p and destroyed", call.Finish, call)
+// finishCall finish the RPC call and end the Go channel
+func (call *Call) finishCall() {
+	//log.Printf("RPC client -> finishCall: Go channel %p finished the assigned call %p and destroyed", call.Finish, call)
 	call.Finish <- call
 }
 
-// StartGo invokes the function asynchronously.
+// StartCall invokes the function asynchronously.
 // It returns the Call structure representing the invocation
-func (client *Client) StartGo(serviceDotMethod string, inputs, output interface{}, finish chan *Call) *Call {
+func (client *Client) StartCall(serviceDotMethod string, inputs, output interface{}, finish chan *Call) *Call {
 	switch {
 	case finish == nil:
 		finish = make(chan *Call, 10)
 	case cap(finish) == 0:
-		log.Panic("RPC Client -> StartGo error: 'finishGo' channel is unbuffered")
+		log.Panic("RPC Client -> StartCall error: 'finishCall' channel is unbuffered")
 	}
 	call := &Call{
 		ServiceDotMethod: serviceDotMethod,
@@ -314,7 +314,7 @@ func (client *Client) StartGo(serviceDotMethod string, inputs, output interface{
 		Output:           output,
 		Finish:           finish,
 	}
-	//log.Printf("RPC client -> StartGo: Go channel %p created and handling client %p call %p...", finish, client, call)
+	//log.Printf("RPC client -> StartCall: Go channel %p created and handling client %p call %p...", finish, client, call)
 	client.sendCall(call)
 	return call
 }
@@ -327,7 +327,7 @@ func (client *Client) sendCall(call *Call) {
 	sequenceNumber, Error := client.addCall(call)
 	if Error != nil {
 		call.Error = Error
-		call.finishGo()
+		call.finishCall()
 		return
 	}
 
@@ -341,7 +341,7 @@ func (client *Client) sendCall(call *Call) {
 	if Error != nil {
 		if call := client.deleteCall(sequenceNumber); call != nil {
 			call.Error = Error
-			call.finishGo()
+			call.finishCall()
 		}
 	}
 }
@@ -361,7 +361,7 @@ func (client *Client) receiveCall() {
 		} else if response.Error != "" {
 			call.Error = fmt.Errorf(response.Error)
 			Error = client.coder.DecodeMessageBody(nil)
-			call.finishGo()
+			call.finishCall()
 		} else {
 			Error = client.coder.DecodeMessageBody(call.Output)
 			if Error != nil {
@@ -369,7 +369,7 @@ func (client *Client) receiveCall() {
 			}
 			actualOutput := reflect.ValueOf(call.Output).Elem()
 			log.Printf("RPC client -> receiveCall: RPC client %p received call %p response -> %v", client, call, actualOutput)
-			call.finishGo()
+			call.finishCall()
 		}
 	}
 	client.terminateCalls(Error)

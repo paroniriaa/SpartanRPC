@@ -20,12 +20,12 @@ var _ LoadBalancer = (*LoadBalancerClientSide)(nil)
 // CreateLoadBalancerClientSide creates a LoadBalancerClientSide instance
 func CreateLoadBalancerClientSide(serverList []string) *LoadBalancerClientSide {
 	//log.Println("RPC Load Balancer Client Side: creating client side load balancer...")
-	loadBalancerDiscovery := &LoadBalancerClientSide{
+	loadBalancerClientSide := &LoadBalancerClientSide{
 		serverList:   serverList,
 		randomNumber: rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
-	loadBalancerDiscovery.serverIndex = loadBalancerDiscovery.randomNumber.Intn(math.MaxInt32 - 1)
-	return loadBalancerDiscovery
+	loadBalancerClientSide.serverIndex = loadBalancerClientSide.randomNumber.Intn(math.MaxInt32 - 1)
+	return loadBalancerClientSide
 }
 
 // GetServer get an available server based on the load balancing loadBalancingMode
@@ -40,7 +40,8 @@ func (loadBalancerClientSide *LoadBalancerClientSide) GetServer(loadBalancingMod
 	case RandomSelectMode:
 		return loadBalancerClientSide.serverList[loadBalancerClientSide.randomNumber.Intn(length)], nil
 	case RoundRobinSelectMode:
-		server := loadBalancerClientSide.serverList[loadBalancerClientSide.serverIndex%length] // servers could be updated, so modular length to ensure safety
+		// servers could be updated, so modular length to ensure safety
+		server := loadBalancerClientSide.serverList[loadBalancerClientSide.serverIndex%length]
 		loadBalancerClientSide.serverIndex = (loadBalancerClientSide.serverIndex + 1) % length
 		return server, nil
 	default:

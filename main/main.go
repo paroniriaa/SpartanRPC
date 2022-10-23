@@ -279,7 +279,7 @@ func main() {
 		createLoadBalancedClientAndCall(addressA, addressB)
 		createLoadBalancedClientAndBroadcastCall(addressA, addressB)*/
 
-	//Stage 3B: TCP, load balancing(registry side), server address random (:0), return 0
+	//Stage 3B: TCP, load balancing(registry side), registry discover and heartbeat monitoring, server address random (:0), return 0
 	registryAddress := "http://localhost:9999/_srpc_/registry"
 	var waitGroup sync.WaitGroup
 
