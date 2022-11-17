@@ -121,8 +121,8 @@ func createClientAndCallHTTP(addressChannel chan string) {
 func createLoadBalancedClientAndCall(addressA string, addressB string) {
 	clientLoadBalancer := loadBalancer.CreateLoadBalancerClientSide([]string{"tcp@" + addressA, "tcp@" + addressB})
 	loadBalancedClient := client.CreateLoadBalancedClient(clientLoadBalancer, loadBalancer.RoundRobinSelectMode, nil)
-	log.Printf("clientLoadBalancer: %+v", clientLoadBalancer)
-	log.Printf("Before -> loadBalancedClient: %+v", loadBalancedClient)
+	//log.Printf("clientLoadBalancer: %+v", clientLoadBalancer)
+	//log.Printf("Before -> loadBalancedClient: %+v", loadBalancedClient)
 	defer func() { _ = loadBalancedClient.Close() }()
 
 	var waitGroup sync.WaitGroup
@@ -136,7 +136,7 @@ func createLoadBalancedClientAndCall(addressA string, addressB string) {
 		n++
 	}
 	waitGroup.Wait()
-	log.Printf("After -> loadBalancedClient: %+v", loadBalancedClient)
+	//log.Printf("After -> loadBalancedClient: %+v", loadBalancedClient)
 }
 
 func createLoadBalancedClientAndBroadcastCall(addressA string, addressB string) {
@@ -186,16 +186,16 @@ func loadBalancedClientBroadcastCallRPC(loadBalancedClient *client.LoadBalancedC
 }
 
 // -------------------------- Stage 3B usage --------------------------
-func createRegistry(waitGroup *sync.WaitGroup) {
+func createRegistry() {
 	log.Println("main -> createRegistry: RPC registry initialization routine start...")
 	listener, _ := net.Listen("tcp", ":9999")
 	registry.HandleHTTP()
-	waitGroup.Done()
+	//waitGroup.Done()
 	_ = http.Serve(listener, nil)
 	log.Println("main -> createRegistry: RPC registry initialization routine end...")
 }
 
-func createServerOnRegistry(registryAddress string, waitGroup *sync.WaitGroup) {
+func createServerOnRegistry(registryAddress string) {
 	log.Println("main -> createServerOnRegistry: RPC server initialization routine start...")
 	var arithmetic Arithmetic
 	listener, err := net.Listen("tcp", ":0")
@@ -209,7 +209,6 @@ func createServerOnRegistry(registryAddress string, waitGroup *sync.WaitGroup) {
 	}
 	testServer.Heartbeat(registryAddress, 0)
 	//log.Println("RPC server -> createServer: RPC server created and hosting on port", listener.ServerAddress())
-	waitGroup.Done()
 	testServer.AcceptConnection(listener)
 	log.Println("main -> createServerOnRegistry: RPC server initialization routine end...")
 
@@ -281,21 +280,13 @@ func main() {
 
 	//Stage 3B: TCP, load balancing(registry side), registry discover and heartbeat monitoring, server address random (:0), return 0
 	registryAddress := "http://localhost:9999/_srpc_/registry"
-	var waitGroup sync.WaitGroup
 
-	waitGroup.Add(1)
-	go createRegistry(&waitGroup)
-	waitGroup.Wait()
-
+	//time.Sleep(time.Second)
+	go createRegistry()
 	time.Sleep(time.Second)
 
-	waitGroup.Add(1)
-	go createServerOnRegistry(registryAddress, &waitGroup)
-
-	//waitGroup.Add(1)
-	//go createServerOnRegistry(registryAddress, &waitGroup)
-	waitGroup.Wait()
-
+	go createServerOnRegistry(registryAddress)
+	go createServerOnRegistry(registryAddress)
 	time.Sleep(time.Second)
 
 	createLoadBalancedClientAndCallOnRegistry(registryAddress)
