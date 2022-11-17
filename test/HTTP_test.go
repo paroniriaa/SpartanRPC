@@ -26,7 +26,8 @@ func TestXDial(t *testing.T) {
 					t.Error("failed to listen windows socket")
 					return
 				}
-				server.RegisterHandlerHTTP()
+				testHTTPServer := server.CreateServer(listener.Addr())
+				testHTTPServer.RegisterHandlerHTTP()
 				addressChannel <- struct{}{}
 				_ = http.Serve(listener, nil)
 				//server.AcceptConnection(listener)
@@ -45,13 +46,14 @@ func TestXDial(t *testing.T) {
 			addr := "/tmp/sRPC.sock"
 			go func() {
 				_ = os.Remove(addr)
-				l, err := net.Listen("unix", addr)
+				listener, err := net.Listen("unix", addr)
+				testServer := server.CreateServer(listener.Addr())
 				if err != nil {
 					t.Error("failed to listen unix socket")
 					return
 				}
 				ch <- struct{}{}
-				server.AcceptConnection(l)
+				testServer.AcceptConnection(listener)
 			}()
 			<-ch
 			_, err := client.XMakeDial("unix@" + addr)

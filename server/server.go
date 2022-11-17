@@ -166,7 +166,7 @@ func (server *Server) read_header(message coder.Coder) (*coder.MessageHeader, er
 	err := message.DecodeMessageHeader(&h)
 	if err != nil {
 		if err != io.EOF && err != io.ErrUnexpectedEOF {
-			log.Println("Server - read header error:", err)
+			log.Println("RPC server -> read_header error: ", err)
 		}
 		return nil, err
 	}
@@ -194,7 +194,7 @@ func (server *Server) read_request(message coder.Coder) (*Request, error) {
 
 	Error = message.DecodeMessageBody(input)
 	if Error != nil {
-		log.Println("Server - read_request error:", Error)
+		log.Println("RPC server -> read_request error: ", Error)
 		return requests, Error
 	}
 	return requests, nil

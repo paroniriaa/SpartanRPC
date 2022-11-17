@@ -36,11 +36,11 @@ func (coder *JsonCoder) DecodeMessageBody(body interface{}) error {
 
 func (coder *JsonCoder) EncodeMessageHeaderAndBody(header *MessageHeader, body interface{}) (error error) {
 	if error = coder.encoder.Encode(header); error != nil {
-		log.Fatal("Coder Error when encoding header:", error)
+		log.Fatal("RPC Json Coder -> EncodeMessageHeaderAndBody Error: error when encoding header:", error)
 		return error
 	}
 	if error = coder.encoder.Encode(body); error != nil {
-		log.Println("Coder Error when encoding body:", error)
+		log.Println("RPC Json Coder -> EncodeMessageHeaderAndBody Error: error when encoding body:", error)
 		return error
 	}
 	defer func() {

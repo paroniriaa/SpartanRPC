@@ -12,17 +12,18 @@ import (
 
 func StartServer(address chan string) {
 	var test Test
-	err := server.ServerRegister(&test)
-	if err != nil {
-		log.Fatal("Server register error:", err)
-	}
 	listener, err := net.Listen("tcp", "localhost:8003")
 	if err != nil {
-		log.Fatal("Network error:", err)
+		log.Fatal("Server Network issue:", err)
+	}
+	testServer := server.CreateServer(listener.Addr())
+	err = testServer.ServerRegister(&test)
+	if err != nil {
+		log.Println("Server register error:", err)
 	}
 	log.Println("Start RPC server on port:", listener.Addr())
 	address <- listener.Addr().String()
-	server.AcceptConnection(listener)
+	testServer.AcceptConnection(listener)
 }
 
 func TestJsonCoder(test *testing.T) {
