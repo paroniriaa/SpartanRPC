@@ -12,13 +12,19 @@ import (
 )
 
 func startServer(address chan string) {
-	portNumber, err := net.Listen("tcp", "localhost:8002")
+	var test Test
+	listener, err := net.Listen("tcp", "localhost:8002")
 	if err != nil {
-		log.Fatal("network issue:", err)
+		log.Fatal("Server Network issue:", err)
 	}
-	log.Println("startServer RPC server on port", portNumber.Addr())
-	address <- portNumber.Addr().String()
-	server.AcceptConnection(portNumber)
+	testServer := server.CreateServer(listener.Addr())
+	err = testServer.ServerRegister(&test)
+	if err != nil {
+		log.Println("Server register error:", err)
+	}
+	log.Println("Start RPC server on port:", listener.Addr())
+	address <- listener.Addr().String()
+	testServer.AcceptConnection(listener)
 }
 
 func TestServer(test *testing.T) {
@@ -36,17 +42,18 @@ func TestServer(test *testing.T) {
 
 	n := 0
 	for n < 5 {
-		header := &coder.MessageHeader{
+		requestHeader := &coder.MessageHeader{
 			ServiceDotMethod: "Test.Echo",
 			SequenceNumber:   uint64(n),
 		}
-		request := "RPC Sequence Number " + strconv.Itoa(n)
-		log.Println("Request:", request)
-		_ = communication.EncodeMessageHeaderAndBody(header, request)
-		_ = communication.DecodeMessageHeader(header)
-		var response string
-		_ = communication.DecodeMessageBody(&response)
-		log.Println("Response:", response)
+		requestBody := "RPC Sequence Number " + strconv.Itoa(n)
+		log.Println("Request:", requestBody)
+		_ = communication.EncodeMessageHeaderAndBody(requestHeader, requestBody)
+		responseHeader := &coder.MessageHeader{}
+		_ = communication.DecodeMessageHeader(responseHeader)
+		var responseBody string
+		_ = communication.DecodeMessageBody(&responseBody)
+		log.Println("Response:", responseBody)
 		n++
 	}
 }
