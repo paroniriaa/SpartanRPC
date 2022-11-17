@@ -5,127 +5,15 @@ import (
 	"Distributed-RPC-Framework/server"
 	"context"
 	"log"
-	"net"
-	"reflect"
 	"sync"
 	"testing"
 	"time"
 )
 
-type ArithmeticCase struct {
-	ServiceDotMethod string
-	ArithmeticSymbol string
-	Input            *Input
-	Output           *Output
-	Expected         int
-}
-
-type BuiltinTypeCase struct {
-	ServiceDotMethod string
-	BuiltinType      string
-	Input            int
-	Output           any
-	Expected         any
-}
-
-type TimeoutCase struct {
-	ServiceDotMethod string
-	TimeoutType      string
-	Input            int
-	Output           any
-	Address          string
-	Context          context.Context
-	ConnectionInfo   *server.ConnectionInfo
-}
-
-//helper function to create concrete Arithmetic test case
-func createArithmeticTestCase(t *testing.T, c *client.Client, ac *ArithmeticCase) {
-	t.Helper()
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
-	err := c.Call(ac.ServiceDotMethod, ac.Input, ac.Output, ctx)
-	es1 := ac.ServiceDotMethod + ":" + " expected no error, but got error %q"
-	es2 := ac.ServiceDotMethod + ":" + " %d " + ac.ArithmeticSymbol + " %d " + "expected output %d, but got %d"
-	if err != nil {
-		t.Errorf(es1, err.Error())
-	}
-	if ac.Output.C != ac.Expected {
-		t.Errorf(es2, ac.Input.A, ac.Input.B, ac.Expected, ac.Output.C)
-	}
-}
-
-func createBuiltinTypeTestCase(t *testing.T, c *client.Client, btc *BuiltinTypeCase) {
-	t.Helper()
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
-	err := c.Call(btc.ServiceDotMethod, btc.Input, btc.Output, ctx)
-	es1 := btc.ServiceDotMethod + ":" + " expected no error, but got error %q"
-	es2 := btc.ServiceDotMethod + ":" + " expected output %v, but got %v"
-	if err != nil {
-		t.Errorf(es1, err.Error())
-	}
-	if !reflect.DeepEqual(btc.Output, btc.Expected) {
-		t.Errorf(es2, btc.Expected, btc.Output)
-	}
-}
-
-func createTimeoutCallTestCase(t *testing.T, tc *TimeoutCase) {
-	t.Helper()
-	c, _ := client.MakeDial("tcp", tc.Address, tc.ConnectionInfo)
-	defer func() { _ = c.Close() }()
-	err := c.Call(tc.ServiceDotMethod, tc.Input, tc.Output, tc.Context)
-	log.Println(err)
-	es1 := tc.ServiceDotMethod + ":" + " expected" + tc.TimeoutType + " timeout error but got nil error"
-	if err == nil {
-		t.Errorf(es1)
-	}
-}
-
-func createTimeoutDialTestCase(t *testing.T, tc *TimeoutCase) {
-	t.Helper()
-	fakeClientInitializer := func(cn net.Conn, cni *server.ConnectionInfo) (client *client.Client, err error) {
-		_ = cn.Close()
-		time.Sleep(time.Second * 2)
-		return nil, nil
-	}
-	_, err := client.MakeDialWithTimeout(fakeClientInitializer, "tcp", tc.Address, tc.ConnectionInfo)
-	//log.Println(err)
-	if tc.ConnectionInfo.ConnectionTimeout == 0 {
-		if err != nil {
-			es := tc.ServiceDotMethod + tc.TimeoutType + ":" + " expected nil timeout error but got error"
-			t.Errorf(es)
-		}
-	} else {
-		if err == nil {
-			es := tc.ServiceDotMethod + tc.TimeoutType + ":" + " expected timeout error but got nil error"
-			t.Errorf(es)
-		}
-	}
-}
-
-func createServer(address chan string, services []any) {
-	for _, service := range services {
-		registerService(service)
-	}
-
-	listener, err := net.Listen("tcp", "localhost:8001")
-	if err != nil {
-		log.Fatal("Server Network issue:", err)
-	}
-	log.Println("RPC server -> createServer: RPC server created and hosting on port", listener.Addr())
-	address <- listener.Addr().String()
-	server.AcceptConnection(listener)
-}
-
-func registerService(service any) {
-	err := server.ServerRegister(service)
-	if err != nil {
-		log.Fatal("Server register error:", err)
-	}
-}
-
 func TestClient(t *testing.T) {
 	t.Helper()
-	//create service type
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
+	//create service type
 	var arithmetic Arithmetic
 	var builtinType BuiltinType
 	var timeOut Timeout
@@ -134,11 +22,14 @@ func TestClient(t *testing.T) {
 		&builtinType,
 		&timeOut,
 	}
+
+	//create server for testing
 	addressChannel := make(chan string)
-	go createServer(addressChannel, services)
+	go createServer(addressChannel, "localhost:8001", services)
 	address := <-addressChannel
+	//create client for testing
 	defaultClient, _ := client.MakeDial("tcp", address)
-	//defer func() { _ = defaultClient.Close() }()
+	defer func() { _ = defaultClient.Close() }()
 
 	//table-driven tests
 	arithmeticCases := []ArithmeticCase{
