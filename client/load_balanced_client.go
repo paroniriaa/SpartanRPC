@@ -111,5 +111,6 @@ func (loadBalancedClient *LoadBalancedClient) BroadcastCall(contextInfo context.
 		}(rpcServerAddress)
 	}
 	waitGroup.Wait()
+	cancelContext()
 	return broadcastError
 }
