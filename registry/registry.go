@@ -13,6 +13,7 @@ import (
 // add an RPC server and receive its heartbeat to keep it alive in its server list.
 // returns all alive RPC servers in the rpcServerAddressToServerInfoMap and delete dead RPC servers simultaneously.
 type Registry struct {
+	RegistryAddress                 string
 	timeout                         time.Duration
 	mutex                           sync.Mutex // protect following
 	rpcServerAddressToServerInfoMap map[string]*ServerInfo
@@ -28,19 +29,20 @@ type ServerInfo struct {
 // will be treated as unavailable server and will be removed
 const (
 	defaultPath    = "/_srpc_/registry"
+	DefaultAddress = "http://localhost:9999/_srpc_/registry"
+	DefaultPort    = ":9999"
 	DefaultTimeout = time.Minute * 5
 )
 
 // CreateRegistry create a registry instance with timeout setting
-func CreateRegistry(timeout time.Duration) *Registry {
+func CreateRegistry(registryAddress string, timeout time.Duration) *Registry {
 	log.Println("RPC Registry -> CreateRegistry: creating RPC registry...")
 	return &Registry{
+		RegistryAddress:                 registryAddress,
 		rpcServerAddressToServerInfoMap: make(map[string]*ServerInfo),
 		timeout:                         timeout,
 	}
 }
-
-var DefaultRegister = CreateRegistry(DefaultTimeout)
 
 func (registry *Registry) registerServer(addr string) {
 	log.Println("RPC Registry -> registerServer: RPC registry registering server instance...")
@@ -98,12 +100,16 @@ func (registry *Registry) ServeHTTP(responseWriter http.ResponseWriter, request 
 }
 
 // HandleHTTP registers an HTTP handler for Registry messages on the registryPath
-func (registry *Registry) HandleHTTP(registryPath string) {
+func (registry *Registry) HandleHTTP() {
 	log.Println("RPC Registry -> HandleHTTP: RPC registry initializing an HTTP handler for message receiving/sending...")
-	http.Handle(registryPath, registry)
-	log.Println("RPC Registry -> HandleHTTP: RPC registry path:", registryPath, "")
+	http.Handle(defaultPath, registry)
+	log.Println("RPC Registry -> HandleHTTP: RPC registry path:", defaultPath, "")
 }
+
+/*
+//var DefaultRegister = CreateRegistry(DefaultAddress, DefaultTimeout)
 
 func HandleHTTP() {
 	DefaultRegister.HandleHTTP(defaultPath)
 }
+*/

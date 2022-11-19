@@ -241,15 +241,17 @@ func createServer(address chan string, addressPort string, services []any) {
 
 //helper function to create a registry on port 9999
 func createRegistry() {
-	//log.Println("main -> createRegistry: RPC registry initialization routine start...")
-	listener, _ := net.Listen("tcp", ":9999")
-	registry.HandleHTTP()
+	log.Println("main -> createRegistry: RPC registry initialization routine start...")
+	listener, _ := net.Listen("tcp", registry.DefaultPort)
+	testRegistry := registry.CreateRegistry(registry.DefaultAddress, registry.DefaultTimeout)
+	testRegistry.HandleHTTP()
+	//waitGroup.Done()
 	_ = http.Serve(listener, nil)
-	//log.Println("main -> createRegistry: RPC registry initialization routine end...")
+	log.Println("main -> createRegistry: RPC registry initialization routine end...")
 }
 
 //helper function to create a server with desired services on specified port, and register to the specified registry
-func createServerOnRegistry(registryAddress string, addressPort string, services []any) {
+func createServerOnRegistry(addressPort string, services []any) {
 	listener, err := net.Listen("tcp", addressPort)
 	if err != nil {
 		log.Fatal("RPC server -> createServer error: Server Network issue:", err)
@@ -262,6 +264,6 @@ func createServerOnRegistry(registryAddress string, addressPort string, services
 			log.Fatal("RPC server -> createServer error: Server register error:", err)
 		}
 	}
-	testServer.Heartbeat(registryAddress, 0)
+	testServer.Heartbeat(registry.DefaultAddress, 0)
 	testServer.AcceptConnection(listener)
 }

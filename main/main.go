@@ -186,19 +186,20 @@ func loadBalancedClientBroadcastCallRPC(loadBalancedClient *client.LoadBalancedC
 }
 
 // -------------------------- Stage 3B usage --------------------------
-func createRegistry() {
+func createRegistry(addressPort string) {
 	log.Println("main -> createRegistry: RPC registry initialization routine start...")
-	listener, _ := net.Listen("tcp", ":9999")
-	registry.HandleHTTP()
+	listener, _ := net.Listen("tcp", addressPort)
+	testRegistry := registry.CreateRegistry(registry.DefaultAddress, registry.DefaultTimeout)
+	testRegistry.HandleHTTP()
 	//waitGroup.Done()
 	_ = http.Serve(listener, nil)
 	log.Println("main -> createRegistry: RPC registry initialization routine end...")
 }
 
-func createServerOnRegistry(registryAddress string) {
+func createServerOnRegistry(addressPort string) {
 	log.Println("main -> createServerOnRegistry: RPC server initialization routine start...")
 	var arithmetic Arithmetic
-	listener, err := net.Listen("tcp", ":0")
+	listener, err := net.Listen("tcp", addressPort)
 	if err != nil {
 		log.Fatal("Server Network issue:", err)
 	}
@@ -207,15 +208,15 @@ func createServerOnRegistry(registryAddress string) {
 	if err != nil {
 		log.Println("Server register error:", err)
 	}
-	testServer.Heartbeat(registryAddress, 0)
+	testServer.Heartbeat(registry.DefaultAddress, 0)
 	//log.Println("RPC server -> createServer: RPC server created and hosting on port", listener.ServerAddress())
 	testServer.AcceptConnection(listener)
 	log.Println("main -> createServerOnRegistry: RPC server initialization routine end...")
 
 }
 
-func createLoadBalancedClientAndCallOnRegistry(registryAddress string) {
-	registryLoadBalancer := loadBalancer.CreateLoadBalancerRegistrySide(registryAddress, 0)
+func createLoadBalancedClientAndCallOnRegistry() {
+	registryLoadBalancer := loadBalancer.CreateLoadBalancerRegistrySide(registry.DefaultAddress, 0)
 	loadBalancedClient := client.CreateLoadBalancedClient(registryLoadBalancer, loadBalancer.RoundRobinSelectMode, nil)
 	log.Printf("registryLoadBalancer: %+v", registryLoadBalancer)
 	log.Printf("Before -> loadBalancedClient: %+v", loadBalancedClient)
@@ -235,8 +236,8 @@ func createLoadBalancedClientAndCallOnRegistry(registryAddress string) {
 	log.Printf("After -> loadBalancedClient: %+v", loadBalancedClient)
 }
 
-func createLoadBalancedClientAndBroadcastCallOnRegistry(registryAddress string) {
-	registryLoadBalancer := loadBalancer.CreateLoadBalancerRegistrySide(registryAddress, 0)
+func createLoadBalancedClientAndBroadcastCallOnRegistry() {
+	registryLoadBalancer := loadBalancer.CreateLoadBalancerRegistrySide(registry.DefaultAddress, 0)
 	loadBalancedClient := client.CreateLoadBalancedClient(registryLoadBalancer, loadBalancer.RandomSelectMode, nil)
 	defer func() { _ = loadBalancedClient.Close() }()
 
@@ -279,16 +280,15 @@ func main() {
 		createLoadBalancedClientAndBroadcastCall(addressA, addressB)*/
 
 	//Stage 3B: TCP, load balancing(registry side), registry discover and heartbeat monitoring, server address random (:0), return 0
-	registryAddress := "http://localhost:9999/_srpc_/registry"
-
+	//registry.DefaultAddress -> "http://localhost:9999/_srpc_/registry"
 	//time.Sleep(time.Second)
-	go createRegistry()
+	go createRegistry(":9999")
 	time.Sleep(time.Second)
 
-	go createServerOnRegistry(registryAddress)
-	go createServerOnRegistry(registryAddress)
+	go createServerOnRegistry(":0")
+	go createServerOnRegistry(":0")
 	time.Sleep(time.Second)
 
-	createLoadBalancedClientAndCallOnRegistry(registryAddress)
-	//createLoadBalancedClientAndBroadcastCallOnRegistry(registryAddress)
+	createLoadBalancedClientAndCallOnRegistry()
+	//createLoadBalancedClientAndBroadcastCallOnRegistry()
 }
