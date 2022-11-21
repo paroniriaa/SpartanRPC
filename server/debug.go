@@ -27,7 +27,7 @@ const debugText = `<html>
 	</body>
 	</html>`
 
-var debug = template.Must(template.New("RPC - debug").Parse(debugText))
+var debug = template.Must(template.New("Spartan RPC - debug").Parse(debugText))
 
 type HTTPDebug struct {
 	*Server
@@ -52,6 +52,6 @@ func (server HTTPDebug) ServeHTTP(responseWriter http.ResponseWriter, request *h
 	})
 	err := debug.Execute(responseWriter, services)
 	if err != nil {
-		_, _ = fmt.Fprintln(responseWriter, "RPC: error when executing template:", err.Error())
+		_, _ = fmt.Fprintln(responseWriter, "RPC server debug -> ServeHTTP: error when executing template:", err.Error())
 	}
 }
