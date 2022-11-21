@@ -6,32 +6,29 @@ import (
 	"encoding/json"
 	"log"
 	"net"
+	"sync"
 	"testing"
-	"time"
 )
 
-func StartServer(address chan string) {
-	var test Test
-	err := server.ServerRegister(&test)
-	if err != nil {
-		log.Fatal("Server register error:", err)
-	}
-	listener, err := net.Listen("tcp", "localhost:8003")
-	if err != nil {
-		log.Fatal("Network error:", err)
-	}
-	log.Println("Start RPC server on port:", listener.Addr())
-	address <- listener.Addr().String()
-	server.AcceptConnection(listener)
-}
+func TestJsonCoder(t *testing.T) {
+	t.Helper()
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
+	var waitGroup sync.WaitGroup
 
-func TestJsonCoder(test *testing.T) {
-	test.Helper()
-	address := make(chan string)
-	go StartServer(address)
-	connection, _ := net.Dial("tcp", <-address)
-	//defer func() { _ = connection.Close() }()
-	time.Sleep(time.Second)
+	// create service type (test is enough)
+	var test Test
+	services := []any{
+		&test,
+	}
+
+	serverAddressChannelA := make(chan string)
+	waitGroup.Add(1)
+	go createServer(":0", services, serverAddressChannelA, &waitGroup)
+	serverAddressA := <-serverAddressChannelA
+	log.Printf("Load balancer test -> main: Server A (not registered) address fetched: %s", serverAddressA)
+	waitGroup.Wait()
+
+	connection, _ := net.Dial("tcp", serverAddressA)
 	_ = json.NewEncoder(connection).Encode(server.DefaultConnectionInfo)
 	testJsonCoder := coder.NewJsonCoder(connection)
 	requestHeader := &coder.MessageHeader{
@@ -47,41 +44,41 @@ func TestJsonCoder(test *testing.T) {
 	var responseBody string
 	responseHeader := &coder.MessageHeader{}
 
-	test.Run("EncodeMessageHeaderAndBody", func(t *testing.T) {
+	t.Run("EncodeMessageHeaderAndBody", func(t *testing.T) {
 		err = testJsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
 		_ = testJsonCoder.DecodeMessageHeader(responseHeader)
 		_ = testJsonCoder.DecodeMessageBody(&responseBody)
 		if err != nil {
-			test.Errorf("EncodeMessageHeaderAndBody Error: %s", err)
+			t.Errorf("EncodeMessageHeaderAndBody Error: %s", err)
 		}
 	})
 
-	test.Run("DecodeMessageHeader", func(t *testing.T) {
+	t.Run("DecodeMessageHeader", func(t *testing.T) {
 		_ = testJsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
 		err = testJsonCoder.DecodeMessageHeader(responseHeader)
 		_ = testJsonCoder.DecodeMessageBody(&responseBody)
 		//log.Printf("responseHeader: %+v", responseHeader)
 		if err != nil {
-			test.Errorf("DecodeMessageHeader Error: %s", err)
+			t.Errorf("DecodeMessageHeader Error: %s", err)
 		}
 		if responseHeader.ServiceDotMethod != requestHeader.ServiceDotMethod {
-			test.Errorf("DecodeMessageHeader Error: responseHeader.ServiceDotMethod expected to be %s, but got %s", requestHeader.ServiceDotMethod, responseHeader.ServiceDotMethod)
+			t.Errorf("DecodeMessageHeader Error: responseHeader.ServiceDotMethod expected to be %s, but got %s", requestHeader.ServiceDotMethod, responseHeader.ServiceDotMethod)
 		}
 		if responseHeader.SequenceNumber != requestHeader.SequenceNumber {
-			test.Errorf("DecodeMessageHeader Error: responseHeader.SequenceNumber expected to be %d, but got %d", requestHeader.SequenceNumber, responseHeader.SequenceNumber)
+			t.Errorf("DecodeMessageHeader Error: responseHeader.SequenceNumber expected to be %d, but got %d", requestHeader.SequenceNumber, responseHeader.SequenceNumber)
 		}
 	})
 
-	test.Run("DecodeMessageBody", func(t *testing.T) {
+	t.Run("DecodeMessageBody", func(t *testing.T) {
 		_ = testJsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
 		_ = testJsonCoder.DecodeMessageHeader(responseHeader)
 		err = testJsonCoder.DecodeMessageBody(&responseBody)
 		//log.Printf("responseBody: %v", responseBody)
 		if err != nil {
-			test.Errorf("DecodeMessageBody Error: %s", err)
+			t.Errorf("DecodeMessageBody Error: %s", err)
 		}
 		if responseBody != requestBody {
-			test.Errorf("DecodeMessageBody Error: responseBody expected to be %s, but got %s", requestBody, responseBody)
+			t.Errorf("DecodeMessageBody Error: responseBody expected to be %s, but got %s", requestBody, responseBody)
 		}
 	})
 

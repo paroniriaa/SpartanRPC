@@ -103,7 +103,7 @@ func (loadBalancedClient *LoadBalancedClient) BroadcastCall(contextInfo context.
 				cancelContext() // if any call failed, cancel unfinished calls
 			}
 			if err == nil && !replyDone {
-				log.Printf("RPC LoadBalancedClient -> BroadcastCall: LoadBalancedClient %p recieved RPC response from RPC server %s first for RPC request invoking function %s with inputs -> %v", loadBalancedClient, address, serviceDotMethod, inputs)
+				log.Printf("RPC loadBalancedClient -> BroadcastCall: LoadBalancedClient %p recieved RPC response from RPC server %s first for RPC request invoking function %s with inputs -> %v", loadBalancedClient, address, serviceDotMethod, inputs)
 				reflect.ValueOf(output).Elem().Set(reflect.ValueOf(clonedReply).Elem())
 				replyDone = true
 			}
@@ -111,5 +111,6 @@ func (loadBalancedClient *LoadBalancedClient) BroadcastCall(contextInfo context.
 		}(rpcServerAddress)
 	}
 	waitGroup.Wait()
+	cancelContext()
 	return broadcastError
 }

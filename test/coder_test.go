@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestInit(test *testing.T) {
+func TestCoder(test *testing.T) {
 	test.Helper()
 	TestNewCoderFuncMap := make(map[coder.CoderType]coder.CoderInitializer)
 	TestNewCoderFuncMap[coder.Json] = coder.NewJsonCoder

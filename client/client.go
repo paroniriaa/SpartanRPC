@@ -237,7 +237,7 @@ func parseConnectionInfo(connectionInfos ...*server.ConnectionInfo) (*server.Con
 		//log.Printf("RPC client -> parseConnectionInfo: parsed nil...use server default connectionInfo")
 		return server.DefaultConnectionInfo, nil
 	case len(connectionInfos) != 1:
-		return nil, errors.New("RPC Client -> parseConnectionInfo error: connectionInfos should be in length 1")
+		return nil, errors.New("RPC client -> parseConnectionInfo error: connectionInfos should be in length 1")
 	default:
 		connectionInfo := connectionInfos[0]
 		connectionInfo.IDNumber = server.DefaultConnectionInfo.IDNumber
@@ -256,11 +256,11 @@ func CreateClient(connection net.Conn, connectionInfo *server.ConnectionInfo) (*
 	Error := json.NewEncoder(connection).Encode(connectionInfo)
 	switch {
 	case coderFunction == nil:
-		err := fmt.Errorf("RPC Client -> CreateClient -> coderFunction error: %s coderType is invalid", connectionInfo.CoderType)
-		//log.Println("RPC Client -> coder error:", err)
+		err := fmt.Errorf("RPC client -> CreateClient -> coderFunction error: %s coderType is invalid", connectionInfo.CoderType)
+		//log.Println("RPC client -> coder error:", err)
 		return nil, err
 	case Error != nil:
-		//log.Println("RPC Client -> CreateClient -> connectionInfo error: ", Error)
+		//log.Println("RPC client -> CreateClient -> connectionInfo error: ", Error)
 		_ = connection.Close()
 		return nil, Error
 	default:
@@ -286,10 +286,10 @@ func (client *Client) Call(serviceDotMethod string, inputs, output interface{}, 
 	select {
 	case <-context.Done():
 		client.deleteCall(call.SequenceNumber)
-		return errors.New("RPC Client -> Call: RPC client fail to finish the RPC request within the timeout period due to error: " + context.Err().Error())
-	case call := <-call.Finish:
+		return errors.New("RPC client -> Call: RPC client fail to finish the RPC request within the timeout period due to error: " + context.Err().Error())
+	case finishedCall := <-call.Finish:
 		//log.Printf("RPC client -> Call: RPC client %p finished RPC request on function %s with inputs -> %v", client, serviceDotMethod, inputs)
-		return call.Error
+		return finishedCall.Error
 	}
 }
 
@@ -306,7 +306,7 @@ func (client *Client) StartCall(serviceDotMethod string, inputs, output interfac
 	case finish == nil:
 		finish = make(chan *Call, 10)
 	case cap(finish) == 0:
-		log.Panic("RPC Client -> StartCall error: 'finishCall' channel is unbuffered")
+		log.Panic("RPC client -> StartCall error: 'finishCall' channel is unbuffered")
 	}
 	call := &Call{
 		ServiceDotMethod: serviceDotMethod,
@@ -339,9 +339,9 @@ func (client *Client) sendCall(call *Call) {
 	Error = client.coder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
 	//log.Printf("RPC client -> sendCall: RPC client %p sent RPC request %p", client, call)
 	if Error != nil {
-		if call := client.deleteCall(sequenceNumber); call != nil {
-			call.Error = Error
-			call.finishCall()
+		if matchedCall := client.deleteCall(sequenceNumber); matchedCall != nil {
+			matchedCall.Error = Error
+			matchedCall.finishCall()
 		}
 	}
 }
@@ -365,7 +365,7 @@ func (client *Client) receiveCall() {
 		} else {
 			Error = client.coder.DecodeMessageBody(call.Output)
 			if Error != nil {
-				call.Error = errors.New("RPC Client -> receiveCall error: cannot decode message body" + Error.Error())
+				call.Error = errors.New("RPC client -> receiveCall error: cannot decode message body" + Error.Error())
 			}
 			actualOutput := reflect.ValueOf(call.Output).Elem()
 			log.Printf("RPC client -> receiveCall: RPC client %p received call %p response -> %v", client, call, actualOutput)

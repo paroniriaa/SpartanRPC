@@ -22,6 +22,7 @@ const MagicNumber = 0x3bef5c
 
 // TODO: struct
 type Server struct {
+	Listener      net.Listener
 	ServerAddress string
 	ServiceMap    sync.Map
 }
@@ -49,25 +50,32 @@ var DefaultConnectionInfo = &ConnectionInfo{
 
 var invalidRequest = struct{}{}
 
-func CreateServer(serverAddress net.Addr) *Server {
-	return &Server{ServerAddress: "tcp@" + serverAddress.String()}
+func CreateServer(listener net.Listener) (*Server, error) {
+	log.Printf("RPC server -> CreateServer: creating RPC server on port %s...", listener.Addr().String())
+	if listener == nil {
+		return nil, errors.New("RPC server > CreateServer error: Network listener should not be nil, but received nil")
+	}
+	return &Server{
+		ServerAddress: listener.Addr().Network() + "@" + listener.Addr().String(),
+		Listener:      listener,
+	}, nil
 }
 
 func (server *Server) ServerRegister(serviceValue interface{}) error {
 	newService := service.CreateService(serviceValue)
 	_, duplicate := server.ServiceMap.LoadOrStore(newService.ServiceName, newService)
 	if duplicate {
-		return errors.New("RPC Server > ServerRegister error: Service has already been defined: " + newService.ServiceName)
+		return errors.New("RPC server > ServerRegister error: Service has already been defined: " + newService.ServiceName)
 	}
-	log.Printf("RPC server -> ServerRegister: RPC Server %p registerd service %+v and hosting on address %s", server, newService, server.ServerAddress)
+	log.Printf("RPC server -> ServerRegister: RPC server %p registerd service %+v and hosting on address %s", server, newService, server.ServerAddress)
 	return nil
 }
 
-func (server *Server) AcceptConnection(listener net.Listener) {
+func (server *Server) LaunchAndAccept() {
 	for {
-		connection, err := listener.Accept()
+		connection, err := server.Listener.Accept()
 		if err != nil {
-			log.Println("RPC server -> AcceptConnection error: ", err)
+			log.Printf("RPC server -> LaunchAndAccept error: %s", err)
 			return
 		}
 		go server.ServeConnection(connection)
@@ -78,16 +86,16 @@ func (server *Server) ServeConnection(connection io.ReadWriteCloser) {
 	defer func() { _ = connection.Close() }()
 	var connectionInfo ConnectionInfo
 	if err := json.NewDecoder(connection).Decode(&connectionInfo); err != nil {
-		log.Println("RPC server -> ServeConnection error: fail to decode connectionInfo due to", err)
+		log.Printf("RPC server -> ServeConnection error: Fail to decode connectionInfo due to %s", err)
 		return
 	}
 	if connectionInfo.IDNumber != MagicNumber {
-		log.Printf("RPC server -> ServeConnection error: invalid ID number %x", connectionInfo.IDNumber)
+		log.Printf("RPC server -> ServeConnection error: Invalid ID number %x", connectionInfo.IDNumber)
 		return
 	}
 	coderInitializerFunction := coder.CoderInitializerMap[connectionInfo.CoderType]
 	if coderInitializerFunction == nil {
-		log.Printf("RPC server-> ServeConnection error: invalid coder type %s", connectionInfo.CoderType)
+		log.Printf("RPC server-> ServeConnection error: Invalid coder type %s", connectionInfo.CoderType)
 		return
 	}
 	server.serveCoder(coderInitializerFunction(connection), &connectionInfo)
@@ -166,7 +174,7 @@ func (server *Server) read_header(message coder.Coder) (*coder.MessageHeader, er
 	err := message.DecodeMessageHeader(&h)
 	if err != nil {
 		if err != io.EOF && err != io.ErrUnexpectedEOF {
-			log.Println("Server - read header error:", err)
+			log.Println("RPC server -> read_header error: ", err)
 		}
 		return nil, err
 	}
@@ -194,7 +202,7 @@ func (server *Server) read_request(message coder.Coder) (*Request, error) {
 
 	Error = message.DecodeMessageBody(input)
 	if Error != nil {
-		log.Println("Server - read_request error:", Error)
+		log.Println("RPC server -> read_request error: ", Error)
 		return requests, Error
 	}
 	return requests, nil
@@ -204,19 +212,19 @@ func (server *Server) read_request(message coder.Coder) (*Request, error) {
 func (server *Server) searchService(serviceMethod string) (services *service.Service, methods *service.Method, err error) {
 	splitIndex := strings.LastIndex(serviceMethod, ".")
 	if splitIndex < 0 {
-		err = errors.New("Server - searchService error: " + serviceMethod + " ill-formed invalid.")
+		err = errors.New("RPC server -> searchService error: " + serviceMethod + " ill-formed invalid.")
 		return
 	}
 	serviceName, methodName := serviceMethod[:splitIndex], serviceMethod[splitIndex+1:]
 	input, serviceStatus := server.ServiceMap.Load(serviceName)
 	if !serviceStatus {
-		err = errors.New("Server - searchService error: " + serviceName + " serviceName didn't exist")
+		err = errors.New("RPC server -> searchService error: " + serviceName + " serviceName didn't exist")
 		return
 	}
 	services = input.(*service.Service)
 	methods = services.ServiceMethod[methodName]
 	if methods == nil {
-		err = errors.New("Server - searchService error: " + methodName + " methodName didn't exist")
+		err = errors.New("RPC server -> searchService error: " + methodName + " methodName didn't exist")
 	}
 	return
 }
@@ -225,7 +233,7 @@ func (server *Server) send_response(message coder.Coder, header *coder.MessageHe
 	sending.Lock()
 	Error := message.EncodeMessageHeaderAndBody(header, body)
 	if Error != nil {
-		log.Println("Server - write response error:", Error)
+		log.Println("RPC server -> write response error:", Error)
 	}
 	defer sending.Unlock()
 }
@@ -256,7 +264,7 @@ func (server *Server) request_handle(message coder.Coder, request *Request, send
 	//which means both serviceCallTimeoutChannel and responseSendTimeoutChannel will be blocked, so we need to send response right after.
 	select {
 	case <-time.After(timeoutLimit):
-		request.header.Error = fmt.Sprintf("RPC Server -> request_handle error: expect to handle RPC request within %s, but failed and timeout", timeoutLimit)
+		request.header.Error = fmt.Sprintf("RPC server -> request_handle error: expect to handle RPC request within %s, but failed and timeout", timeoutLimit)
 		server.send_response(message, request.header, invalidRequest, sending)
 	case <-serviceCallTimeoutChannel:
 		<-responseSendTimeoutChannel
@@ -279,45 +287,48 @@ func (server *Server) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 	}
 	connection, _, err := writer.(http.Hijacker).Hijack()
 	if err != nil {
-		log.Print("RPC hijacking ", request.RemoteAddr, ": ", err.Error())
+		log.Print("RPC server -> ServeHTTP hijacking ", request.RemoteAddr, ": ", err.Error())
 		return
 	}
 	_, _ = io.WriteString(connection, "HTTP/1.0 "+ConnectedMessage+"\n\n")
 	server.ServeConnection(connection)
 }
 
-// RegisterHandlerHTTP is a convenient approach for default server to register HTTP handlers
-func (server *Server) RegisterHandlerHTTP() {
-	http.Handle(DefaultRPCPath, server)
-	http.Handle(DefaultDebugPath, HTTPDebug{server})
-	log.Println("RPC server -> registerHandlerHTTP: registered debug path:", DefaultDebugPath)
+// LaunchAndServe is a convenient approach for server to register an individual HTTP handlers and have it serve the specified path(s)
+func (server *Server) LaunchAndServe() {
+	log.Println("RPC server -> LaunchAndServe: RPC server initializing an HTTP multiplexer (handler) for debug...")
+	serverMultiplexer := http.NewServeMux()
+	serverMultiplexer.HandleFunc(DefaultRPCPath, server.ServeHTTP)
+	serverMultiplexer.HandleFunc(DefaultDebugPath, HTTPDebug{server}.ServeHTTP)
+	log.Printf("RPC server -> LaunchAndServe: RPC server finished initializing the HTTP multiplexer (handler) for debug, and it is serving on URL path: %s", "http://localhost"+server.Listener.Addr().String()[4:]+DefaultDebugPath)
+	_ = http.Serve(server.Listener, serverMultiplexer)
 }
 
 // Heartbeat send a heartbeat message every once in a while
 // it's a helper function for the RPC server to register or send heartbeat to the RPC registry
-func (server *Server) Heartbeat(registryAddress string, heartRate time.Duration) {
+func (server *Server) Heartbeat(registryURL string, heartRate time.Duration) {
 	if heartRate == 0 {
 		// make sure there is enough time to send heart beat
-		// before it's removed from registryAddress
+		// before it's removed from registryURL
 		heartRate = registry.DefaultTimeout - time.Duration(1)*time.Minute
 	}
-	log.Printf("RPC Registry -> Heartbeat: RPC server %s hosted heartbeat service, and its heartbeat will be send to the RPC registry %s per %s...", server.ServerAddress, registryAddress, heartRate)
+	log.Printf("RPC server -> Heartbeat: RPC server %s launched auto heartbeat sending service, and its heartbeat will be send to the RPC registry %s per %s...", server.ServerAddress, registryURL, heartRate)
 	var err error
-	err = server.sendHeartbeat(registryAddress)
+	err = server.sendHeartbeat(registryURL)
 	go func() {
 		heartRateTicker := time.NewTicker(heartRate)
 		for err == nil {
 			<-heartRateTicker.C
-			err = server.sendHeartbeat(registryAddress)
+			err = server.sendHeartbeat(registryURL)
 		}
 	}()
 }
 
-func (server *Server) sendHeartbeat(registryAddress string) error {
-	log.Printf("RPC Server -> sendHeartbeat: RPC server %s sends heart beat to RPC registry %s...", server.ServerAddress, registryAddress)
+func (server *Server) sendHeartbeat(registryURL string) error {
+	log.Printf("RPC Server -> sendHeartbeat: RPC server %s sends heart beat to RPC registry %s...", server.ServerAddress, registryURL)
 	httpClient := &http.Client{}
-	httpRequest, _ := http.NewRequest("POST", registryAddress, nil)
-	httpRequest.Header.Set("SpartanRPC-AliveServer", server.ServerAddress)
+	httpRequest, _ := http.NewRequest("POST", registryURL, nil)
+	httpRequest.Header.Set("POST-SpartanRPC-AliveServer", server.ServerAddress)
 	if _, err := httpClient.Do(httpRequest); err != nil {
 		log.Printf("RPC Server -> sendHeartbeat error: RPC server %s heart beat error %s", server.ServerAddress, err)
 		return err
