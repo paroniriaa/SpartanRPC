@@ -231,7 +231,7 @@ func createServer(port string, services []any, addressChannel chan string, waitG
 	}
 	testServer, err := server.CreateServer(listener)
 	if err != nil {
-		log.Fatal("Test utility -> createServer: RPC server creation issue:", err)
+		log.Fatal("Test utility -> createServer error: RPC server creation issue:", err)
 	}
 	for _, service := range services {
 		err = testServer.ServerRegister(service)
@@ -252,11 +252,11 @@ func createRegistry(port string, registryChannel chan *registry.Registry, waitGr
 	log.Println("Test utility -> createRegistry: RPC registry initialization routine start...")
 	listener, err := net.Listen("tcp", port)
 	if err != nil {
-		log.Fatal("Test utility -> createRegistry: RPC registry network issue:", err)
+		log.Fatal("Test utility -> createRegistry error: RPC registry network issue:", err)
 	}
 	testRegistry, err := registry.CreateRegistry(listener, registry.DefaultTimeout)
 	if err != nil {
-		log.Fatal("Test utility -> createRegistry: RPC registry creation issue:", err)
+		log.Fatal("Test utility -> createRegistry error: RPC registry creation issue:", err)
 	}
 	registryChannel <- testRegistry
 	waitGroup.Done()
@@ -271,11 +271,11 @@ func createServerOnRegistry(port string, registryURL string, services []any, ser
 	log.Println("Test utility -> createServerOnRegistry: RPC server initialization routine start...")
 	listener, err := net.Listen("tcp", port)
 	if err != nil {
-		log.Fatal("Test utility -> createServerOnRegistry: RPC server network issue:", err)
+		log.Fatal("Test utility -> createServerOnRegistry error: RPC server network issue:", err)
 	}
 	testServer, err := server.CreateServer(listener)
 	if err != nil {
-		log.Fatal("Test utility -> createServerOnRegistry: RPC server creation issue:", err)
+		log.Fatal("Test utility -> createServerOnRegistry error: RPC server creation issue:", err)
 	}
 	for _, service := range services {
 		err = testServer.ServerRegister(service)
