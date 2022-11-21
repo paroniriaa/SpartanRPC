@@ -5,6 +5,8 @@ import (
 	"Distributed-RPC-Framework/server"
 	"context"
 	"log"
+	"net"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -13,6 +15,7 @@ import (
 func TestClient(t *testing.T) {
 	t.Helper()
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
+	var waitGroup sync.WaitGroup
 	//create service type
 	var arithmetic Arithmetic
 	var builtinType BuiltinType
@@ -25,8 +28,10 @@ func TestClient(t *testing.T) {
 
 	//create server for testing
 	addressChannel := make(chan string)
-	go createServer(addressChannel, "localhost:8001", services)
+	waitGroup.Add(1)
+	go createServer(":0", services, addressChannel, &waitGroup)
 	address := <-addressChannel
+	waitGroup.Wait()
 	//create client for testing
 	defaultClient, _ := client.MakeDial("tcp", address)
 	defer func() { _ = defaultClient.Close() }()
@@ -81,7 +86,7 @@ func TestClient(t *testing.T) {
 
 	//Synchronous calls tests
 	prefix := "SynchronousCalls."
-	time.Sleep(time.Second)
+	//time.Sleep(time.Second)
 	//loop through all arithmeticCases in the table and create the concrete subtest
 	for _, testCase := range arithmeticCases {
 		t.Run(prefix+testCase.ServiceDotMethod, func(t *testing.T) {
@@ -91,8 +96,7 @@ func TestClient(t *testing.T) {
 
 	//Asynchronous calls test
 	prefix = "AsynchronousCalls."
-	time.Sleep(time.Second)
-	var waitGroup sync.WaitGroup
+	//time.Sleep(time.Second)
 	//loop through all arithmeticCases in the table and create the concrete subtest
 	for _, testCase := range arithmeticCases {
 		t.Run(prefix+testCase.ServiceDotMethod, func(t *testing.T) {
@@ -107,7 +111,7 @@ func TestClient(t *testing.T) {
 
 	//Builtin type calls test
 	prefix = "TypeCheckingCalls."
-	time.Sleep(time.Second)
+	//time.Sleep(time.Second)
 	//loop through all builtinTypeCases in the table and create the concrete subtest
 	for _, testCase := range builtinTypeCases {
 		t.Run(prefix+testCase.ServiceDotMethod, func(t *testing.T) {
@@ -119,7 +123,7 @@ func TestClient(t *testing.T) {
 
 	//Timeout calls test
 	prefix = "TimeoutCheckingCalls."
-	time.Sleep(time.Second)
+	//time.Sleep(time.Second)
 	//loop through all timeoutCallCases in the table and create the concrete subtest
 	for _, testCase := range timeoutCallCases {
 		t.Run(prefix+testCase.TimeoutType, func(t *testing.T) {
@@ -129,11 +133,55 @@ func TestClient(t *testing.T) {
 
 	//Timeout dials test
 	prefix = "TimeoutCheckingDials."
-	time.Sleep(time.Second)
+	//time.Sleep(time.Second)
 	//loop through all timeoutDialCases in the table and create the concrete subtest
 	for _, testCase := range timeoutDialCases {
 		t.Run(prefix+testCase.TimeoutType, func(t *testing.T) {
 			createTimeoutDialTestCase(t, &testCase)
 		})
 	}
+
+	//client direct HTTP XDials test (windows)
+	t.Run("WindowsXDial", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			windowsAddressChannel := make(chan string)
+			go func() {
+				listener, err := net.Listen("tcp", ":0")
+				if err != nil {
+					t.Error("failed to listen windows socket")
+					return
+				}
+				testHTTPServer, err := server.CreateServer(listener)
+				windowsAddressChannel <- listener.Addr().String()
+				testHTTPServer.LaunchAndServe()
+			}()
+			serverAddress := <-windowsAddressChannel
+			_, err := client.XMakeDial("http@" + serverAddress)
+			_assert(err == nil, "failed to connect windows socket", err)
+		} else {
+			log.Println("current GO OS is not windows, corresponding sub tests has been dumped")
+		}
+	})
+
+	//client direct HTTP XDials test (Linux)
+	t.Run("LinuxXDial", func(t *testing.T) {
+		if runtime.GOOS == "linux" {
+			linuxAddressChannel := make(chan string)
+			go func() {
+				listener, err := net.Listen("unix", ":0")
+				if err != nil {
+					t.Error("failed to listen unix socket")
+					return
+				}
+				testHTTPServer, err := server.CreateServer(listener)
+				linuxAddressChannel <- listener.Addr().String()
+				testHTTPServer.LaunchAndServe()
+			}()
+			serverAddress := <-linuxAddressChannel
+			_, err := client.XMakeDial("unix@" + serverAddress)
+			_assert(err == nil, "failed to connect unix socket", err)
+		} else {
+			log.Println("current GO OS is not linux, corresponding sub tests has been dumped")
+		}
+	})
 }
