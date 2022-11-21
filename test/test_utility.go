@@ -8,8 +8,8 @@ import (
 	"errors"
 	"log"
 	"net"
-	"net/http"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 )
@@ -222,48 +222,71 @@ func createBroadcastCallTestCase(t *testing.T, c *client.LoadBalancedClient, ac 
 }
 
 //helper function to create a server with desired services on specified port
-func createServer(address chan string, addressPort string, services []any) {
-	listener, err := net.Listen("tcp", addressPort)
+//and have the created server send to the address channel
+func createServer(port string, services []any, addressChannel chan string, waitGroup *sync.WaitGroup) {
+	log.Println("Test utility -> createServer: RPC server initialization routine start...")
+	listener, err := net.Listen("tcp", port)
 	if err != nil {
-		log.Fatal("RPC server -> createServer error: Server Network issue:", err)
+		log.Fatal("Test utility -> createServer error: RPC server network issue:", err)
 	}
-	log.Println("RPC server -> createServer: RPC server created and hosting on port", listener.Addr())
-	testServer := server.CreateServer(listener.Addr())
+	testServer, err := server.CreateServer(listener)
+	if err != nil {
+		log.Fatal("Test utility -> createServer: RPC server creation issue:", err)
+	}
 	for _, service := range services {
 		err = testServer.ServerRegister(service)
 		if err != nil {
-			log.Fatal("RPC server -> createServer error: Server register error:", err)
+			log.Fatal("Test utility -> createServer error: RPC server register error:", err)
 		}
 	}
-	address <- listener.Addr().String()
-	testServer.AcceptConnection(listener)
+	addressChannel <- listener.Addr().String()
+	waitGroup.Done()
+	log.Println("Test utility -> createServer: RPC server initialization routine end, now launched and accepting...")
+	//BLOCKING and keep listening
+	testServer.LaunchAndAccept()
 }
 
-//helper function to create a registry on port 9999
-func createRegistry() {
-	log.Println("main -> createRegistry: RPC registry initialization routine start...")
-	listener, _ := net.Listen("tcp", registry.DefaultPort)
-	testRegistry := registry.CreateRegistry(registry.DefaultAddress, registry.DefaultTimeout)
-	testRegistry.HandleHTTP()
-	//waitGroup.Done()
-	_ = http.Serve(listener, nil)
-	log.Println("main -> createRegistry: RPC registry initialization routine end...")
+//helper function to create a registry on specified port
+//and have the created registry send to the registry channel
+func createRegistry(port string, registryChannel chan *registry.Registry, waitGroup *sync.WaitGroup) {
+	log.Println("Test utility -> createRegistry: RPC registry initialization routine start...")
+	listener, err := net.Listen("tcp", port)
+	if err != nil {
+		log.Fatal("Test utility -> createRegistry: RPC registry network issue:", err)
+	}
+	testRegistry, err := registry.CreateRegistry(listener, registry.DefaultTimeout)
+	if err != nil {
+		log.Fatal("Test utility -> createRegistry: RPC registry creation issue:", err)
+	}
+	registryChannel <- testRegistry
+	waitGroup.Done()
+	log.Println("Test utility -> createRegistry: RPC registry initialization routine end, now launched and serving...")
+	//BLOCKING and keep serving
+	testRegistry.LaunchAndServe()
 }
 
 //helper function to create a server with desired services on specified port, and register to the specified registry
-func createServerOnRegistry(addressPort string, services []any) {
-	listener, err := net.Listen("tcp", addressPort)
+//and have the created server send to the server channel
+func createServerOnRegistry(port string, registryURL string, services []any, serverChannel chan *server.Server, waitGroup *sync.WaitGroup) {
+	log.Println("Test utility -> createServerOnRegistry: RPC server initialization routine start...")
+	listener, err := net.Listen("tcp", port)
 	if err != nil {
-		log.Fatal("RPC server -> createServer error: Server Network issue:", err)
+		log.Fatal("Test utility -> createServerOnRegistry: RPC server network issue:", err)
 	}
-	log.Println("RPC server -> createServer: RPC server created and hosting on port", listener.Addr())
-	testServer := server.CreateServer(listener.Addr())
+	testServer, err := server.CreateServer(listener)
+	if err != nil {
+		log.Fatal("Test utility -> createServerOnRegistry: RPC server creation issue:", err)
+	}
 	for _, service := range services {
 		err = testServer.ServerRegister(service)
 		if err != nil {
-			log.Fatal("RPC server -> createServer error: Server register error:", err)
+			log.Fatal("Test utility utility -> createServer error: RPC server register error:", err)
 		}
 	}
-	testServer.Heartbeat(registry.DefaultAddress, 0)
-	testServer.AcceptConnection(listener)
+	testServer.Heartbeat(registryURL, 0)
+	serverChannel <- testServer
+	waitGroup.Done()
+	log.Println("Test utility -> createServerOnRegistry: RPC server initialization routine end, now launched and accepting...")
+	//BLOCKING and keep listening
+	testServer.LaunchAndAccept()
 }
