@@ -7,10 +7,11 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"sync"
 	"testing"
-	"time"
 )
 
+/*
 func startServer(address chan string) {
 	var test Test
 	listener, err := net.Listen("tcp", "localhost:8002")
@@ -24,19 +25,29 @@ func startServer(address chan string) {
 	}
 	log.Println("Start RPC server on port:", listener.Addr())
 	address <- listener.Addr().String()
-	testServer.AcceptConnection(listener)
-}
+	testServer.LaunchAndAccept(listener)
+}*/
 
-func TestServer(test *testing.T) {
-	test.Helper()
+func TestServer(t *testing.T) {
+	t.Helper()
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
-	address := make(chan string)
-	go startServer(address)
+	var waitGroup sync.WaitGroup
+	//create service type (arithmetic is enough)
+	var test Test
+	services := []any{
+		&test,
+	}
 
-	connection, _ := net.Dial("tcp", <-address)
+	addressChannel := make(chan string)
+	waitGroup.Add(1)
+	go createServer(":0", services, addressChannel, &waitGroup)
+	serverAddress := <-addressChannel
+	log.Printf("Server test -> main: Server address fetched: %s", serverAddress)
+	waitGroup.Wait()
+
+	connection, _ := net.Dial("tcp", serverAddress)
 	defer func() { _ = connection.Close() }()
 
-	time.Sleep(time.Second)
 	_ = json.NewEncoder(connection).Encode(server.DefaultConnectionInfo)
 	communication := coder.NewJsonCoder(connection)
 
