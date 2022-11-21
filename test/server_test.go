@@ -11,23 +11,6 @@ import (
 	"testing"
 )
 
-/*
-func startServer(address chan string) {
-	var test Test
-	listener, err := net.Listen("tcp", "localhost:8002")
-	if err != nil {
-		log.Fatal("Server Network issue:", err)
-	}
-	testServer := server.CreateServer(listener.Addr())
-	err = testServer.ServerRegister(&test)
-	if err != nil {
-		log.Println("Server register error:", err)
-	}
-	log.Println("Start RPC server on port:", listener.Addr())
-	address <- listener.Addr().String()
-	testServer.LaunchAndAccept(listener)
-}*/
-
 func TestServer(t *testing.T) {
 	t.Helper()
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
