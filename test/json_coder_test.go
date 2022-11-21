@@ -44,7 +44,7 @@ func TestJsonCoder(t *testing.T) {
 	var responseBody string
 	responseHeader := &coder.MessageHeader{}
 
-	t.Run("EncodeMessageHeaderAndBody", func(t *testing.T) {
+	t.Run("JasonCoder.EncodeMessageHeaderAndBody", func(t *testing.T) {
 		err = testJsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
 		_ = testJsonCoder.DecodeMessageHeader(responseHeader)
 		_ = testJsonCoder.DecodeMessageBody(&responseBody)
@@ -53,7 +53,7 @@ func TestJsonCoder(t *testing.T) {
 		}
 	})
 
-	t.Run("DecodeMessageHeader", func(t *testing.T) {
+	t.Run("JasonCoder.DecodeMessageHeader", func(t *testing.T) {
 		_ = testJsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
 		err = testJsonCoder.DecodeMessageHeader(responseHeader)
 		_ = testJsonCoder.DecodeMessageBody(&responseBody)
@@ -69,7 +69,7 @@ func TestJsonCoder(t *testing.T) {
 		}
 	})
 
-	t.Run("DecodeMessageBody", func(t *testing.T) {
+	t.Run("JasonCoder.DecodeMessageBody", func(t *testing.T) {
 		_ = testJsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
 		_ = testJsonCoder.DecodeMessageHeader(responseHeader)
 		err = testJsonCoder.DecodeMessageBody(&responseBody)
