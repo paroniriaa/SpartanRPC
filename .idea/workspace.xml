@@ -6,8 +6,20 @@
   <component name="ChangeListManager">
     <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="client">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/coder_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/coder_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/json_coder_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/json_coder_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/client.go" beforeDir="false" afterPath="$PROJECT_DIR$/client/client.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/coder/coder.go" beforeDir="false" afterPath="$PROJECT_DIR$/coder/coder.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/loadBalancer/load_balancer_client_side.go" beforeDir="false" afterPath="$PROJECT_DIR$/loadBalancer/load_balancer_client_side.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/client_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/client_unit_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/coder_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/coder_unit_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/json_coder_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/json_coder_unit_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/load_balancer_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/load_balancer_unit_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/registry_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/registry_unit_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/server_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/server_unit_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/service_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/service_unit_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/test_utility.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/unit_test_utility.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,6 +36,14 @@
   <component name="GOROOT" url="file://$USER_HOME$/sdk/go1.18.3" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
   </component>
   <component name="GoLibraries">
     <option name="indexEntireGoPath" value="false" />
@@ -52,7 +72,7 @@
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/test" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/test/unit/unit_test_utility.go" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
@@ -60,11 +80,12 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Local Project\Distributed-RPC-Framework\test" />
       <recent name="C:\Local Project\Distributed-RPC-Framework\server" />
       <recent name="K:\github_repo\Distributed-RPC-Framework\main" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.go test all">
+  <component name="RunManager" selected="Go Test.go bench test client">
     <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$" />
@@ -85,105 +106,201 @@
     </configuration>
     <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
       <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$" />
-      <kind value="DIRECTORY" />
+      <working_directory value="$PROJECT_DIR$/test/benchmark" />
+      <parameters value="-test.benchmem" />
+      <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <framework value="gotest" />
+      <filePath value="$PROJECT_DIR$/test/benchmark/benchmark_test_utility.go" />
+      <framework value="gobench" />
       <method v="2" />
     </configuration>
-    <configuration name="go test all" type="GoTestRunConfiguration" factoryName="Go Test">
+    <configuration name="go bench test all" type="GoTestRunConfiguration" factoryName="Go Test">
       <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$/test" />
+      <working_directory value="$PROJECT_DIR$/test/benchmark" />
+      <parameters value="-test.benchmem" />
       <kind value="DIRECTORY" />
       <package value="Distributed-RPC-Framework" />
-      <directory value="$PROJECT_DIR$/test" />
+      <directory value="$PROJECT_DIR$/test/benchmark" />
+      <filePath value="$PROJECT_DIR$/test/benchmark/benchmark_test_utility.go" />
+      <framework value="gobench" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go bench test client" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/test/benchmark" />
+      <parameters value="-test.benchmem" />
+      <kind value="FILE" />
+      <package value="Distributed-RPC-Framework" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/test/benchmark/benchmark_test_utility.go|$PROJECT_DIR$/test/benchmark/client_benchmark_test.go" />
+      <framework value="gobench" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go bench test coder" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/test/benchmark" />
+      <parameters value="-test.benchmem" />
+      <kind value="FILE" />
+      <package value="Distributed-RPC-Framework" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/test/benchmark/benchmark_test_utility.go|$PROJECT_DIR$/test/benchmark/coder_benchmark_test.go" />
+      <framework value="gobench" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go bench test json_coder" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/test/benchmark" />
+      <parameters value="-test.benchmem -test.benchtime 0.20s" />
+      <kind value="FILE" />
+      <package value="Distributed-RPC-Framework" />
+      <directory value="$PROJECT_DIR$/test/benchmark/coder_benchmark_test.go" />
+      <filePath value="$PROJECT_DIR$/test/benchmark/benchmark_test_utility.go|$PROJECT_DIR$/test/benchmark/json_coder_benchmark_test.go" />
+      <framework value="gobench" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go bench test load balancer" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/test/benchmark" />
+      <parameters value="-test.benchmem" />
+      <kind value="FILE" />
+      <package value="Distributed-RPC-Framework" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/test/benchmark/benchmark_test_utility.go|$PROJECT_DIR$/test/benchmark/load_balancer_benchmark_test.go" />
+      <framework value="gobench" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go bench test registry" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/test/benchmark" />
+      <parameters value="-test.benchmem" />
+      <kind value="FILE" />
+      <package value="Distributed-RPC-Framework" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/test/benchmark/benchmark_test_utility.go|$PROJECT_DIR$/test/benchmark/registry_benchmark_test.go" />
+      <framework value="gobench" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go bench test server" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/test/benchmark" />
+      <parameters value="-test.benchmem" />
+      <kind value="FILE" />
+      <package value="Distributed-RPC-Framework" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/test/benchmark/benchmark_test_utility.go|$PROJECT_DIR$/test/benchmark/server_benchmark_test.go" />
+      <framework value="gobench" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go bench test service" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/test/benchmark" />
+      <parameters value="-test.benchmem" />
+      <kind value="FILE" />
+      <package value="Distributed-RPC-Framework" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/test/benchmark/benchmark_test_utility.go|$PROJECT_DIR$/test/benchmark/service_benchmark_test.go" />
+      <framework value="gobench" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go unit test all" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/test/unit" />
+      <kind value="DIRECTORY" />
+      <package value="Distributed-RPC-Framework" />
+      <directory value="$PROJECT_DIR$/test/unit" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
       <method v="2" />
     </configuration>
-    <configuration name="go test client_test.go" type="GoTestRunConfiguration" factoryName="Go Test">
+    <configuration name="go unit test client" type="GoTestRunConfiguration" factoryName="Go Test">
       <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$/test" />
+      <working_directory value="$PROJECT_DIR$/test/unit" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework/client" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/test/client_test.go|$PROJECT_DIR$/test/test_utility.go" />
+      <filePath value="$PROJECT_DIR$/test/unit/unit_test_utility.go|$PROJECT_DIR$/test/unit/client_unit_test.go" />
       <framework value="gotest" />
       <method v="2" />
     </configuration>
-    <configuration name="go test coder_test.go" type="GoTestRunConfiguration" factoryName="Go Test">
+    <configuration name="go unit test coder" type="GoTestRunConfiguration" factoryName="Go Test">
       <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$/test" />
+      <working_directory value="$PROJECT_DIR$/test/unit" />
       <kind value="FILE" />
-      <package value="Distributed-RPC-Framework/server" />
+      <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/test/coder_test.go" />
+      <filePath value="$PROJECT_DIR$/test/unit/unit_test_utility.go|$PROJECT_DIR$/test/unit/coder_unit_test.go" />
       <framework value="gotest" />
-      <pattern value="^\QTestServer\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="go test json_coder_test.go" type="GoTestRunConfiguration" factoryName="Go Test">
+    <configuration name="go unit test json_coder" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="Distributed-RPC-Framework" />
+      <working_directory value="$PROJECT_DIR$/test/unit" />
+      <kind value="FILE" />
+      <package value="Distributed-RPC-Framework" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/test/unit/unit_test_utility.go|$PROJECT_DIR$/test/unit/json_coder_unit_test.go" />
+      <framework value="gotest" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go unit test load_balancer" type="GoTestRunConfiguration" factoryName="Go Test">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/test" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/test/Json_coder_test.go|$PROJECT_DIR$/test/test_utility.go" />
+      <filePath value="$PROJECT_DIR$/test/unit/load_balancer_unit_test.go|$PROJECT_DIR$/test/unit/unit_test_utility.go" />
       <framework value="gotest" />
       <method v="2" />
     </configuration>
-    <configuration name="go test load_balancer_test.go" type="GoTestRunConfiguration" factoryName="Go Test">
+    <configuration name="go unit test registry" type="GoTestRunConfiguration" factoryName="Go Test">
       <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$/test" />
+      <working_directory value="$PROJECT_DIR$/test/unit" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/test/load_balancer_test.go|$PROJECT_DIR$/test/test_utility.go" />
+      <filePath value="$PROJECT_DIR$/test/unit/unit_test_utility.go|$PROJECT_DIR$/test/unit/registry_unit_test.go" />
       <framework value="gotest" />
       <method v="2" />
     </configuration>
-    <configuration name="go test registry_test.go" type="GoTestRunConfiguration" factoryName="Go Test">
+    <configuration name="go unit test server" type="GoTestRunConfiguration" factoryName="Go Test">
       <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$/test" />
+      <working_directory value="$PROJECT_DIR$/test/unit" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/test/registry_test.go|$PROJECT_DIR$/test/test_utility.go" />
+      <filePath value="$PROJECT_DIR$/test/unit/unit_test_utility.go|$PROJECT_DIR$/test/unit/server_unit_test.go" />
       <framework value="gotest" />
       <method v="2" />
     </configuration>
-    <configuration name="go test server_test.go" type="GoTestRunConfiguration" factoryName="Go Test">
+    <configuration name="go unit test service" type="GoTestRunConfiguration" factoryName="Go Test">
       <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$/test" />
+      <working_directory value="$PROJECT_DIR$/test/unit" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/test/server_test.go|$PROJECT_DIR$/test/test_utility.go" />
-      <framework value="gotest" />
-      <method v="2" />
-    </configuration>
-    <configuration name="go test service_test.go" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
-      <working_directory value="$PROJECT_DIR$/test" />
-      <kind value="FILE" />
-      <package value="Distributed-RPC-Framework" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/test/service_test.go|$PROJECT_DIR$/test/test_utility.go" />
+      <filePath value="$PROJECT_DIR$/test/unit/unit_test_utility.go|$PROJECT_DIR$/test/unit/service_unit_test.go" />
       <framework value="gotest" />
       <method v="2" />
     </configuration>
     <list>
       <item itemvalue="Go Build.go build main.go" />
-      <item itemvalue="Go Test.go test all" />
-      <item itemvalue="Go Test.go test client_test.go" />
-      <item itemvalue="Go Test.go test coder_test.go" />
-      <item itemvalue="Go Test.go test json_coder_test.go" />
-      <item itemvalue="Go Test.go test load_balancer_test.go" />
-      <item itemvalue="Go Test.go test registry_test.go" />
-      <item itemvalue="Go Test.go test server_test.go" />
-      <item itemvalue="Go Test.go test service_test.go" />
+      <item itemvalue="Go Test.go unit test all" />
+      <item itemvalue="Go Test.go unit test coder" />
+      <item itemvalue="Go Test.go unit test json_coder" />
+      <item itemvalue="Go Test.go unit test service" />
+      <item itemvalue="Go Test.go unit test server" />
+      <item itemvalue="Go Test.go unit test client" />
+      <item itemvalue="Go Test.go unit test load_balancer" />
+      <item itemvalue="Go Test.go unit test registry" />
+      <item itemvalue="Go Test.go bench test all" />
+      <item itemvalue="Go Test.go bench test coder" />
+      <item itemvalue="Go Test.go bench test json_coder" />
+      <item itemvalue="Go Test.go bench test service" />
+      <item itemvalue="Go Test.go bench test load balancer" />
+      <item itemvalue="Go Test.go bench test registry" />
+      <item itemvalue="Go Test.go bench test client" />
+      <item itemvalue="Go Test.go bench test server" />
     </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
@@ -214,6 +331,9 @@
       <workItem from="1663964807775" duration="640000" />
       <workItem from="1666054724466" duration="3118000" />
       <workItem from="1666057889802" duration="7138000" />
+      <workItem from="1669086275118" duration="22651000" />
+      <workItem from="1669182452821" duration="7352000" />
+      <workItem from="1669250324903" duration="23971000" />
     </task>
     <servers />
   </component>
