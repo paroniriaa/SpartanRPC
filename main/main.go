@@ -34,8 +34,7 @@ func (t *Arithmetic) SleepThenAddition(input *Input, output *Output) error {
 }
 
 // -------------------------- Stage 1 usage --------------------------
-func createServer(port string, addressChannel chan string, waitGroup *sync.WaitGroup) {
-	var arithmetic Arithmetic
+func createServer(port string, serviceList []any, serverChannel chan *server.Server, waitGroup *sync.WaitGroup) {
 	log.Println("main -> createServer: RPC server initialization routine start...")
 	listener, err := net.Listen("tcp", port)
 	if err != nil {
@@ -45,11 +44,13 @@ func createServer(port string, addressChannel chan string, waitGroup *sync.WaitG
 	if err != nil {
 		log.Fatal("main -> createServer error: RPC server creation issue:", err)
 	}
-	err = testServer.ServerRegister(&arithmetic)
-	if err != nil {
-		log.Fatal("main -> createServer error: RPC server register error:", err)
+	for _, service := range serviceList {
+		err = testServer.ServerRegister(service)
+		if err != nil {
+			log.Fatal("main -> createServer error: RPC server register error:", err)
+		}
 	}
-	addressChannel <- listener.Addr().String()
+	serverChannel <- testServer
 	waitGroup.Done()
 	log.Println("main -> createServer: RPC server initialization routine end, now launched and accepting...")
 	//BLOCKING and keep listening
@@ -57,7 +58,7 @@ func createServer(port string, addressChannel chan string, waitGroup *sync.WaitG
 }
 
 func createClientAndCall(serverAddress string) {
-	testClient, _ := client.MakeDial("tcp", serverAddress)
+	testClient, _ := client.XMakeDial(serverAddress)
 	defer func() { _ = testClient.Close() }()
 
 	time.Sleep(time.Second)
@@ -79,34 +80,41 @@ func clientCallRPC(client *client.Client, number int) {
 	output := &Output{}
 	timeOutContext, _ := context.WithTimeout(context.Background(), time.Second*5)
 	if err := client.Call("Arithmetic.Addition", input, output, timeOutContext); err != nil {
-		log.Fatal("Client RPC call Arithmetic.Addition error: ", err)
+		log.Fatal("main -> clientCallRPC: Client RPC call Arithmetic.Addition error: ", err)
 	}
 	log.Printf("%d + %d = %d", input.A, input.B, output.C)
 }
 
 // -------------------------- Stage 2 usage --------------------------
-func createServerHTTP(port string, addressChannel chan string, waitGroup *sync.WaitGroup) {
-	var arithmetic Arithmetic
+
+func createServerHTTP(port string, serviceList []any, serverChannelHTTP chan *server.Server, waitGroup *sync.WaitGroup) {
+	log.Println("main -> createServerHTTP: RPC HTTP server initialization routine start...")
+	//even though we are creating HTTP-based RPC server, we still need to declare the underlying transportation protocol(TCP) when listening
 	listener, err := net.Listen("tcp", port)
 	if err != nil {
-		log.Fatal("main -> createServerHTTP error: Server network issue: ", err)
+		log.Fatal("main -> createServerHTTP error: RPC HTTP server network issue: ", err)
 	}
-	testHTTPServer, err := server.CreateServer(listener)
+	testServerHTTP, err := server.CreateServerHTTP(listener)
 	if err != nil {
-		log.Fatal("main -> createServerHTTP error: Server creation issue: ", err)
+		log.Fatal("main -> createServerHTTP error: RPC HTTP server creation issue: ", err)
 	}
-	err = testHTTPServer.ServerRegister(&arithmetic)
-	if err != nil {
-		log.Fatal("main -> createServerHTTP error: Server register error: ", err)
+	for _, service := range serviceList {
+		err = testServerHTTP.ServerRegister(service)
+		if err != nil {
+			log.Fatal("main -> createServerHTTP error: RPC HTTP server register error:", err)
+		}
 	}
-	addressChannel <- listener.Addr().String()
+	serverChannelHTTP <- testServerHTTP
 	waitGroup.Done()
+	log.Println("main -> createServerHTTP: RPC HTTP server initialization routine end, now launched and accepting...")
 	//BLOCKING and keep serving
-	testHTTPServer.LaunchAndServe()
+	testServerHTTP.LaunchAndServe()
 }
 
-func createClientAndCallHTTP(addressChannel chan string) {
-	testClient, _ := client.MakeDialHTTP("tcp", <-addressChannel)
+func createClientAndCallHTTP(serverChannelHTTP chan *server.Server) {
+	testServerHTTP := <-serverChannelHTTP
+	log.Printf("main -> createClientAndCallHTTP: RPC HTTP Server address fetched from serverChannelHTTP: %s", testServerHTTP.ServerAddress)
+	testClient, _ := client.XMakeDial(testServerHTTP.ServerAddress)
 	defer func() { _ = testClient.Close() }()
 
 	time.Sleep(time.Second)
@@ -124,8 +132,8 @@ func createClientAndCallHTTP(addressChannel chan string) {
 }
 
 // -------------------------- Stage 3A usage --------------------------
-func createLoadBalancedClientAndCall(addressA string, addressB string) {
-	clientLoadBalancer := loadBalancer.CreateLoadBalancerClientSide([]string{"tcp@" + addressA, "tcp@" + addressB})
+func createLoadBalancedClientAndCall(serverAddressA string, serverAddressB string) {
+	clientLoadBalancer := loadBalancer.CreateLoadBalancerClientSide([]string{serverAddressA, serverAddressB})
 	loadBalancedClient := client.CreateLoadBalancedClient(clientLoadBalancer, loadBalancer.RoundRobinSelectMode, nil)
 	//log.Printf("Before Call -> clientLoadBalancer: %+v", clientLoadBalancer)
 	//log.Printf("Before Call -> loadBalancedClient: %+v", loadBalancedClient)
@@ -146,8 +154,8 @@ func createLoadBalancedClientAndCall(addressA string, addressB string) {
 	//log.Printf("After Call -> loadBalancedClient: %+v", loadBalancedClient)
 }
 
-func createLoadBalancedClientAndBroadcastCall(addressA string, addressB string) {
-	clientLoadBalancer := loadBalancer.CreateLoadBalancerClientSide([]string{"tcp@" + addressA, "tcp@" + addressB})
+func createLoadBalancedClientAndBroadcastCall(serverAddressA string, serverAddressB string) {
+	clientLoadBalancer := loadBalancer.CreateLoadBalancerClientSide([]string{serverAddressA, serverAddressB})
 	loadBalancedClient := client.CreateLoadBalancedClient(clientLoadBalancer, loadBalancer.RandomSelectMode, nil)
 	defer func() { _ = loadBalancedClient.Close() }()
 
@@ -170,9 +178,9 @@ func loadBalancedClientCallRPC(loadBalancedClient *client.LoadBalancedClient, nu
 	//expect no timeout
 	err := loadBalancedClient.Call(context.Background(), "Arithmetic.Addition", input, output)
 	if err != nil {
-		log.Println("RPC call Arithmetic.Addition error: ", err)
+		log.Println("main -> main: RPC call Arithmetic.Addition error: ", err)
 	} else {
-		log.Printf("RPC call Arithmetic.Addition success: %d + %d = %d", input.A, input.B, output.C)
+		log.Printf("main -> main: RPC call Arithmetic.Addition success: %d + %d = %d", input.A, input.B, output.C)
 	}
 }
 
@@ -185,9 +193,9 @@ func loadBalancedClientBroadcastCallRPC(loadBalancedClient *client.LoadBalancedC
 	timeOutContext, _ := context.WithTimeout(context.Background(), time.Second*2)
 	err := loadBalancedClient.BroadcastCall(timeOutContext, "Arithmetic.SleepThenAddition", input, output)
 	if err != nil {
-		log.Println("RPC call Arithmetic.SleepThenAddition error: ", err)
+		log.Println("main -> main: RPC call Arithmetic.SleepThenAddition error: ", err)
 	} else {
-		log.Printf("RPC call Arithmetic.SleepThenAddition success: %d + %d = %d", input.A, input.B, output.C)
+		log.Printf("main -> main: RPC call Arithmetic.SleepThenAddition success: %d + %d = %d", input.A, input.B, output.C)
 	}
 	//cancelContext()
 }
@@ -208,29 +216,6 @@ func createRegistry(port string, registryChannel chan *registry.Registry, waitGr
 	log.Println("main -> createRegistry: RPC registry initialization routine end, now launched and serving...")
 	//BLOCKING and keep serving
 	testRegistry.LaunchAndServe()
-}
-
-func createServerOnRegistry(port string, registryURL string, serverChannel chan *server.Server, waitGroup *sync.WaitGroup) {
-	log.Println("main -> createServerOnRegistry: RPC server initialization routine start...")
-	var arithmetic Arithmetic
-	listener, err := net.Listen("tcp", port)
-	if err != nil {
-		log.Fatal("main -> createServerOnRegistry error: RPC server network issue:", err)
-	}
-	testServer, err := server.CreateServer(listener)
-	if err != nil {
-		log.Fatal("main -> createServerOnRegistry error: RPC server creation issue:", err)
-	}
-	err = testServer.ServerRegister(&arithmetic)
-	if err != nil {
-		log.Fatal("main -> createServerOnRegistry error: RPC server register error:", err)
-	}
-	testServer.Heartbeat(registryURL, 0)
-	serverChannel <- testServer
-	waitGroup.Done()
-	log.Println("main -> createServerOnRegistry: RPC server initialization routine end, now launched and accepting...")
-	//BLOCKING and keep listening
-	testServer.LaunchAndAccept()
 }
 
 func createLoadBalancedClientAndCallOnRegistry(registryURL string) {
@@ -276,8 +261,15 @@ func createLoadBalancedClientAndBroadcastCallOnRegistry(registryURL string) {
 }
 
 func main() {
+	//set up logger
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
+	//use waitGroup for goroutines synchronization
 	var waitGroup sync.WaitGroup
+	//create service type and store it in the service list
+	var arithmetic Arithmetic
+	serviceList := []any{
+		&arithmetic,
+	}
 
 	//Stage 1:
 	//Server: 1 TCP-based RPC server
@@ -287,13 +279,13 @@ func main() {
 	//Call: 6 RPC normal calls, called from RPC client via direct Call()
 	//Expected result: All RPC calls are handled, return 0
 
-	/*	addressChannel := make(chan string)
+	/*	serverChannel := make(chan *server.Server)
 		waitGroup.Add(1)
-		go createServer(":0", addressChannel, &waitGroup)
-		serverAddress := <-addressChannel
-		log.Printf("main -> main: Server address fetched from addressChannel: %s", serverAddress)
+		go createServer(":0", serviceList, serverChannel, &waitGroup)
+		testServer := <-serverChannel
+		log.Printf("main -> main: Server address fetched from addressChannel: %s", testServer.ServerAddress)
 		waitGroup.Wait()
-		createClientAndCall(serverAddress)*/
+		createClientAndCall(testServer.ServerAddress)*/
 
 	//Stage 2:
 	//Server: 1 HTTP-based RPC server
@@ -303,10 +295,10 @@ func main() {
 	//Call: 6 RPC normal calls, called from RPC client via direct Call()
 	//Expected result: All RPC calls are handled, not returning (so that debug page is hosted)
 
-	/*	addressChannel := make(chan string)
-		go createClientAndCallHTTP(addressChannel)
+	/*	serverChannelHTTP := make(chan *server.Server)
+		go createClientAndCallHTTP(serverChannelHTTP)
 		waitGroup.Add(1)
-		createServerHTTP(":0", addressChannel, &waitGroup)
+		createServerHTTP(":0", serviceList, serverChannelHTTP, &waitGroup)
 		waitGroup.Wait()*/
 
 	//Stage 3A:
@@ -317,19 +309,19 @@ func main() {
 	//Call: 6 RPC normal calls, 6 RPC broadcast calls (12 normal calls for 2 server), called from RPC client manager via indirect Call()
 	//Expected result: All 6 RPC normal calls are handled, 2 RPC broadcast calls are handled, 4 RPC broadcast calls are timeout, return 0
 
-	/*	addressChannelA := make(chan string)
-		addressChannelB := make(chan string)
+	/*	serverChannelA := make(chan *server.Server)
+		serverChannelB := make(chan *server.Server)
 		time.Sleep(time.Second)
 		waitGroup.Add(2)
-		go createServer(":0", addressChannelA, &waitGroup)
-		addressA := <-addressChannelA
-		log.Printf("main -> main: Server A address fetched from addressChannel: %s", addressA)
-		go createServer(":0", addressChannelB, &waitGroup)
-		addressB := <-addressChannelB
+		go createServer(":0", serviceList, serverChannelA, &waitGroup)
+		serverA := <-serverChannelA
+		log.Printf("main -> main: Server A address fetched from serverChannelA: %s", serverA.ServerAddress)
+		go createServer(":0", serviceList, serverChannelB, &waitGroup)
+		serverB := <-serverChannelB
 		waitGroup.Wait()
-		log.Printf("main -> main: Server B address fetched from addressChannel: %s", addressB)
-		createLoadBalancedClientAndCall(addressA, addressB)
-		createLoadBalancedClientAndBroadcastCall(addressA, addressB)*/
+		log.Printf("main -> main: Server B address fetched from serverChannelB: %s", serverB.ServerAddress)
+		createLoadBalancedClientAndCall(serverA.ServerAddress, serverB.ServerAddress)
+		createLoadBalancedClientAndBroadcastCall(serverA.ServerAddress, serverB.ServerAddress)*/
 
 	//Stage 3B:
 	//Server: 2 TCP-based RPC server, auto heartbeat sending
@@ -349,13 +341,19 @@ func main() {
 	serverChannelC := make(chan *server.Server)
 	serverChannelD := make(chan *server.Server)
 	waitGroup.Add(2)
-	go createServerOnRegistry(":0", testRegistry.RegistryURL, serverChannelC, &waitGroup)
+	go createServer(":0", serviceList, serverChannelC, &waitGroup)
 	serverC := <-serverChannelC
+	serverC.Heartbeat(testRegistry.RegistryURL, 0)
 	log.Printf("main -> main: Server C address fetched from serverChannelC: %s", serverC.ServerAddress)
-	go createServerOnRegistry(":0", testRegistry.RegistryURL, serverChannelD, &waitGroup)
+	go createServer(":0", serviceList, serverChannelD, &waitGroup)
 	serverD := <-serverChannelD
+	serverD.Heartbeat(testRegistry.RegistryURL, 0)
 	log.Printf("main -> main: Server D address fetched from serverChannelD: %s", serverD.ServerAddress)
 	waitGroup.Wait()
 	createLoadBalancedClientAndCallOnRegistry(testRegistry.RegistryURL)
 	createLoadBalancedClientAndBroadcastCallOnRegistry(testRegistry.RegistryURL)
+	//registry -> 8000
+	//server A -> 8001
+	//server A -> 8002
+
 }
