@@ -1,4 +1,4 @@
-package test
+package unit
 
 import (
 	"Distributed-RPC-Framework/client"
@@ -8,32 +8,35 @@ import (
 	"log"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestLoadBalancer(t *testing.T) {
 	t.Helper()
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
 	var waitGroup sync.WaitGroup
+
 	//create service type (arithmetic is enough)
 	var arithmetic Arithmetic
-	services := []any{
+	serviceList := []any{
 		&arithmetic,
 	}
 
 	//create 2 servers to simulate client-side load balancing
-	addressChannelA := make(chan string)
-	addressChannelB := make(chan string)
+	serverChannelA := make(chan *server.Server)
+	serverChannelB := make(chan *server.Server)
+	time.Sleep(time.Second)
 	waitGroup.Add(2)
-	go createServer(":0", services, addressChannelA, &waitGroup)
-	serverAddressA := <-addressChannelA
-	log.Printf("Load balancer test -> main: Server A (not registered) address fetched: %s", serverAddressA)
-	go createServer(":0", services, addressChannelB, &waitGroup)
-	serverAddressB := <-addressChannelB
-	log.Printf("Load balancer test -> main: Server B (not registered) address fetched: %s", serverAddressB)
+	go createServer(":0", serviceList, serverChannelA, &waitGroup)
+	testServerA := <-serverChannelA
+	log.Printf("Load balancer unit -> main: Server A address fetched from serverChannelA: %s", testServerA.ServerAddress)
+	go createServer(":0", serviceList, serverChannelB, &waitGroup)
+	testServerB := <-serverChannelB
+	log.Printf("Load balancer unit -> main: Server B address fetched from serverChannelA: %s", testServerB.ServerAddress)
 	waitGroup.Wait()
 
 	//create client-side load balancer for testing
-	clientSideLoadBalancer := loadBalancer.CreateLoadBalancerClientSide([]string{"tcp@" + serverAddressA, "tcp@" + serverAddressB})
+	clientSideLoadBalancer := loadBalancer.CreateLoadBalancerClientSide([]string{testServerA.ServerAddress, testServerB.ServerAddress})
 	//create load balanced client for testing
 	clientSideLoadBalancedClient := client.CreateLoadBalancedClient(clientSideLoadBalancer, loadBalancer.RoundRobinSelectMode, nil)
 	defer func() { _ = clientSideLoadBalancedClient.Close() }()
@@ -43,20 +46,12 @@ func TestLoadBalancer(t *testing.T) {
 	waitGroup.Add(1)
 	go createRegistry(":0", registryChannel, &waitGroup)
 	testRegistry := <-registryChannel
-	log.Printf("Load balancer test -> main: Registry address fetched: %s", testRegistry.RegistryURL)
+	log.Printf("Load balancer unit -> main: Registry address fetched: %s", testRegistry.RegistryURL)
 	waitGroup.Wait()
 
-	//create 2 servers to simulate registry-side load balancing
-	serverChannelC := make(chan *server.Server)
-	serverChannelD := make(chan *server.Server)
-	waitGroup.Add(2)
-	go createServerOnRegistry(":0", testRegistry.RegistryURL, services, serverChannelC, &waitGroup)
-	serverC := <-serverChannelC
-	log.Printf("Load balancer test -> main: Server C (registered) address fetched: %s", serverC.ServerAddress)
-	go createServerOnRegistry(":0", testRegistry.RegistryURL, services, serverChannelD, &waitGroup)
-	serverD := <-serverChannelD
-	log.Printf("Load balancer test -> main: Server D (registered) address fetched: %s", serverD.ServerAddress)
-	waitGroup.Wait()
+	//servers send heartbeat to the registry to register as alive server to simulate registry-side load balancing
+	testServerA.Heartbeat(testRegistry.RegistryURL, 0)
+	testServerB.Heartbeat(testRegistry.RegistryURL, 0)
 
 	//create registry-side load balancer for testing
 	registrySideLoadBalancer := loadBalancer.CreateLoadBalancerRegistrySide(testRegistry.RegistryURL, 0)
@@ -72,7 +67,7 @@ func TestLoadBalancer(t *testing.T) {
 		{"Arithmetic.Division", "/", &Input{5, 5}, &Output{}, 1},
 	}
 
-	//client-side load balanced asynchronous call test
+	//client-side load balanced asynchronous call unit
 	prefix := "ClientSideBalanced.Asynchronous.NormalCalls."
 	//time.Sleep(time.Second)
 	for _, testCase := range arithmeticCases {
@@ -86,7 +81,7 @@ func TestLoadBalancer(t *testing.T) {
 	}
 	waitGroup.Wait()
 
-	//client-side load balanced asynchronous broadcast call test
+	//client-side load balanced asynchronous broadcast call unit
 	prefix = "ClientSideBalanced.Asynchronous.BroadcastCalls."
 	//time.Sleep(time.Second)
 	for _, testCase := range arithmeticCases {
@@ -100,7 +95,7 @@ func TestLoadBalancer(t *testing.T) {
 	}
 	waitGroup.Wait()
 
-	//registry-side load balanced asynchronous call test
+	//registry-side load balanced asynchronous call unit
 	prefix = "RegistrySideBalanced.Asynchronous.NormalCalls."
 	//time.Sleep(time.Second)
 	for _, testCase := range arithmeticCases {
@@ -114,7 +109,7 @@ func TestLoadBalancer(t *testing.T) {
 	}
 	waitGroup.Wait()
 
-	//registry-side load balanced asynchronous broadcast call test
+	//registry-side load balanced asynchronous broadcast call unit
 	prefix = "RegistrySideBalanced.Asynchronous.BroadcastCalls."
 	//time.Sleep(time.Second)
 	for _, testCase := range arithmeticCases {

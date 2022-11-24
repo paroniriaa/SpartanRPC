@@ -1,4 +1,4 @@
-package test
+package unit
 
 import (
 	"Distributed-RPC-Framework/coder"
@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"net"
+	"reflect"
 	"sync"
 	"testing"
 )
@@ -15,20 +16,20 @@ func TestJsonCoder(t *testing.T) {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
 	var waitGroup sync.WaitGroup
 
-	// create service type (test is enough)
+	// create service type (unit is enough)
 	var test Test
-	services := []any{
+	serviceList := []any{
 		&test,
 	}
 
-	serverAddressChannelA := make(chan string)
+	serverChannel := make(chan *server.Server)
 	waitGroup.Add(1)
-	go createServer(":0", services, serverAddressChannelA, &waitGroup)
-	serverAddressA := <-serverAddressChannelA
-	log.Printf("Load balancer test -> main: Server A (not registered) address fetched: %s", serverAddressA)
+	go createServer(":0", serviceList, serverChannel, &waitGroup)
+	testServer := <-serverChannel
+	log.Printf("TestJsonCoder -> main: Server address fetched from serverChannel: %s", testServer.ServerAddress)
 	waitGroup.Wait()
 
-	connection, _ := net.Dial("tcp", serverAddressA)
+	connection, _ := net.Dial("tcp", testServer.Listener.Addr().String())
 	_ = json.NewEncoder(connection).Encode(server.DefaultConnectionInfo)
 	testJsonCoder := coder.NewJsonCoder(connection)
 	requestHeader := &coder.MessageHeader{
@@ -44,7 +45,14 @@ func TestJsonCoder(t *testing.T) {
 	var responseBody string
 	responseHeader := &coder.MessageHeader{}
 
-	t.Run("JasonCoder.EncodeMessageHeaderAndBody", func(t *testing.T) {
+	t.Run("NewJsonCoder", func(t *testing.T) {
+		testJsonCoder = coder.NewJsonCoder(connection)
+		if reflect.TypeOf(&coder.JsonCoder{}) != reflect.TypeOf(testJsonCoder) {
+			t.Errorf("NewJsonCoder Error: testJsonCoder expected be in type of %s, but got %s", reflect.TypeOf(coder.JsonCoder{}), reflect.TypeOf(testJsonCoder))
+		}
+	})
+
+	t.Run("EncodeMessageHeaderAndBody", func(t *testing.T) {
 		err = testJsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
 		_ = testJsonCoder.DecodeMessageHeader(responseHeader)
 		_ = testJsonCoder.DecodeMessageBody(&responseBody)
@@ -53,7 +61,7 @@ func TestJsonCoder(t *testing.T) {
 		}
 	})
 
-	t.Run("JasonCoder.DecodeMessageHeader", func(t *testing.T) {
+	t.Run("DecodeMessageHeader", func(t *testing.T) {
 		_ = testJsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
 		err = testJsonCoder.DecodeMessageHeader(responseHeader)
 		_ = testJsonCoder.DecodeMessageBody(&responseBody)
@@ -69,7 +77,7 @@ func TestJsonCoder(t *testing.T) {
 		}
 	})
 
-	t.Run("JasonCoder.DecodeMessageBody", func(t *testing.T) {
+	t.Run("DecodeMessageBody", func(t *testing.T) {
 		_ = testJsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
 		_ = testJsonCoder.DecodeMessageHeader(responseHeader)
 		err = testJsonCoder.DecodeMessageBody(&responseBody)
