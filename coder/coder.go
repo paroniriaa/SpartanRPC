@@ -17,12 +17,6 @@ type MessageHeader struct {
 
 type Coder interface {
 	io.Closer
-	/*
-		Connection() io.ReadWriteCloser
-		Buffer() *bufio.Writer
-		Encoder() *json.Encoder
-		Decoder() *json.Decoder
-	*/
 	DecodeMessageHeader(*MessageHeader) error
 	DecodeMessageBody(interface{}) error
 	EncodeMessageHeaderAndBody(*MessageHeader, interface{}) error
