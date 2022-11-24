@@ -51,12 +51,26 @@ var DefaultConnectionInfo = &ConnectionInfo{
 var invalidRequest = struct{}{}
 
 func CreateServer(listener net.Listener) (*Server, error) {
-	log.Printf("RPC server -> CreateServer: creating RPC server on port %s...", listener.Addr().String())
 	if listener == nil {
 		return nil, errors.New("RPC server > CreateServer error: Network listener should not be nil, but received nil")
 	}
+	serverAddress := listener.Addr().Network() + "@" + listener.Addr().String()
+	log.Printf("RPC server -> CreateServer: Created RPC server on address %s", serverAddress)
 	return &Server{
-		ServerAddress: listener.Addr().Network() + "@" + listener.Addr().String(),
+		ServerAddress: serverAddress,
+		Listener:      listener,
+	}, nil
+}
+
+func CreateServerHTTP(listener net.Listener) (*Server, error) {
+	if listener == nil {
+		return nil, errors.New("RPC server > CreateServer error: Network listener should not be nil, but received nil")
+	}
+	//http@serverAddress will hide the transportation protocol info, use listener.Addr().Network() to fetch when needed
+	serverAddress := "http" + "@" + listener.Addr().String()
+	log.Printf("RPC server -> CreateServer: Created RPC server on address %s", serverAddress)
+	return &Server{
+		ServerAddress: serverAddress,
 		Listener:      listener,
 	}, nil
 }
