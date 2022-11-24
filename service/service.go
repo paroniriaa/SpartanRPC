@@ -56,7 +56,7 @@ func CreateService(serviceValue interface{}) *Service {
 	newService.serviceValue = reflect.ValueOf(serviceValue)
 	newService.ServiceName = reflect.Indirect(newService.serviceValue).Type().Name()
 	if !ast.IsExported(newService.ServiceName) {
-		log.Fatalf("methodType - create methodType error: methodType name: %s is invalid ", newService.ServiceName)
+		log.Fatalf("RPC service -> CreateServicev error: newService.ServiceName %s is invalid ", newService.ServiceName)
 	}
 	newService.serviceType = reflect.TypeOf(serviceValue)
 	newService.createMethod()
@@ -71,13 +71,13 @@ func (service *Service) createMethod() {
 		methodType := method.Type
 		switch {
 		case methodType.NumIn() != 3:
-			log.Printf("service - createMethod error: methodType.NumIn() != 3, got %d", methodType.NumIn())
+			log.Printf("RPC service -> createMethod error: methodType.NumIn() != 3, got %d", methodType.NumIn())
 			continue
 		case methodType.NumOut() != 1:
-			log.Printf("service - createMethod error: methodType.NumIn() != 1, got %d", methodType.NumIn())
+			log.Printf("RPC service -> createMethod error: methodType.NumIn() != 1, got %d", methodType.NumIn())
 			continue
 		case methodType.Out(0) != reflect.TypeOf((*error)(nil)).Elem():
-			log.Println("service - createMethod error: methodType.Out(0) != reflect.TypeOf((*error)(nil)).Elem()")
+			log.Println("RPC service -> createMethod error: methodType.Out(0) != reflect.TypeOf((*error)(nil)).Elem()")
 			continue
 		default:
 			inputType, outputType := methodType.In(1), methodType.In(2)
@@ -99,7 +99,7 @@ func (service *Service) createMethod() {
 	}
 }
 
-func (service *Service) Call(method *Method, input, output reflect.Value) error {
+func (service *Service) Call(method *Method, input reflect.Value, output reflect.Value) error {
 	atomic.AddUint64(&method.callCounts, 1)
 	function := method.methodType.Func
 	outputValue := function.Call([]reflect.Value{service.serviceValue, input, output})
