@@ -5,7 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="client">
-      <change beforePath="$PROJECT_DIR$/test/deploy/deploy_client.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/deploy/deploy_client.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -332,7 +332,8 @@
       <workItem from="1669368619218" duration="8857000" />
       <workItem from="1669422411410" duration="6013000" />
       <workItem from="1669439518481" duration="1156000" />
-      <workItem from="1669441221463" duration="10257000" />
+      <workItem from="1669441221463" duration="11046000" />
+      <workItem from="1669460932144" duration="567000" />
     </task>
     <servers />
   </component>
