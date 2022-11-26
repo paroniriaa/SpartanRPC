@@ -380,9 +380,10 @@ func main() {
 	serverD.Heartbeat(testRegistry.RegistryURL, 0)
 	log.Printf("main -> main: Server D address fetched from serverChannelD: %s", serverD.ServerAddress)
 	waitGroup.Wait()
-	//createLoadBalancedClientAndCallOnRegistry(testRegistry.RegistryURL)
+	createLoadBalancedClientAndCallOnRegistry(testRegistry.RegistryURL)
 	createLoadBalancedClientAndBroadcastCallOnRegistry(testRegistry.RegistryURL)
 
+	//create infinite loop to stop main process from terminating to monitor all other go routines
 	for {
 
 	}
