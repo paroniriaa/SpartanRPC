@@ -16,7 +16,7 @@ func TestJsonCoder(t *testing.T) {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
 	var waitGroup sync.WaitGroup
 
-	// create service type (unit is enough)
+	// create service type (test is enough)
 	var test Test
 	serviceList := []any{
 		&test,
