@@ -112,5 +112,8 @@ func (loadBalancedClient *LoadBalancedClient) BroadcastCall(contextInfo context.
 	}
 	waitGroup.Wait()
 	cancelContext()
+	if broadcastError != nil {
+		log.Printf("RPC loadBalancedClient -> BroadcastCall error: One RPC Call failed due to %s, all unfinsihed RPC call has been cancled...", broadcastError)
+	}
 	return broadcastError
 }
