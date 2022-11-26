@@ -56,7 +56,7 @@ func CreateRegistry(listener net.Listener, timeout time.Duration) (*Registry, er
 }
 
 func (registry *Registry) registerServer(serverAddress string) {
-	log.Printf("RPC registry -> registerServer: RPC registry registering server instance %s...", serverAddress)
+	log.Printf("RPC registry -> registerServer: RPC registry updatiing server instance %s...", serverAddress)
 	registry.mutex.Lock()
 	defer registry.mutex.Unlock()
 	serverInfo := registry.RpcServerAddressToServerInfoMap[serverAddress]
@@ -66,7 +66,7 @@ func (registry *Registry) registerServer(serverAddress string) {
 		// if the server already exists, update its lastUpdateTime time as now to keep it alive
 		serverInfo.lastUpdateTime = time.Now()
 	}
-	log.Printf("RPC registry -> registerServer: RPC registry finished server registration and updated the alive server list %+v: ", registry.RpcServerAddressToServerInfoMap)
+	log.Printf("RPC registry -> registerServer: RPC registry finished server instance update, and the current alive server map is: %+v", registry.RpcServerAddressToServerInfoMap)
 }
 
 func (registry *Registry) getAliveServerList() []string {
