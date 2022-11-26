@@ -6,11 +6,20 @@ import (
 	"Distributed-RPC-Framework/registry"
 	"Distributed-RPC-Framework/server"
 	"context"
+	"errors"
 	"log"
 	"net"
 	"sync"
 	"time"
 )
+
+type ArithmeticCase struct {
+	ServiceDotMethod string
+	ArithmeticSymbol string
+	Input            *Input
+	Output           *Output
+	Expected         int
+}
 
 type Input struct {
 	A, B int
@@ -24,6 +33,24 @@ type Arithmetic int
 
 func (t *Arithmetic) Addition(input *Input, output *Output) error {
 	output.C = input.A + input.B
+	return nil
+}
+
+func (t *Arithmetic) Subtraction(input *Input, output *Output) error {
+	output.C = input.A - input.B
+	return nil
+}
+
+func (t *Arithmetic) Multiplication(input *Input, output *Output) error {
+	output.C = input.A * input.B
+	return nil
+}
+
+func (t *Arithmetic) Division(input *Input, output *Output) error {
+	if input.B == 0 {
+		return errors.New("divide by zero")
+	}
+	output.C = input.A / input.B
 	return nil
 }
 
@@ -244,7 +271,8 @@ func createLoadBalancedClientAndCallOnRegistry(registryURL string) {
 
 func createLoadBalancedClientAndBroadcastCallOnRegistry(registryURL string) {
 	registryLoadBalancer := loadBalancer.CreateLoadBalancerRegistrySide(registryURL, 0)
-	loadBalancedClient := client.CreateLoadBalancedClient(registryLoadBalancer, loadBalancer.RandomSelectMode, nil)
+	shortProcessTimeoutConnectionInfo := &server.ConnectionInfo{ConnectionTimeout: time.Second * 2, ProcessingTimeout: time.Second * 2}
+	loadBalancedClient := client.CreateLoadBalancedClient(registryLoadBalancer, loadBalancer.RoundRobinSelectMode, shortProcessTimeoutConnectionInfo)
 	defer func() { _ = loadBalancedClient.Close() }()
 
 	var waitGroup sync.WaitGroup
@@ -279,7 +307,8 @@ func main() {
 	//Call: 6 RPC normal calls, called from RPC client via direct Call()
 	//Expected result: All RPC calls are handled, return 0
 
-	/*	serverChannel := make(chan *server.Server)
+	/*	time.Sleep(time.Second)
+		serverChannel := make(chan *server.Server)
 		waitGroup.Add(1)
 		go createServer(":0", serviceList, serverChannel, &waitGroup)
 		testServer := <-serverChannel
@@ -295,7 +324,8 @@ func main() {
 	//Call: 6 RPC normal calls, called from RPC client via direct Call()
 	//Expected result: All RPC calls are handled, not returning (so that debug page is hosted)
 
-	/*	serverChannelHTTP := make(chan *server.Server)
+	/*	time.Sleep(time.Second)
+		serverChannelHTTP := make(chan *server.Server)
 		go createClientAndCallHTTP(serverChannelHTTP)
 		waitGroup.Add(1)
 		createServerHTTP(":0", serviceList, serverChannelHTTP, &waitGroup)
@@ -309,9 +339,9 @@ func main() {
 	//Call: 6 RPC normal calls, 6 RPC broadcast calls (12 normal calls for 2 server), called from RPC client manager via indirect Call()
 	//Expected result: All 6 RPC normal calls are handled, 2 RPC broadcast calls are handled, 4 RPC broadcast calls are timeout, return 0
 
-	/*	serverChannelA := make(chan *server.Server)
+	/*	time.Sleep(time.Second)
+		serverChannelA := make(chan *server.Server)
 		serverChannelB := make(chan *server.Server)
-		time.Sleep(time.Second)
 		waitGroup.Add(2)
 		go createServer(":0", serviceList, serverChannelA, &waitGroup)
 		serverA := <-serverChannelA
@@ -331,8 +361,8 @@ func main() {
 	//Call: 6 RPC normal calls, 6 RPC broadcast calls (12 normal calls for 2 server), called from RPC client manager via indirect Call()
 	//Expected result: All 6 RPC normal calls are handled, 2 RPC broadcast calls are handled, 4 RPC broadcast calls are timeout, return 0
 
-	registryChannel := make(chan *registry.Registry)
 	time.Sleep(time.Second)
+	registryChannel := make(chan *registry.Registry)
 	waitGroup.Add(1)
 	go createRegistry(":0", registryChannel, &waitGroup)
 	testRegistry := <-registryChannel
@@ -350,10 +380,10 @@ func main() {
 	serverD.Heartbeat(testRegistry.RegistryURL, 0)
 	log.Printf("main -> main: Server D address fetched from serverChannelD: %s", serverD.ServerAddress)
 	waitGroup.Wait()
-	createLoadBalancedClientAndCallOnRegistry(testRegistry.RegistryURL)
+	//createLoadBalancedClientAndCallOnRegistry(testRegistry.RegistryURL)
 	createLoadBalancedClientAndBroadcastCallOnRegistry(testRegistry.RegistryURL)
-	//registry -> 8000
-	//server A -> 8001
-	//server A -> 8002
 
+	for {
+
+	}
 }
