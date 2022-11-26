@@ -1,0 +1,111 @@
+
+---CRITICAL NOTE---
+All commands listed here are done in a Linux(Ubunto), so try to modify some steps/elements if you are using Windows/Mac.
+
+0. (Optional) You can first download and install GCP CLI tools:
+        Check out https://cloud.google.com/sdk/docs/install to install it. 
+
+1. Set up free billing account using the Google Cloud Education Credit Coupon 
+    if you dont have it, bummer, use your credit card :C
+
+2. Create new project named CMPE-295, and connect it with the billing account created in step 1.
+
+3. Enable Computer Engine API, wait for its initializiation to be done.
+
+4. create 3 GCP vm under project CMPE-295:
+    # we aim to create multiple VMs to simulate real-world RPC nodes communication via subnet and RPC system (Spartan RPC in this case)
+    # VMs that need to be created: node-a, node-b, node-c 
+    # modify [vm-name] before you use
+    bash gcp-create-vm.sh:
+        gcloud auth login
+
+        gcloud config set project cmpe-295-369606
+
+        gcloud compute instances create [vm-name] --project=cmpe-295-369609 --zone=us-west1-a --machine-type=e2-small --network-interface=network-tier=PREMIUM,subnet=default --maintenance-policy=MIGRATE --provisioning-model=STANDARD --service-account=563449857226-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append --tags=http-server,https-server --create-disk=auto-delete=yes,boot=yes,device-name=[vm-name],image=projects/ubuntu-os-cloud/global/images/ubuntu-1804-bionic-v20190122,mode=rw,size=10,type=projects/cmpe-295-369609/zones/us-west1-a/diskTypes/pd-balanced --reservation-affinity=any
+
+    if later on you want to rename vm, stop it first, then use the following command:
+        gcloud beta compute instances set-name [origin-vm-name] --new-name=[new-vm-name]
+    
+    Note: be aware that if you stop your vm and resume it then its possible that
+    its external IP address is maintained but the its host key is different
+    so your ssh key manager need to remove the old vm host key
+
+5. Generate public and private SSH-KEY:
+    # you should run this only one time, then copy your ssh key
+    # modify $USER before you use
+    bash gcp-gen-ssh.sh:       
+        # define $USER if needed
+
+        ssh-keygen -t rsa -f ~/.ssh/google_cloud_key -C $USER
+        
+        cat /home/$USER/.ssh/google_cloud_key.pub
+
+6. Save the generated SSH public key to GCP VM Metadata:
+        Go to GCP -> Compute Engine -> Settings -> Metadata -> SSH Keys -> Add Item ->
+                # the format should looks like the following
+                Username: <your name> (it will get auto generated)
+                Key: ssh-sra AAAA.....XfGI0= <your name> (just copy from ssh-sra...to the end)
+        Then wait until it finished importing the SHH key
+
+7. Connecte to default VM instance-1 in GCP:
+        # modify EXTERNAL_IP before you use 
+        bash gcp-ssh-vm.sh
+                # define $USER if needed 
+                
+                EXTERNAL_IP="<your VM external IP>"
+
+                ssh -i ~/.ssh/google_cloud_key $USER@$EXTERNAL_IP
+
+8. Check the OS version fo the vm to ensure everything is in place:
+    uname -a
+
+9. Install Go-lang 1.18.3 to the machine:
+    wget https://go.dev/dl/go1.19.3.linux-amd64.tar.gz
+
+9. Unzip the Golang tar.gz file that just down using wget:
+    tar -xvf go1.19.3.linux-amd64.tar.gz
+
+10. move the installed Go-lang to /usr/local
+    rm go1.19.3.linux-amd64.tar.gz
+    sudo mv go /usr/local/  
+
+11. modify ~/.bashrc to export bin of Go-lang:
+    vim ~/.bashrc
+        i
+        export PATH=$PATH:/usr/local/go/bin
+        :wq
+
+12. (CRITICAL) exit the vm and re-log in:
+    so that the changes in ~/.bashrc can apply, so Go can be found
+    exit 
+    bash gcp-ssh-vm.sh
+
+13. check go version:
+    go version
+
+14. clone Spartan RPC to local machine using git:
+    git clone https://github.com/paroniriaa/SpartanRPC.git
+    cd SpartanRPC
+    git fetch --all
+    git pull --all
+    git checkout Junjie
+
+15. all terminal cd to the deploy directory:
+    cd ~/SpartanRPC/test/deploy
+
+16. host RPC registry on node-a:
+    # on node-a terminal, run the follow commands
+    go run deploy_registry.go deploy_utility.go
+
+17. then host RPC server on node-b:
+    # on node-b terminal, run the follow commands
+    go run deploy_server.go deploy_utility.go
+
+18. then host RPC client on node-c:
+    # on node-c terminal, run the follow commands
+    go run deploy_cleint.go deploy_utility.go
+
+19. check current machine subnet IP for deployment usage:
+    hostname -I
+
+
