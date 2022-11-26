@@ -314,11 +314,7 @@ func (server *Server) LaunchAndServe() {
 	serverMultiplexer := http.NewServeMux()
 	serverMultiplexer.HandleFunc(DefaultRPCPath, server.ServeHTTP)
 	serverMultiplexer.HandleFunc(DefaultDebugPath, HTTPDebug{server}.ServeHTTP)
-	if server.Listener.Addr().String()[:3] == "[::]" {
-		log.Printf("RPC server -> LaunchAndServe: RPC server finished initializing the HTTP multiplexer (handler) for debug, and it is serving on URL path: %s", "http://localhost"+server.Listener.Addr().String()[4:]+DefaultDebugPath)
-	} else {
-		log.Printf("RPC server -> LaunchAndServe: RPC server finished initializing the HTTP multiplexer (handler) for debug, and it is serving on URL path: %s", "http://"+server.ServerAddress+DefaultDebugPath)
-	}
+	log.Printf("RPC server -> LaunchAndServe: RPC server finished initializing the HTTP multiplexer (handler) for debug, and it is serving on URL path: %s", "http://"+server.Listener.Addr().String()+DefaultDebugPath)
 	_ = http.Serve(server.Listener, serverMultiplexer)
 }
 

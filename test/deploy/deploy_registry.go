@@ -54,5 +54,5 @@ func main() {
 		testRegistry := <-registryChannel
 		log.Printf("main -> main: Registry address fetched from registryChannel: %s", testRegistry.RegistryURL)*/
 
-	createRegistry(":8001")
+	createRegistry("10.138.0.2:8001")
 }
