@@ -21,7 +21,7 @@ func createClient(registryURL string) {
 
 	//log.Println("sRPC Call example: Arithmetic.Addition 1 1")
 	for {
-		log.Println("Enter sRPC Call info: [Service.Method] [NumberA] [NumberB]")
+		log.Println("Enter sRPC call info: [Service.Method] [NumberA] [NumberB]")
 		var serviceDotMethod, arithmeticSymbol string
 		var numberA, numberB int
 		n, err := fmt.Scanln(&serviceDotMethod, &numberA, &numberB)
@@ -29,24 +29,12 @@ func createClient(registryURL string) {
 			os.Exit(0)
 		}
 		if n != 3 {
-			log.Println("Initialize sRPC Call error: expected 3 arguments: [Service.Method] [NumberA] [NumberB]")
+			log.Println("Initialize sRPC call error: expected 3 arguments: [Service.Method] [NumberA] [NumberB]")
 		}
 		if err != nil {
 			log.Fatal(err)
 		}
 		switch serviceDotMethod {
-		case "Arithmetic.Addition":
-			arithmeticSymbol = "+"
-			break
-		case "Arithmetic.Subtraction":
-			arithmeticSymbol = "-"
-			break
-		case "Arithmetic.Multiplication":
-			arithmeticSymbol = "*"
-			break
-		case "Arithmetic.Division":
-			arithmeticSymbol = "/"
-			break
 		case "A.A":
 			serviceDotMethod = "Arithmetic.Addition"
 			arithmeticSymbol = "+"
@@ -64,11 +52,11 @@ func createClient(registryURL string) {
 			arithmeticSymbol = "/"
 			break
 		default:
-			log.Printf("Initialize sRPC Call error sRPC Call failed: [Service.Method] %s does not exist, plesae retry...", serviceDotMethod)
+			log.Printf("Initialize sRPC call error: [Service.Method] %s does not exist, plesae retry...", serviceDotMethod)
 			continue
 
 		}
-		log.Printf("Invoking sRPC Call: %s -> %d %s %d", serviceDotMethod, numberA, arithmeticSymbol, numberB)
+		log.Printf("Invoking sRPC call: %s -> %d %s %d", serviceDotMethod, numberA, arithmeticSymbol, numberB)
 		testCase = ArithmeticCase{
 			serviceDotMethod,
 			arithmeticSymbol,
@@ -81,7 +69,7 @@ func createClient(registryURL string) {
 		if err != nil {
 			log.Printf("sRPC call %s error: %s", testCase.ServiceDotMethod, err)
 		} else {
-			log.Printf("sRPC call %s success: %d %s %d = %d", testCase.ServiceDotMethod, testCase.Input.A, arithmeticSymbol, testCase.Input.B, testCase.Output.C)
+			log.Printf("sRPC call %s success -> %d %s %d = %d", testCase.ServiceDotMethod, testCase.Input.A, arithmeticSymbol, testCase.Input.B, testCase.Output.C)
 		}
 	}
 }
@@ -101,7 +89,6 @@ func main() {
 	}
 
 	registryURL = "http://" + registryAddressPort + registry.DefaultPath
-
 	createClient(registryURL)
 
 }
