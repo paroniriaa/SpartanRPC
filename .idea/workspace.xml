@@ -6,20 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="client">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/client.go" beforeDir="false" afterPath="$PROJECT_DIR$/client/client.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/coder/coder.go" beforeDir="false" afterPath="$PROJECT_DIR$/coder/coder.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loadBalancer/load_balancer_client_side.go" beforeDir="false" afterPath="$PROJECT_DIR$/loadBalancer/load_balancer_client_side.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/load_balanced_client.go" beforeDir="false" afterPath="$PROJECT_DIR$/client/load_balanced_client.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/coder/json_coder.go" beforeDir="false" afterPath="$PROJECT_DIR$/coder/json_coder.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/registry/registry.go" beforeDir="false" afterPath="$PROJECT_DIR$/registry/registry.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/client_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/client_unit_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/coder_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/coder_unit_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/json_coder_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/json_coder_unit_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/load_balancer_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/load_balancer_unit_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/registry_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/registry_unit_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/server_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/server_unit_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/service_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/service_unit_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/test_utility.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/unit/unit_test_utility.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -72,20 +63,26 @@
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/test/unit/unit_test_utility.go" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/deploy" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
     <property name="nodejs_package_manager_path" value="npm" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Local Project\Distributed-RPC-Framework\deploy" />
+      <recent name="C:\Local Project\Distributed-RPC-Framework\main" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Local Project\Distributed-RPC-Framework\test" />
+      <recent name="C:\Local Project\Distributed-RPC-Framework\deploy" />
+      <recent name="C:\Local Project\Distributed-RPC-Framework\main" />
       <recent name="C:\Local Project\Distributed-RPC-Framework\server" />
       <recent name="K:\github_repo\Distributed-RPC-Framework\main" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.go bench test client">
+  <component name="RunManager" selected="Go Build.go build main.go">
     <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$" />
@@ -118,7 +115,7 @@
     <configuration name="go bench test all" type="GoTestRunConfiguration" factoryName="Go Test">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/test/benchmark" />
-      <parameters value="-test.benchmem" />
+      <parameters value="-test.benchmem -test.benchtime=0.50s" />
       <kind value="DIRECTORY" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$/test/benchmark" />
@@ -151,7 +148,7 @@
     <configuration name="go bench test json_coder" type="GoTestRunConfiguration" factoryName="Go Test">
       <module name="Distributed-RPC-Framework" />
       <working_directory value="$PROJECT_DIR$/test/benchmark" />
-      <parameters value="-test.benchmem -test.benchtime 0.20s" />
+      <parameters value="-test.benchmem -test.benchtime=0.20s" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$/test/benchmark/coder_benchmark_test.go" />
@@ -333,7 +330,11 @@
       <workItem from="1666057889802" duration="7138000" />
       <workItem from="1669086275118" duration="22651000" />
       <workItem from="1669182452821" duration="7352000" />
-      <workItem from="1669250324903" duration="23971000" />
+      <workItem from="1669250324903" duration="27389000" />
+      <workItem from="1669285606830" duration="54000" />
+      <workItem from="1669336319431" duration="26585000" />
+      <workItem from="1669368619218" duration="8857000" />
+      <workItem from="1669422411410" duration="5481000" />
     </task>
     <servers />
   </component>
