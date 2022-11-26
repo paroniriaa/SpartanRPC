@@ -45,7 +45,7 @@ func CreateRegistry(listener net.Listener, timeout time.Duration) (*Registry, er
 		return nil, errors.New("RPC server > CreateServer error: Network listener should not be nil, but received nil")
 	}
 	//the port parameter passed-in will be in the form of "[::]:1234", so we need to extract port
-	registryURL := "http://localhost" + listener.Addr().String()[4:] + DefaultPath
+	registryURL := "http://" + listener.Addr().String() + DefaultPath
 	log.Printf("RPC registry -> CreateRegistry: created RPC registry on HTTP end-point %s...", registryURL)
 	return &Registry{
 		Listener:                        listener,

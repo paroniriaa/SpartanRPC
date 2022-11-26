@@ -6,7 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="client">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/registry/registry.go" beforeDir="false" afterPath="$PROJECT_DIR$/registry/registry.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/debug.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/debug.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,7 +61,7 @@
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/deploy" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/test/deploy" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
@@ -67,6 +69,7 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Local Project\Distributed-RPC-Framework\test\deploy" />
       <recent name="C:\Local Project\Distributed-RPC-Framework\deploy" />
       <recent name="C:\Local Project\Distributed-RPC-Framework\main" />
     </key>
@@ -331,7 +334,8 @@
       <workItem from="1669336319431" duration="26585000" />
       <workItem from="1669368619218" duration="8857000" />
       <workItem from="1669422411410" duration="6013000" />
-      <workItem from="1669439518481" duration="1118000" />
+      <workItem from="1669439518481" duration="1156000" />
+      <workItem from="1669441221463" duration="4779000" />
     </task>
     <servers />
   </component>

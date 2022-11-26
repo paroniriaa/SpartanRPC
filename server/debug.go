@@ -25,7 +25,8 @@ const debugText = `<html>
 		</table>
 	{{end}}
 	</body>
-	</html>`
+	</html>
+`
 
 var debug = template.Must(template.New("Spartan RPC - debug").Parse(debugText))
 
