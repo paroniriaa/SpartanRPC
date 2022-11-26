@@ -88,7 +88,7 @@ func createClient(registryURL string) {
 
 func main() {
 	//set up logger
-	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
+	log.SetFlags(log.Lshortfile)
 
 	log.Println("Enter RPC Client Info: [Registry_Subnet_IP_Address:Port]")
 	var registryAddressPort, registryURL string

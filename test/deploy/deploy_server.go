@@ -56,7 +56,7 @@ func createServerHTTP(addressPort string, serviceList []any, registryURL string)
 
 func main() {
 	//set up logger
-	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
+	log.SetFlags(log.Lshortfile)
 
 	//create service type and store it in the service list
 	var arithmetic Arithmetic

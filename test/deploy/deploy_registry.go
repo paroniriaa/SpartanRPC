@@ -25,7 +25,7 @@ func createRegistry(addressPort string) {
 
 func main() {
 	//set up logger
-	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
+	log.SetFlags(log.Lshortfile)
 
 	log.Println("Enter RPC Registry Info: [Machine_Subnet_IP_Address:Port]")
 	var registryAddressPort string
