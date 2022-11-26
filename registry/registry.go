@@ -31,10 +31,11 @@ type ServerInfo struct {
 // indicating that any server has lastUpdateTime + DefaultTimeout <= now
 // will be treated as unavailable server and will be removed
 const (
-	DefaultPath    = "/_srpc_/registry"
-	DefaultURL     = "http://localhost:9999/_srpc_/registry"
-	DefaultPort    = ":9999"
-	DefaultTimeout = time.Minute * 5
+	DefaultPath = "/_srpc_/registry"
+	DefaultURL  = "http://localhost:9999/_srpc_/registry"
+	DefaultPort = ":9999"
+	//DefaultTimeout should not be less than 1 minute for performance purpose
+	DefaultTimeout = time.Minute * 2
 )
 
 // CreateRegistry create a registry instance with Timeout setting
@@ -54,17 +55,18 @@ func CreateRegistry(listener net.Listener, timeout time.Duration) (*Registry, er
 	}, nil
 }
 
-func (registry *Registry) registerServer(addr string) {
-	log.Println("RPC registry -> registerServer: RPC registry registering server instance...")
+func (registry *Registry) registerServer(serverAddress string) {
+	log.Printf("RPC registry -> registerServer: RPC registry registering server instance %s...", serverAddress)
 	registry.mutex.Lock()
 	defer registry.mutex.Unlock()
-	serverInfo := registry.RpcServerAddressToServerInfoMap[addr]
+	serverInfo := registry.RpcServerAddressToServerInfoMap[serverAddress]
 	if serverInfo == nil {
-		registry.RpcServerAddressToServerInfoMap[addr] = &ServerInfo{ServerAddress: addr, lastUpdateTime: time.Now()}
+		registry.RpcServerAddressToServerInfoMap[serverAddress] = &ServerInfo{ServerAddress: serverAddress, lastUpdateTime: time.Now()}
 	} else {
 		// if the server already exists, update its lastUpdateTime time as now to keep it alive
 		serverInfo.lastUpdateTime = time.Now()
 	}
+	log.Printf("RPC registry -> registerServer: RPC registry finished server registration and updated the alive server list %+v: ", registry.RpcServerAddressToServerInfoMap)
 }
 
 func (registry *Registry) getAliveServerList() []string {
@@ -91,15 +93,15 @@ func (registry *Registry) ServeHTTP(responseWriter http.ResponseWriter, request 
 	switch request.Method {
 	//GET returns all the alive servers instance currently available in the registry, used "GET-SpartanRPC-AliveServers" as customized HTTP header field
 	case "GET":
-		log.Println("RPC registry -> ServeHTTP: RPC registry serving HTTP GET request...")
+		log.Printf("RPC registry -> ServeHTTP: RPC registry serving HTTP GET request from RPC client...")
 		// keep it simple, server is in request.Header
 		responseWriter.Header().Set("GET-SpartanRPC-AliveServers", strings.Join(registry.getAliveServerList(), ","))
 
 	//POST register/send heartbeat for the server instance to the registry, used "POST-SpartanRPC-AliveServer" as customized HTTP header field
 	case "POST":
-		log.Println("RPC registry -> ServeHTTP: RPC registry serving HTTP POST request...")
 		// keep it simple, server is in request.Header
 		serverAddress := request.Header.Get("POST-SpartanRPC-AliveServer")
+		log.Printf("RPC registry -> ServeHTTP: RPC registry serving HTTP POST request from RPC server %s...", serverAddress)
 		if serverAddress == "" {
 			responseWriter.WriteHeader(http.StatusInternalServerError)
 			return

@@ -1,4 +1,4 @@
-package test
+package unit
 
 import (
 	"Distributed-RPC-Framework/client"
@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -20,13 +21,6 @@ type Input struct {
 
 type Output struct {
 	C int
-}
-
-type Demo int
-
-func (t *Demo) Addition_demo(input Input, output *int) error {
-	*output = input.A + input.B
-	return nil
 }
 
 type Test int
@@ -59,10 +53,6 @@ func (t *Arithmetic) Division(input *Input, output *Output) error {
 	}
 	output.C = input.A / input.B
 	return nil
-}
-
-func (t *Arithmetic) Error(input *Input, output *Output) error {
-	panic("ERROR")
 }
 
 type BuiltinType struct{}
@@ -126,7 +116,7 @@ type TimeoutCase struct {
 	ConnectionInfo   *server.ConnectionInfo
 }
 
-//helper function to create concrete Arithmetic test case
+//helper function to create concrete Arithmetic unit case
 func createArithmeticTestCase(t *testing.T, c *client.Client, ac *ArithmeticCase) {
 	t.Helper()
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
@@ -141,7 +131,7 @@ func createArithmeticTestCase(t *testing.T, c *client.Client, ac *ArithmeticCase
 	}
 }
 
-//helper function to create concrete BuiltinType test case
+//helper function to create concrete BuiltinType unit case
 func createBuiltinTypeTestCase(t *testing.T, c *client.Client, btc *BuiltinTypeCase) {
 	t.Helper()
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
@@ -156,10 +146,10 @@ func createBuiltinTypeTestCase(t *testing.T, c *client.Client, btc *BuiltinTypeC
 	}
 }
 
-//helper function to create concrete TimeoutCall test case
+//helper function to create concrete TimeoutCall unit case
 func createTimeoutCallTestCase(t *testing.T, tc *TimeoutCase) {
 	t.Helper()
-	c, _ := client.MakeDial("tcp", tc.Address, tc.ConnectionInfo)
+	c, _ := client.XMakeDial(tc.Address, tc.ConnectionInfo)
 	defer func() { _ = c.Close() }()
 	err := c.Call(tc.ServiceDotMethod, tc.Input, tc.Output, tc.Context)
 	log.Println(err)
@@ -169,7 +159,7 @@ func createTimeoutCallTestCase(t *testing.T, tc *TimeoutCase) {
 	}
 }
 
-//helper function to create concrete TimeoutDial test case
+//helper function to create concrete TimeoutDial unit case
 func createTimeoutDialTestCase(t *testing.T, tc *TimeoutCase) {
 	t.Helper()
 	fakeClientInitializer := func(cn net.Conn, cni *server.ConnectionInfo) (client *client.Client, err error) {
@@ -177,7 +167,9 @@ func createTimeoutDialTestCase(t *testing.T, tc *TimeoutCase) {
 		time.Sleep(time.Second * 2)
 		return nil, nil
 	}
-	_, err := client.MakeDialWithTimeout(fakeClientInitializer, "tcp", tc.Address, tc.ConnectionInfo)
+	protocolAtServerAddress := strings.Split(tc.Address, "@")
+	_, serverAddress := protocolAtServerAddress[0], protocolAtServerAddress[1]
+	_, err := client.MakeDialWithTimeout(fakeClientInitializer, "tcp", serverAddress, tc.ConnectionInfo)
 	//log.Println(err)
 	if tc.ConnectionInfo.ConnectionTimeout == 0 {
 		if err != nil {
@@ -192,7 +184,7 @@ func createTimeoutDialTestCase(t *testing.T, tc *TimeoutCase) {
 	}
 }
 
-// helper function to create concrete load balancer client-side test case
+// helper function to create concrete load balancer client-side unit case
 func createNormalCallTestCase(t *testing.T, c *client.LoadBalancedClient, ac *ArithmeticCase) {
 	t.Helper()
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
@@ -221,9 +213,9 @@ func createBroadcastCallTestCase(t *testing.T, c *client.LoadBalancedClient, ac 
 	}
 }
 
-//helper function to create a server with desired services on specified port
-//and have the created server send to the address channel
-func createServer(port string, services []any, addressChannel chan string, waitGroup *sync.WaitGroup) {
+//helper function to create an RPC server with desired services on specified port
+//and have the created RPC server send to the server channel
+func createServer(port string, services []any, serverChannel chan *server.Server, waitGroup *sync.WaitGroup) {
 	log.Println("Test utility -> createServer: RPC server initialization routine start...")
 	listener, err := net.Listen("tcp", port)
 	if err != nil {
@@ -239,15 +231,40 @@ func createServer(port string, services []any, addressChannel chan string, waitG
 			log.Fatal("Test utility -> createServer error: RPC server register error:", err)
 		}
 	}
-	addressChannel <- listener.Addr().String()
+	serverChannel <- testServer
 	waitGroup.Done()
 	log.Println("Test utility -> createServer: RPC server initialization routine end, now launched and accepting...")
 	//BLOCKING and keep listening
 	testServer.LaunchAndAccept()
 }
 
-//helper function to create a registry on specified port
-//and have the created registry send to the registry channel
+//helper function to create an RPC HTTP server with desired services on specified port
+//and have the created RPC HTTP server send to the server channel
+func createServerHTTP(port string, serviceList []any, serverChannelHTTP chan *server.Server, waitGroup *sync.WaitGroup) {
+	log.Println("Test utility -> createServerHTTP: RPC HTTP server initialization routine start...")
+	listener, err := net.Listen("tcp", port)
+	if err != nil {
+		log.Fatal("Test utility -> createServerHTTP error: RPC HTTP server network issue: ", err)
+	}
+	testServerHTTP, err := server.CreateServerHTTP(listener)
+	if err != nil {
+		log.Fatal("Test utility -> createServerHTTP error: RPC HTTP server creation issue: ", err)
+	}
+	for _, service := range serviceList {
+		err = testServerHTTP.ServerRegister(service)
+		if err != nil {
+			log.Fatal("Test utility -> createServerHTTP error: RPC HTTP server register error:", err)
+		}
+	}
+	serverChannelHTTP <- testServerHTTP
+	waitGroup.Done()
+	log.Println("Test utility -> createServerHTTP: RPC HTTP server initialization routine end, now launched and serving...")
+	//BLOCKING and keep serving
+	testServerHTTP.LaunchAndServe()
+}
+
+//helper function to create an RPC registry on specified port
+//and have the created RPC registry send to the registry channel
 func createRegistry(port string, registryChannel chan *registry.Registry, waitGroup *sync.WaitGroup) {
 	log.Println("Test utility -> createRegistry: RPC registry initialization routine start...")
 	listener, err := net.Listen("tcp", port)
@@ -263,30 +280,4 @@ func createRegistry(port string, registryChannel chan *registry.Registry, waitGr
 	log.Println("Test utility -> createRegistry: RPC registry initialization routine end, now launched and serving...")
 	//BLOCKING and keep serving
 	testRegistry.LaunchAndServe()
-}
-
-//helper function to create a server with desired services on specified port, and register to the specified registry
-//and have the created server send to the server channel
-func createServerOnRegistry(port string, registryURL string, services []any, serverChannel chan *server.Server, waitGroup *sync.WaitGroup) {
-	log.Println("Test utility -> createServerOnRegistry: RPC server initialization routine start...")
-	listener, err := net.Listen("tcp", port)
-	if err != nil {
-		log.Fatal("Test utility -> createServerOnRegistry error: RPC server network issue:", err)
-	}
-	testServer, err := server.CreateServer(listener)
-	if err != nil {
-		log.Fatal("Test utility -> createServerOnRegistry error: RPC server creation issue:", err)
-	}
-	for _, service := range services {
-		err = testServer.ServerRegister(service)
-		if err != nil {
-			log.Fatal("Test utility utility -> createServer error: RPC server register error:", err)
-		}
-	}
-	testServer.Heartbeat(registryURL, 0)
-	serverChannel <- testServer
-	waitGroup.Done()
-	log.Println("Test utility -> createServerOnRegistry: RPC server initialization routine end, now launched and accepting...")
-	//BLOCKING and keep listening
-	testServer.LaunchAndAccept()
 }

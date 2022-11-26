@@ -51,12 +51,26 @@ var DefaultConnectionInfo = &ConnectionInfo{
 var invalidRequest = struct{}{}
 
 func CreateServer(listener net.Listener) (*Server, error) {
-	log.Printf("RPC server -> CreateServer: creating RPC server on port %s...", listener.Addr().String())
 	if listener == nil {
 		return nil, errors.New("RPC server > CreateServer error: Network listener should not be nil, but received nil")
 	}
+	serverAddress := listener.Addr().Network() + "@" + listener.Addr().String()
+	log.Printf("RPC server -> CreateServer: Created RPC server on address %s", serverAddress)
 	return &Server{
-		ServerAddress: listener.Addr().Network() + "@" + listener.Addr().String(),
+		ServerAddress: serverAddress,
+		Listener:      listener,
+	}, nil
+}
+
+func CreateServerHTTP(listener net.Listener) (*Server, error) {
+	if listener == nil {
+		return nil, errors.New("RPC server > CreateServer error: Network listener should not be nil, but received nil")
+	}
+	//http@serverAddress will hide the transportation protocol info, use listener.Addr().Network() to fetch when needed
+	serverAddress := "http" + "@" + listener.Addr().String()
+	log.Printf("RPC server -> CreateServer: Created RPC server on address %s", serverAddress)
+	return &Server{
+		ServerAddress: serverAddress,
 		Listener:      listener,
 	}, nil
 }
@@ -188,7 +202,7 @@ func (server *Server) read_request(message coder.Coder) (*Request, error) {
 	}
 	requests := &Request{header: header}
 
-	requests.service, requests.method, Error = server.searchService(header.ServiceDotMethod)
+	requests.service, requests.method, Error = server.search_service(header.ServiceDotMethod)
 	if Error != nil {
 		return requests, Error
 	}
@@ -209,22 +223,22 @@ func (server *Server) read_request(message coder.Coder) (*Request, error) {
 
 }
 
-func (server *Server) searchService(serviceMethod string) (services *service.Service, methods *service.Method, err error) {
+func (server *Server) search_service(serviceMethod string) (services *service.Service, methods *service.Method, err error) {
 	splitIndex := strings.LastIndex(serviceMethod, ".")
 	if splitIndex < 0 {
-		err = errors.New("RPC server -> searchService error: " + serviceMethod + " ill-formed invalid.")
+		err = errors.New("RPC server -> search_service error: " + serviceMethod + " ill-formed invalid.")
 		return
 	}
 	serviceName, methodName := serviceMethod[:splitIndex], serviceMethod[splitIndex+1:]
 	input, serviceStatus := server.ServiceMap.Load(serviceName)
 	if !serviceStatus {
-		err = errors.New("RPC server -> searchService error: " + serviceName + " serviceName didn't exist")
+		err = errors.New("RPC server -> search_service error: " + serviceName + " serviceName didn't exist")
 		return
 	}
 	services = input.(*service.Service)
 	methods = services.ServiceMethod[methodName]
 	if methods == nil {
-		err = errors.New("RPC server -> searchService error: " + methodName + " methodName didn't exist")
+		err = errors.New("RPC server -> search_service error: " + methodName + " methodName didn't exist")
 	}
 	return
 }

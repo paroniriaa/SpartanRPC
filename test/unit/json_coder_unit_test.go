@@ -1,4 +1,4 @@
-package test
+package unit
 
 import (
 	"Distributed-RPC-Framework/coder"
@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"net"
+	"reflect"
 	"sync"
 	"testing"
 )
@@ -17,18 +18,18 @@ func TestJsonCoder(t *testing.T) {
 
 	// create service type (test is enough)
 	var test Test
-	services := []any{
+	serviceList := []any{
 		&test,
 	}
 
-	serverAddressChannelA := make(chan string)
+	serverChannel := make(chan *server.Server)
 	waitGroup.Add(1)
-	go createServer(":0", services, serverAddressChannelA, &waitGroup)
-	serverAddressA := <-serverAddressChannelA
-	log.Printf("Load balancer test -> main: Server A (not registered) address fetched: %s", serverAddressA)
+	go createServer(":0", serviceList, serverChannel, &waitGroup)
+	testServer := <-serverChannel
+	log.Printf("TestJsonCoder -> main: Server address fetched from serverChannel: %s", testServer.ServerAddress)
 	waitGroup.Wait()
 
-	connection, _ := net.Dial("tcp", serverAddressA)
+	connection, _ := net.Dial("tcp", testServer.Listener.Addr().String())
 	_ = json.NewEncoder(connection).Encode(server.DefaultConnectionInfo)
 	testJsonCoder := coder.NewJsonCoder(connection)
 	requestHeader := &coder.MessageHeader{
@@ -43,6 +44,13 @@ func TestJsonCoder(t *testing.T) {
 	var err error
 	var responseBody string
 	responseHeader := &coder.MessageHeader{}
+
+	t.Run("NewJsonCoder", func(t *testing.T) {
+		testJsonCoder = coder.NewJsonCoder(connection)
+		if reflect.TypeOf(&coder.JsonCoder{}) != reflect.TypeOf(testJsonCoder) {
+			t.Errorf("NewJsonCoder Error: testJsonCoder expected be in type of %s, but got %s", reflect.TypeOf(coder.JsonCoder{}), reflect.TypeOf(testJsonCoder))
+		}
+	})
 
 	t.Run("EncodeMessageHeaderAndBody", func(t *testing.T) {
 		err = testJsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)

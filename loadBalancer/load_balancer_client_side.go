@@ -59,7 +59,7 @@ func (loadBalancerClientSide *LoadBalancerClientSide) GetServerList() ([]string,
 	return serverList, nil
 }
 
-// RefreshServerList is not applicable for MultiServersDiscovery, so return nil
+// RefreshServerList is not applicable for client-side load balancer, so return nil
 func (loadBalancerClientSide *LoadBalancerClientSide) RefreshServerList() error {
 	return nil
 }

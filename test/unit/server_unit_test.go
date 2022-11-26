@@ -1,4 +1,4 @@
-package test
+package unit
 
 import (
 	"Distributed-RPC-Framework/coder"
@@ -15,24 +15,25 @@ func TestServer(t *testing.T) {
 	t.Helper()
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
 	var waitGroup sync.WaitGroup
-	//create service type (arithmetic is enough)
+
+	//create service type (test is enough)
 	var test Test
-	services := []any{
+	serviceList := []any{
 		&test,
 	}
 
-	addressChannel := make(chan string)
+	serverChannel := make(chan *server.Server)
 	waitGroup.Add(1)
-	go createServer(":0", services, addressChannel, &waitGroup)
-	serverAddress := <-addressChannel
-	log.Printf("Server test -> main: Server address fetched: %s", serverAddress)
+	go createServer(":0", serviceList, serverChannel, &waitGroup)
+	testServer := <-serverChannel
+	log.Printf("TestServer -> main: Server address fetched from addressChannel: %s", testServer.ServerAddress)
 	waitGroup.Wait()
 
-	connection, _ := net.Dial("tcp", serverAddress)
+	connection, _ := net.Dial("tcp", testServer.Listener.Addr().String())
 	defer func() { _ = connection.Close() }()
 
 	_ = json.NewEncoder(connection).Encode(server.DefaultConnectionInfo)
-	communication := coder.NewJsonCoder(connection)
+	jsonCoder := coder.NewJsonCoder(connection)
 
 	n := 0
 	for n < 5 {
@@ -42,11 +43,11 @@ func TestServer(t *testing.T) {
 		}
 		requestBody := "RPC Sequence Number " + strconv.Itoa(n)
 		log.Println("Request:", requestBody)
-		_ = communication.EncodeMessageHeaderAndBody(requestHeader, requestBody)
+		_ = jsonCoder.EncodeMessageHeaderAndBody(requestHeader, requestBody)
 		responseHeader := &coder.MessageHeader{}
-		_ = communication.DecodeMessageHeader(responseHeader)
+		_ = jsonCoder.DecodeMessageHeader(responseHeader)
 		var responseBody string
-		_ = communication.DecodeMessageBody(&responseBody)
+		_ = jsonCoder.DecodeMessageBody(&responseBody)
 		log.Println("Response:", responseBody)
 		n++
 	}

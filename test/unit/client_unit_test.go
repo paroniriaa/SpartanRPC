@@ -1,4 +1,4 @@
-package test
+package unit
 
 import (
 	"Distributed-RPC-Framework/client"
@@ -16,6 +16,7 @@ func TestClient(t *testing.T) {
 	t.Helper()
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
 	var waitGroup sync.WaitGroup
+
 	//create service type
 	var arithmetic Arithmetic
 	var builtinType BuiltinType
@@ -27,13 +28,15 @@ func TestClient(t *testing.T) {
 	}
 
 	//create server for testing
-	addressChannel := make(chan string)
+	serverChannel := make(chan *server.Server)
 	waitGroup.Add(1)
-	go createServer(":0", services, addressChannel, &waitGroup)
-	address := <-addressChannel
+	go createServer(":0", services, serverChannel, &waitGroup)
+	testServer := <-serverChannel
+	log.Printf("TestClient -> main: Server address fetched from serverChannel: %s", testServer.ServerAddress)
 	waitGroup.Wait()
+
 	//create client for testing
-	defaultClient, _ := client.MakeDial("tcp", address)
+	defaultClient, _ := client.XMakeDial(testServer.ServerAddress)
 	defer func() { _ = defaultClient.Close() }()
 
 	//table-driven tests
@@ -62,26 +65,30 @@ func TestClient(t *testing.T) {
 	//Range: from client sending the request to server, to client receiving the response from server
 	//expected to fail because Timeout.SleepForTimeout takes 5 secs, and client-side time limit is 1 sec
 	smallTimeoutContext, _ := context.WithTimeout(context.Background(), time.Second)
+
 	//Set 1 sec as timeout limit on the server-side (after connection)
 	//Range: from server sending the request to service(concrete method), to server receiving the response from service
 	//expected to fail because Timeout.SleepForTimeout takes 5 secs, and server-side time limit is 1 sec
 	noTimeoutContext := context.Background()
 	shortProcessTimeoutConnectionInfo := &server.ConnectionInfo{ProcessingTimeout: time.Second}
+
 	timeoutCallCases := []TimeoutCase{
-		{"Timeout.SleepForTimeout", "Handling.Client-Side", input, &i, address, smallTimeoutContext, nil},
-		{"Timeout.SleepForTimeout", "Handling.Server-Side", input, &i, address, noTimeoutContext, shortProcessTimeoutConnectionInfo},
+		{"Timeout.SleepForTimeout", "Handling.Client-Side", input, &i, testServer.ServerAddress, smallTimeoutContext, nil},
+		{"Timeout.SleepForTimeout", "Handling.Server-Side", input, &i, testServer.ServerAddress, noTimeoutContext, shortProcessTimeoutConnectionInfo},
 	}
+
 	//Set 1 sec as timeout limit on the client-side (before connection)
 	//Range: from initializing a client, to returning a connected client
 	//expected to fail because fakeClientInitializer takes 5 secs, and ConnectionTimeout is 1 sec
 	shortConnectionTimeoutConnectionInfo := &server.ConnectionInfo{ConnectionTimeout: time.Second}
-	//Set 1 sec as timeout limit on the client-side (before connection)
+
+	//Set 0 sec as timeout limit on the client-side (before connection)
 	//Range: from initializing a client, to returning a connected client
 	//expected to pass because ConnectionTimeout is 0, which means there is no timeout limit
 	noConnectionTimeoutConnectionInfo := &server.ConnectionInfo{ConnectionTimeout: 0}
 	timeoutDialCases := []TimeoutCase{
-		{"MakeDialWithTimeout", "Connection.1 Sec Limit", input, &i, address, nil, shortConnectionTimeoutConnectionInfo},
-		{"MakeDialWithTimeout", "Connection.No Limit", input, &i, address, nil, noConnectionTimeoutConnectionInfo},
+		{"MakeDialWithTimeout", "Connection.1 Sec Limit", input, &i, testServer.ServerAddress, nil, shortConnectionTimeoutConnectionInfo},
+		{"MakeDialWithTimeout", "Connection.No Limit", input, &i, testServer.ServerAddress, nil, noConnectionTimeoutConnectionInfo},
 	}
 
 	//Synchronous calls tests
@@ -94,7 +101,7 @@ func TestClient(t *testing.T) {
 		})
 	}
 
-	//Asynchronous calls test
+	//Asynchronous calls unit
 	prefix = "AsynchronousCalls."
 	//time.Sleep(time.Second)
 	//loop through all arithmeticCases in the table and create the concrete subtest
@@ -109,7 +116,7 @@ func TestClient(t *testing.T) {
 	}
 	waitGroup.Wait()
 
-	//Builtin type calls test
+	//Builtin type calls unit
 	prefix = "TypeCheckingCalls."
 	//time.Sleep(time.Second)
 	//loop through all builtinTypeCases in the table and create the concrete subtest
@@ -121,7 +128,7 @@ func TestClient(t *testing.T) {
 
 	_ = defaultClient.Close()
 
-	//Timeout calls test
+	//Timeout calls unit
 	prefix = "TimeoutCheckingCalls."
 	//time.Sleep(time.Second)
 	//loop through all timeoutCallCases in the table and create the concrete subtest
@@ -131,7 +138,7 @@ func TestClient(t *testing.T) {
 		})
 	}
 
-	//Timeout dials test
+	//Timeout dials unit
 	prefix = "TimeoutCheckingDials."
 	//time.Sleep(time.Second)
 	//loop through all timeoutDialCases in the table and create the concrete subtest
@@ -141,14 +148,14 @@ func TestClient(t *testing.T) {
 		})
 	}
 
-	//client direct HTTP XDials test (windows)
+	//client direct HTTP XDials unit (windows)
 	t.Run("WindowsXDial", func(t *testing.T) {
 		if runtime.GOOS == "windows" {
 			windowsAddressChannel := make(chan string)
 			go func() {
 				listener, err := net.Listen("tcp", ":0")
 				if err != nil {
-					t.Error("failed to listen windows socket")
+					t.Error("WindowsXDial error: Server failed to listen windows socket")
 					return
 				}
 				testHTTPServer, err := server.CreateServer(listener)
@@ -157,20 +164,20 @@ func TestClient(t *testing.T) {
 			}()
 			serverAddress := <-windowsAddressChannel
 			_, err := client.XMakeDial("http@" + serverAddress)
-			_assert(err == nil, "failed to connect windows socket", err)
+			_assert(err == nil, "WindowsXDial error: Client failed to connect windows socket", err)
 		} else {
-			log.Println("current GO OS is not windows, corresponding sub tests has been dumped")
+			log.Println("WindowsXDial: Current GO OS is not windows, corresponding sub tests has been dumped")
 		}
 	})
 
-	//client direct HTTP XDials test (Linux)
+	//client direct HTTP XDials unit (Linux)
 	t.Run("LinuxXDial", func(t *testing.T) {
 		if runtime.GOOS == "linux" {
 			linuxAddressChannel := make(chan string)
 			go func() {
 				listener, err := net.Listen("unix", ":0")
 				if err != nil {
-					t.Error("failed to listen unix socket")
+					t.Error("LinuxXDial error: Server failed to listen unix socket")
 					return
 				}
 				testHTTPServer, err := server.CreateServer(listener)
@@ -179,9 +186,9 @@ func TestClient(t *testing.T) {
 			}()
 			serverAddress := <-linuxAddressChannel
 			_, err := client.XMakeDial("unix@" + serverAddress)
-			_assert(err == nil, "failed to connect unix socket", err)
+			_assert(err == nil, "LinuxXDial error: failed to connect unix socket", err)
 		} else {
-			log.Println("current GO OS is not linux, corresponding sub tests has been dumped")
+			log.Println("LinuxXDial: current GO OS is not linux, corresponding sub tests has been dumped")
 		}
 	})
 }
