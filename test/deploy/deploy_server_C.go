@@ -74,5 +74,5 @@ func main() {
 		log.Printf("main -> main: Server A address fetched from serverChannelA: %s", serverA.ServerAddress)
 		waitGroup.Wait()*/
 
-	createServerC(":9003", serviceList, registryURL)
+	createServerC("34.127.87.30:9003", serviceList, registryURL)
 }
