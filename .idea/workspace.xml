@@ -4,7 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="client" />
+    <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="client">
+      <change afterPath="$PROJECT_DIR$/test/deploy/deploy_client.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test/deploy/deploy_registry.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test/deploy/deploy_server_A.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test/deploy/deploy_server_B.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test/deploy/deploy_utility.go" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -327,7 +333,7 @@
       <workItem from="1669285606830" duration="54000" />
       <workItem from="1669336319431" duration="26585000" />
       <workItem from="1669368619218" duration="8857000" />
-      <workItem from="1669422411410" duration="5906000" />
+      <workItem from="1669422411410" duration="6013000" />
     </task>
     <servers />
   </component>
