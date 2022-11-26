@@ -132,7 +132,7 @@ func (call *Call) finishCall() {
 /*
 func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
 	//log.Printf("RPC client -> MakeDial: dialing and connecting to server %s...", serverAddress)
-	connectionInfo, Error := parseConnectionInfo(connectionInfos...)
+	connectionInfo, Error := ParseConnectionInfo(connectionInfos...)
 	if Error != nil {
 		return nil, Error
 	}
@@ -150,7 +150,7 @@ func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*serve
 }
 */
 
-// XMakeDial calls specific Dial function to connect to an RPC server based on the first parameter("http", "tcp", etc) of completeServerAddress.
+// XMakeDial calls specific Dial function to connect to an RPC server based on the first parameter("http", "tcp", etc.) of completeServerAddress.
 // completeServerAddress is a general format (protocol@addr) to represent a rpc server
 // eg, http@10.0.0.1:6666, tcp@10.0.0.1:7777, unix@/tmp/srpc.sock
 func XMakeDial(protocolAtServerAddress string, connectionInfos ...*server.ConnectionInfo) (*Client, error) {
@@ -175,7 +175,7 @@ func MakeDialHTTP(transportProtocol, serverAddress string, connectionInfos ...*s
 	//log.Printf("RPC client -> MakeDialHTTP: HTTP dialing process finished)
 }
 
-// CreateClientHTTP create a Client instance via HTTP transport protocol
+// CreateClientHTTP create a Client instance via HTTP application protocol
 func CreateClientHTTP(connection net.Conn, connectionInfo *server.ConnectionInfo) (*Client, error) {
 	//log.Printf("RPC client -> CreateClientHTTP: creating an HTTP RPC client...")
 	_, _ = io.WriteString(connection, fmt.Sprintf("CONNECT %s HTTP/1.0\n\n", server.DefaultRPCPath))
@@ -201,7 +201,7 @@ func MakeDial(transportProtocol, serverAddress string, connectionInfos ...*serve
 // MakeDialWithTimeout enable client to connect to an RPC server within the configured timeout period
 func MakeDialWithTimeout(createClient CreateClientFunctionType, transportProtocol, serverAddress string, connectionInfos ...*server.ConnectionInfo) (client *Client, Error error) {
 	//log.Printf("RPC client -> MakeDialWithTimeout: dialing and connecting to server %s with timeout configuration %+v...", serverAddress, connectionInfos)
-	connectionInfo, Error := parseConnectionInfo(connectionInfos...)
+	connectionInfo, Error := ParseConnectionInfo(connectionInfos...)
 	if Error != nil {
 		return nil, Error
 	}
@@ -235,22 +235,22 @@ func MakeDialWithTimeout(createClient CreateClientFunctionType, transportProtoco
 	}
 }
 
-// parseConnectionInfo parse the input connection info to form proper connection info
-func parseConnectionInfo(connectionInfos ...*server.ConnectionInfo) (*server.ConnectionInfo, error) {
-	//log.Printf("RPC client -> parseConnectionInfo: parsing connectionInfo...")
+// ParseConnectionInfo parse the input connection info to form proper connection info
+func ParseConnectionInfo(connectionInfos ...*server.ConnectionInfo) (*server.ConnectionInfo, error) {
+	//log.Printf("RPC client -> ParseConnectionInfo: parsing connectionInfo...")
 	switch {
 	case len(connectionInfos) == 0 || connectionInfos[0] == nil:
-		//log.Printf("RPC client -> parseConnectionInfo: parsed nil...use server default connectionInfo")
+		//log.Printf("RPC client -> ParseConnectionInfo: parsed nil...use server default connectionInfo")
 		return server.DefaultConnectionInfo, nil
 	case len(connectionInfos) != 1:
-		return nil, errors.New("RPC client -> parseConnectionInfo error: connectionInfos should be in length 1")
+		return nil, errors.New("RPC client -> ParseConnectionInfo error: connectionInfos should be in length 1")
 	default:
 		connectionInfo := connectionInfos[0]
 		connectionInfo.IDNumber = server.DefaultConnectionInfo.IDNumber
 		if connectionInfo.CoderType == "" {
 			connectionInfo.CoderType = server.DefaultConnectionInfo.CoderType
 		}
-		//log.Printf("RPC client -> parseConnectionInfo: parsed connectionInfo -> %+v", connectionInfo)
+		//log.Printf("RPC client -> ParseConnectionInfo: parsed connectionInfo -> %+v", connectionInfo)
 		return connectionInfo, nil
 	}
 }
