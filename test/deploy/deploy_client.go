@@ -3,26 +3,25 @@ package main
 import (
 	"Distributed-RPC-Framework/client"
 	"Distributed-RPC-Framework/loadBalancer"
+	"Distributed-RPC-Framework/registry"
 	"context"
 	"fmt"
 	"log"
 	"os"
 )
 
-func createClient() {
+func createClient(registryURL string) {
 	var testCase ArithmeticCase
-	//registryURL =  http://localhost:8001/_srpc_/registry
-	registryURL := "http://localhost:8001/_srpc_/registry"
+
 	registryLoadBalancer := loadBalancer.CreateLoadBalancerRegistrySide(registryURL, 0)
 	loadBalancedClient := client.CreateLoadBalancedClient(registryLoadBalancer, loadBalancer.RoundRobinSelectMode, nil)
 	defer func() { _ = loadBalancedClient.Close() }()
 	log.Printf("Before Call -> clientLoadBalancer: %+v", registryLoadBalancer)
 	log.Printf("Before Call -> loadBalancedClient: %+v", loadBalancedClient)
 
-	log.Println("sRPC Call usage: Service.Method NumberA NumberB")
-	log.Println("sRPC Call example: Arithmetic.Addition 1 1")
+	//log.Println("sRPC Call example: Arithmetic.Addition 1 1")
 	for {
-		log.Println("sRPC Call: ")
+		log.Println("Enter sRPC Call info: [Service.Method] [NumberA] [NumberB]")
 		var serviceDotMethod, arithmeticSymbol string
 		var numberA, numberB int
 		n, err := fmt.Scanln(&serviceDotMethod, &numberA, &numberB)
@@ -30,7 +29,7 @@ func createClient() {
 			os.Exit(0)
 		}
 		if n != 3 {
-			log.Println("sRPC Call failed: expected 3 arguments: Service.Method NumberA NumberB")
+			log.Println("Initialize sRPC Call error: expected 3 arguments: [Service.Method] [NumberA] [NumberB]")
 		}
 		if err != nil {
 			log.Fatal(err)
@@ -65,7 +64,7 @@ func createClient() {
 			arithmeticSymbol = "/"
 			break
 		default:
-			log.Printf("sRPC Call failed: Service.Method %s does not exist, plesae retry...", serviceDotMethod)
+			log.Printf("Initialize sRPC Call error sRPC Call failed: [Service.Method] %s does not exist, plesae retry...", serviceDotMethod)
 			continue
 
 		}
@@ -90,5 +89,19 @@ func createClient() {
 func main() {
 	//set up logger
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
-	createClient()
+
+	log.Println("Enter RPC Client Info: [Registry_Subnet_IP_Address:Port]")
+	var registryAddressPort, registryURL string
+	n, err := fmt.Scanln(&registryAddressPort)
+	if n != 1 {
+		log.Println("Initialize RPC Client Info error: expected 1 argument1: [Registry_Subnet_IP_Address:Port]")
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	registryURL = "http://" + registryAddressPort + registry.DefaultPath
+
+	createClient(registryURL)
+
 }
