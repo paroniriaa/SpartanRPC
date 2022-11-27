@@ -1,4 +1,4 @@
-# SpartanRPC - Distributed RPC Framework
+# SpartanRPC - Lightweight Distributed Remote Procedure Call Framework
 
 ## Project Introduction
 
@@ -9,9 +9,15 @@ It is developed based on [Golang](https://github.com/golang/go) 's standard libr
 * Server-side server initialization and hosting, service and method registration, RPC request receiving and processing, and RPC response sending
 * Client-side client initialization and connecting, RPC call procedure asynchrony and concurrency, RPC request sending and RPC response receiving
 
-More importantly, encapsulating from the existing functionalities, advanced features were designed and implemented to better support different needs of an edge device in edge computing or distributed computing environment that uses RPC:
+Encapsulating from the existing functionalities, advanced features were designed and implemented to better support different needs of an edge device in edge computing or distributed computing environment that uses RPC:
 * RPC timeout handling mechanism to ensure the call is regulated by customized timeout value for connection time and processing time  
 * HTTP protocol exchange for supporting HTTP-based web service utilization
 * Load balancing utility through random selection and Round Robin scheduling algorithm to dynamically regular the overall loads of each server
 * RPC registry that supports service registration, service discovery, and heartbeat monitoring to support distributed system computing environment
+
+We also developed full sets of unit testing with high code coverage to eliminate functional defects and maintain code health, and completed sets of benchmark testing with high test coverage to control code quality and justify the framework performance:
+* test/unit -> unit testing directory for all modules
+* test/benchmark -> benchmark testing directory for all modules
+* test/deploy -> deployment testing directory for RPC system simulation
+
 

@@ -155,10 +155,10 @@ func BenchmarkServer(b *testing.B) {
 	//serveCoder() -> read_request() -> read_header() -> search_service() -> request_handle() -> send_response()
 	b.Run("ServeConnection.HTTP", func(b *testing.B) {
 		testConnectionHTTP, _ = net.Dial("tcp", testServerC.Listener.Addr().String())
-		_, _ = io.WriteString(testConnectionHTTP, fmt.Sprintf("CONNECT %s HTTP/1.0\n\n", server.DefaultRPCPath))
+		_, _ = io.WriteString(testConnectionHTTP, fmt.Sprintf("CONNECT %s HTTP/1.0\n\n", server.DefaultServerPath))
 		// Require successful HTTP response before switching to RPC protocol.
 		response, err := http.ReadResponse(bufio.NewReader(testConnectionHTTP), &http.Request{Method: "CONNECT"})
-		if err != nil || response.Status != server.ConnectedMessage {
+		if err != nil || response.Status != server.ConnectedToServerMessage {
 			b.Error(response.Status, err)
 		}
 		_ = json.NewEncoder(testConnectionHTTP).Encode(server.DefaultConnectionInfo)
@@ -178,7 +178,7 @@ func BenchmarkServer(b *testing.B) {
 		testConnectionHTTP, _ = net.Dial("tcp", testServerC.Listener.Addr().String())
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = io.WriteString(testConnectionHTTP, fmt.Sprintf("CONNECT %s HTTP/1.0\n\n", server.DefaultRPCPath))
+			_, _ = io.WriteString(testConnectionHTTP, fmt.Sprintf("CONNECT %s HTTP/1.0\n\n", server.DefaultServerPath))
 		}
 	})
 

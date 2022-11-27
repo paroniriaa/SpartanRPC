@@ -371,18 +371,21 @@ func main() {
 	serverChannelC := make(chan *server.Server)
 	serverChannelD := make(chan *server.Server)
 	waitGroup.Add(2)
+	//go createServerHTTP(":0", serviceList, serverChannelC, &waitGroup)
 	go createServer(":0", serviceList, serverChannelC, &waitGroup)
 	serverC := <-serverChannelC
 	serverC.Heartbeat(testRegistry.RegistryURL, 0)
 	log.Printf("main -> main: Server C address fetched from serverChannelC: %s", serverC.ServerAddress)
+	//go createServerHTTP(":0", serviceList, serverChannelD, &waitGroup)
 	go createServer(":0", serviceList, serverChannelD, &waitGroup)
 	serverD := <-serverChannelD
 	serverD.Heartbeat(testRegistry.RegistryURL, 0)
 	log.Printf("main -> main: Server D address fetched from serverChannelD: %s", serverD.ServerAddress)
 	waitGroup.Wait()
-	//createLoadBalancedClientAndCallOnRegistry(testRegistry.RegistryURL)
+	createLoadBalancedClientAndCallOnRegistry(testRegistry.RegistryURL)
 	createLoadBalancedClientAndBroadcastCallOnRegistry(testRegistry.RegistryURL)
 
+	//create infinite loop to stop main process from terminating to monitor all other go routines
 	for {
 
 	}
