@@ -74,7 +74,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	registryURL = "http://" + registryAddressPort + registry.DefaultPath
+	registryURL = "http://" + registryAddressPort + registry.DefaultRegistryPath
 	if serverType == "HTTP" || serverType == "http" {
 		createServerHTTP(machineAddressPort, serviceList, registryURL)
 	} else {
