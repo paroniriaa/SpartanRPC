@@ -42,7 +42,7 @@ func TestRegistry(t *testing.T) {
 			t.Errorf("CreateRegistry error: registryA.RpcServerAddressToServerInfoMap expected be in type of %s, but got %s", reflect.TypeOf(registry.Registry{}), reflect.TypeOf(testRegistry))
 		}
 		if testRegistry.RegistryURL != testRegistryAddress {
-			t.Errorf("CreateRegistry error: registryA.RegistryURL expected be %s, but got %s", registry.DefaultURL, testRegistry.RegistryURL)
+			t.Errorf("CreateRegistry error: registryA.RegistryURL expected be %s, but got %s", testRegistryAddress, testRegistry.RegistryURL)
 		}
 		if testRegistry.Timeout != registry.DefaultTimeout {
 			t.Errorf("CreateRegistry error: registryA.Timeout expected be %s, but got %s", registry.DefaultTimeout, testRegistry.Timeout)
