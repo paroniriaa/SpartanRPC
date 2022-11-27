@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-const debugText = `<html>
+const serverInfoText = `<html>
 	<body>
 	<title>Spartan RPC Services</title>
 	{{range .}}
@@ -28,31 +28,31 @@ const debugText = `<html>
 	</html>
 `
 
-var debug = template.Must(template.New("Spartan RPC - debug").Parse(debugText))
+var serverInfo = template.Must(template.New("Spartan RPC - Server Info").Parse(serverInfoText))
 
-type HTTPDebug struct {
+type ServerInfoHTTP struct {
 	*Server
 }
 
-type serviceDebug struct {
+type serviceInfo struct {
 	Name   string
 	Method map[string]*service.Method
 }
 
-// ServeHTTP is the server HTTP endpoint that runs at /debug/srpc
-func (server HTTPDebug) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
+// ServeHTTP is the server HTTP endpoint that runs at DefaultServerInfoPath
+func (server ServerInfoHTTP) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
 	// Build a sorted version of the data.
-	var services []serviceDebug
+	var services []serviceInfo
 	server.ServiceMap.Range(func(nameInterface, serviceInterface interface{}) bool {
 		currentService := serviceInterface.(*service.Service)
-		services = append(services, serviceDebug{
+		services = append(services, serviceInfo{
 			Name:   nameInterface.(string),
 			Method: currentService.ServiceMethod,
 		})
 		return true
 	})
-	err := debug.Execute(responseWriter, services)
+	err := serverInfo.Execute(responseWriter, services)
 	if err != nil {
-		_, _ = fmt.Fprintln(responseWriter, "RPC server debug -> ServeHTTP: error when executing template:", err.Error())
+		_, _ = fmt.Fprintln(responseWriter, "RPC server info -> ServeHTTP: error when executing template:", err.Error())
 	}
 }
