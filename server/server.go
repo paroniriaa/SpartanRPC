@@ -24,6 +24,7 @@ const MagicNumber = 0x3bef5c
 type Server struct {
 	Listener      net.Listener
 	ServerAddress string
+	ServerURL     string
 	ServiceMap    sync.Map
 }
 
@@ -58,6 +59,7 @@ func CreateServer(listener net.Listener) (*Server, error) {
 	log.Printf("RPC server -> CreateServer: Created RPC server on address %s", serverAddress)
 	return &Server{
 		ServerAddress: serverAddress,
+		ServerURL:     "",
 		Listener:      listener,
 	}, nil
 }
@@ -66,11 +68,20 @@ func CreateServerHTTP(listener net.Listener) (*Server, error) {
 	if listener == nil {
 		return nil, errors.New("RPC server > CreateServer error: Network listener should not be nil, but received nil")
 	}
-	//http@serverAddress will hide the transportation protocol info, use listener.Addr().Network() to fetch when needed
+	var serverURL string
+	if listener.Addr().String()[:4] == "[::]" {
+		//listener.Addr().String() -> "[::]:1234" -> port extraction needed
+		serverURL = "http://localhost" + listener.Addr().String()[4:] + DefaultServerPath
+	} else {
+		//listener.Addr().String() -> "127.0.0.1:1234", port extraction not needed
+		serverURL = "http://" + listener.Addr().String() + DefaultServerPath
+	}
+	//http@serverAddress will hide the transportation protocol info, use listener.Addr().Network() to fetch the transportation protocol info when needed
 	serverAddress := "http" + "@" + listener.Addr().String()
 	log.Printf("RPC server -> CreateServer: Created RPC server on address %s", serverAddress)
 	return &Server{
 		ServerAddress: serverAddress,
+		ServerURL:     serverURL,
 		Listener:      listener,
 	}, nil
 }
@@ -287,9 +298,9 @@ func (server *Server) request_handle(message coder.Coder, request *Request, send
 }
 
 const (
-	ConnectedMessage = "200 Connected to Spartan RPC"
-	DefaultRPCPath   = "/_srpc_"
-	DefaultDebugPath = "/debug/srpc"
+	ConnectedToServerMessage = "200 Connected to Spartan RPC"
+	DefaultServerPath        = "/_srpc_/server"
+	DefaultServerInfoPath    = "/_srpc_/server/info"
 )
 
 func (server *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
@@ -304,17 +315,17 @@ func (server *Server) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 		log.Print("RPC server -> ServeHTTP hijacking ", request.RemoteAddr, ": ", err.Error())
 		return
 	}
-	_, _ = io.WriteString(connection, "HTTP/1.0 "+ConnectedMessage+"\n\n")
+	_, _ = io.WriteString(connection, "HTTP/1.0 "+ConnectedToServerMessage+"\n\n")
 	server.ServeConnection(connection)
 }
 
 // LaunchAndServe is a convenient approach for server to register an individual HTTP handlers and have it serve the specified path(s)
 func (server *Server) LaunchAndServe() {
-	log.Println("RPC server -> LaunchAndServe: RPC server initializing an HTTP multiplexer (handler) for debug...")
+	log.Println("RPC server -> LaunchAndServe: RPC server initializing an HTTP multiplexer (handler) for serverInfo...")
 	serverMultiplexer := http.NewServeMux()
-	serverMultiplexer.HandleFunc(DefaultRPCPath, server.ServeHTTP)
-	serverMultiplexer.HandleFunc(DefaultDebugPath, HTTPDebug{server}.ServeHTTP)
-	log.Printf("RPC server -> LaunchAndServe: RPC server finished initializing the HTTP multiplexer (handler) for debug, and it is serving on URL path: %s", "http://"+server.Listener.Addr().String()+DefaultDebugPath)
+	serverMultiplexer.HandleFunc(DefaultServerPath, server.ServeHTTP)
+	serverMultiplexer.HandleFunc(DefaultServerInfoPath, ServerInfoHTTP{server}.ServeHTTP)
+	log.Printf("RPC server -> LaunchAndServe: RPC server finished initializing the HTTP multiplexer (handler) for serverInfo, and it is serving on URL path: %s", server.ServerURL)
 	_ = http.Serve(server.Listener, serverMultiplexer)
 }
 
