@@ -178,11 +178,11 @@ func MakeDialHTTP(transportProtocol, serverAddress string, connectionInfos ...*s
 // CreateClientHTTP create a Client instance via HTTP application protocol
 func CreateClientHTTP(connection net.Conn, connectionInfo *server.ConnectionInfo) (*Client, error) {
 	//log.Printf("RPC client -> CreateClientHTTP: creating an HTTP RPC client...")
-	_, _ = io.WriteString(connection, fmt.Sprintf("CONNECT %s HTTP/1.0\n\n", server.DefaultRPCPath))
+	_, _ = io.WriteString(connection, fmt.Sprintf("CONNECT %s HTTP/1.0\n\n", server.DefaultServerPath))
 
 	// Require successful HTTP response before switching to RPC protocol.
 	response, err := http.ReadResponse(bufio.NewReader(connection), &http.Request{Method: "CONNECT"})
-	if err == nil && response.Status == server.ConnectedMessage {
+	if err == nil && response.Status == server.ConnectedToServerMessage {
 		return CreateClient(connection, connectionInfo)
 	}
 	if err == nil {
