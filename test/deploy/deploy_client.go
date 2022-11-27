@@ -88,7 +88,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	registryURL = "http://" + registryAddressPort + registry.DefaultPath
+	registryURL = "http://" + registryAddressPort + registry.DefaultRegistryPath
 	createClient(registryURL)
 
 }
