@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="client">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="client" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -80,7 +78,7 @@
   </component>
   <component name="RunManager" selected="Go Build.go build main.go">
     <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
       <package value="Distributed-RPC-Framework" />
@@ -89,7 +87,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go build main.go" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
@@ -98,7 +96,7 @@
       <method v="2" />
     </configuration>
     <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/benchmark" />
       <parameters value="-test.benchmem" />
       <kind value="FILE" />
@@ -109,7 +107,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go bench test all" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/benchmark" />
       <parameters value="-test.benchmem -test.benchtime=0.50s" />
       <kind value="DIRECTORY" />
@@ -120,7 +118,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go bench test client" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/benchmark" />
       <parameters value="-test.benchmem" />
       <kind value="FILE" />
@@ -131,7 +129,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go bench test coder" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/benchmark" />
       <parameters value="-test.benchmem" />
       <kind value="FILE" />
@@ -142,7 +140,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go bench test json_coder" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/benchmark" />
       <parameters value="-test.benchmem -test.benchtime=0.20s" />
       <kind value="FILE" />
@@ -153,7 +151,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go bench test load balancer" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/benchmark" />
       <parameters value="-test.benchmem" />
       <kind value="FILE" />
@@ -164,7 +162,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go bench test registry" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/benchmark" />
       <parameters value="-test.benchmem" />
       <kind value="FILE" />
@@ -175,7 +173,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go bench test server" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/benchmark" />
       <parameters value="-test.benchmem" />
       <kind value="FILE" />
@@ -186,7 +184,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go bench test service" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/benchmark" />
       <parameters value="-test.benchmem" />
       <kind value="FILE" />
@@ -197,7 +195,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go unit test all" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/unit" />
       <kind value="DIRECTORY" />
       <package value="Distributed-RPC-Framework" />
@@ -207,7 +205,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go unit test client" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/unit" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework/client" />
@@ -217,7 +215,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go unit test coder" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/unit" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
@@ -227,7 +225,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go unit test json_coder" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/unit" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
@@ -237,7 +235,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go unit test load_balancer" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
@@ -247,7 +245,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go unit test registry" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/unit" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
@@ -257,7 +255,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go unit test server" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/unit" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
@@ -267,7 +265,7 @@
       <method v="2" />
     </configuration>
     <configuration name="go unit test service" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="Distributed-RPC-Framework" />
+      <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/unit" />
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
@@ -333,7 +331,7 @@
       <workItem from="1669422411410" duration="6013000" />
       <workItem from="1669439518481" duration="1156000" />
       <workItem from="1669441221463" duration="11046000" />
-      <workItem from="1669460932144" duration="567000" />
+      <workItem from="1669460932144" duration="630000" />
     </task>
     <servers />
   </component>
