@@ -31,9 +31,7 @@ type ServerInfo struct {
 // indicating that any server has lastUpdateTime + DefaultTimeout <= now
 // will be treated as unavailable server and will be removed
 const (
-	DefaultPath = "/_srpc_/registry"
-	DefaultURL  = "http://localhost:9999/_srpc_/registry"
-	DefaultPort = ":9999"
+	DefaultRegistryPath = "/_srpc_/registry"
 	//DefaultTimeout should not be less than 1 minute for performance purpose
 	DefaultTimeout = time.Minute * 2
 )
@@ -45,13 +43,12 @@ func CreateRegistry(listener net.Listener, timeout time.Duration) (*Registry, er
 		return nil, errors.New("RPC server > CreateServer error: Network listener should not be nil, but received nil")
 	}
 	var registryURL string
-	log.Printf("listener.Addr().String()[:3] = %s", listener.Addr().String()[:3])
 	if listener.Addr().String()[:4] == "[::]" {
-		//the port parameter passed-in is in the form of "[::]:1234", so we need to extract port
-		registryURL = "http://localhost" + listener.Addr().String()[4:] + DefaultPath
+		//listener.Addr().String() -> "[::]:1234" -> port extraction needed
+		registryURL = "http://localhost" + listener.Addr().String()[4:] + DefaultRegistryPath
 	} else {
-		//the port parameter passed-in is in the form of "127.0.0.1:1234", so we do not need to extract port
-		registryURL = "http://" + listener.Addr().String() + DefaultPath
+		//listener.Addr().String() -> "127.0.0.1:1234", port extraction not needed
+		registryURL = "http://" + listener.Addr().String() + DefaultRegistryPath
 	}
 	log.Printf("RPC registry -> CreateRegistry: created RPC registry on HTTP end-point %s...", registryURL)
 	return &Registry{
@@ -123,7 +120,7 @@ func (registry *Registry) ServeHTTP(responseWriter http.ResponseWriter, request 
 func (registry *Registry) LaunchAndServe() {
 	log.Println("RPC registry -> LaunchAndServe: RPC registry initializing an HTTP multiplexer (handler) for message receiving/sending...")
 	serverMultiplexer := http.NewServeMux()
-	serverMultiplexer.HandleFunc(DefaultPath, registry.ServeHTTP)
+	serverMultiplexer.HandleFunc(DefaultRegistryPath, registry.ServeHTTP)
 	log.Println("RPC registry -> LaunchAndServe: RPC registry finished initializing the HTTP multiplexer (handler), and it is serving on URL path: ", registry.RegistryURL, "")
 	_ = http.Serve(registry.Listener, serverMultiplexer)
 }
