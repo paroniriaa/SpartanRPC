@@ -36,20 +36,16 @@ func createClient(registryURL string) {
 		}
 		switch serviceDotMethod {
 		case "A.A":
-			serviceDotMethod = "Arithmetic.Addition"
-			arithmeticSymbol = "+"
+			serviceDotMethod, arithmeticSymbol = "Arithmetic.Addition", "+"
 			break
 		case "A.S":
-			serviceDotMethod = "Arithmetic.Subtraction"
-			arithmeticSymbol = "-"
+			serviceDotMethod, arithmeticSymbol = "Arithmetic.Subtraction", "-"
 			break
 		case "A.M":
-			serviceDotMethod = "Arithmetic.Multiplication"
-			arithmeticSymbol = "*"
+			serviceDotMethod, arithmeticSymbol = "Arithmetic.Multiplication", "*"
 			break
 		case "A.D":
-			serviceDotMethod = "Arithmetic.Division"
-			arithmeticSymbol = "/"
+			serviceDotMethod, arithmeticSymbol = "Arithmetic.Division", "/"
 			break
 		default:
 			log.Printf("Initialize sRPC call error: [Service.Method] %s does not exist, plesae retry...", serviceDotMethod)
