@@ -17,7 +17,6 @@ type LoadBalancerRegistrySide struct {
 const defaultUpdateTimeout = time.Second * 10
 
 func CreateLoadBalancerRegistrySide(registerURL string, timeout time.Duration) *LoadBalancerRegistrySide {
-	log.Println("RPC Load Balancer(Registry Side) -> CreateLoadBalancerRegistrySide: creating RPC load balancer(registryURL side)...")
 	if timeout == 0 {
 		timeout = defaultUpdateTimeout
 	}
@@ -26,26 +25,26 @@ func CreateLoadBalancerRegistrySide(registerURL string, timeout time.Duration) *
 		registryURL:            registerURL,
 		timeout:                timeout,
 	}
+	log.Printf("RPC Load Balancer(Registry Side) -> CreateLoadBalancerRegistrySide: created RPC load balancer(registry side) %p with field -> %+v...", loadBalancerRegistrySide, loadBalancerRegistrySide)
 	return loadBalancerRegistrySide
 }
 
 func (loadBalancerRegistrySide *LoadBalancerRegistrySide) UpdateServerList(servers []string) error {
-	//log.Println("RPC Load Balancer(Registry Side) -> UpdateServerList: RPC load balancer(registryURL side) manually update its maintained RPC server instance list...")
 	loadBalancerRegistrySide.readWriteMutex.Lock()
 	defer loadBalancerRegistrySide.readWriteMutex.Unlock()
+	log.Printf("RPC Load Balancer(Registry Side) -> UpdateServerList: RPC load balancer(registry side) %p manually update its maintained RPC server instance list...", loadBalancerRegistrySide)
 	loadBalancerRegistrySide.serverList = servers
 	loadBalancerRegistrySide.lastUpdate = time.Now()
 	return nil
 }
 
 func (loadBalancerRegistrySide *LoadBalancerRegistrySide) RefreshServerList() error {
-	//log.Println("RPC Load Balancer(Registry Side) -> RefreshServerList: RPC load balancer(registryURL side) automatically update its maintained RPC server instance list...")
 	loadBalancerRegistrySide.readWriteMutex.Lock()
 	defer loadBalancerRegistrySide.readWriteMutex.Unlock()
 	if loadBalancerRegistrySide.lastUpdate.Add(loadBalancerRegistrySide.timeout).After(time.Now()) {
 		return nil
 	}
-	//log.Println("RPC Load Balancer(Registry Side) -> RefreshServerList: refreshing servers from RPC registryURL...", loadBalancerRegistrySide.registryURL)
+	log.Printf("RPC Load Balancer(Registry Side) -> RefreshServerList: RPC load balancer(registryURL side) %p automatically update its maintained RPC server instance list form RPC registry %s...", loadBalancerRegistrySide, loadBalancerRegistrySide.registryURL)
 	resp, err := http.Get(loadBalancerRegistrySide.registryURL)
 	if err != nil {
 		log.Println("RPC Load Balancer(Registry Side) -> RefreshServerList error: refresh err: ", err)
@@ -63,7 +62,7 @@ func (loadBalancerRegistrySide *LoadBalancerRegistrySide) RefreshServerList() er
 }
 
 func (loadBalancerRegistrySide *LoadBalancerRegistrySide) GetServer(loadBalancingMode LoadBalancingMode) (string, error) {
-	//log.Println("RPC Load Balancer(Registry Side) -> GetServer: RPC load balancer(registryURL side) choose and return a RPC server instance based on load balancing mode...")
+	log.Printf("RPC Load Balancer(Registry Side) -> GetServer: RPC load balancer(registry side) %p choose and return an RPC server instance based on load balancing mode...", loadBalancerRegistrySide)
 	if err := loadBalancerRegistrySide.RefreshServerList(); err != nil {
 		return "", err
 	}
@@ -71,7 +70,7 @@ func (loadBalancerRegistrySide *LoadBalancerRegistrySide) GetServer(loadBalancin
 }
 
 func (loadBalancerRegistrySide *LoadBalancerRegistrySide) GetServerList() ([]string, error) {
-	//log.Println("RPC Load Balancer(Registry Side) -> GetServerList: RPC load balancer(registryURL side) return all RPC severs instance in its maintained RPC server instance list...")
+	log.Printf("RPC Load Balancer(Registry Side) -> GetServerList: RPC load balancer(registry side) %p return all RPC severs instance in its maintained RPC server instance list...", loadBalancerRegistrySide)
 	if err := loadBalancerRegistrySide.RefreshServerList(); err != nil {
 		return nil, err
 	}

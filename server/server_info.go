@@ -32,6 +32,8 @@ var serverInfo = template.Must(template.New("Spartan RPC - Server Info").Parse(s
 
 type ServerInfoHTTP struct {
 	*Server
+	ServerConnectURL string
+	ServerInfoURL    string
 }
 
 type serviceInfo struct {

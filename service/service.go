@@ -35,6 +35,7 @@ func (method *Method) CreateInput() reflect.Value {
 	default:
 		input = reflect.New(method.InputType).Elem()
 	}
+	log.Printf("RPC service -> CreateInput: RPC method %s created input %+v", method.MethodName, input)
 	return input
 }
 
@@ -48,6 +49,7 @@ func (method *Method) CreateOutput() reflect.Value {
 	} else {
 		// Do nothing
 	}
+	log.Printf("RPC service -> CreateInput: RPC method %s created output %+v", method.MethodName, output)
 	return output
 }
 
@@ -59,6 +61,7 @@ func CreateService(serviceValue interface{}) *Service {
 		log.Fatalf("RPC service -> CreateServicev error: newService.ServiceName %s is invalid ", newService.ServiceName)
 	}
 	newService.serviceType = reflect.TypeOf(serviceValue)
+	log.Printf("RPC service -> CreateService: created new RPC service %s, initializing process createMethod()...", newService.ServiceName)
 	newService.createMethod()
 	return newService
 }
@@ -94,7 +97,7 @@ func (service *Service) createMethod() {
 				InputType:  inputType,
 				OutputType: outputType,
 			}
-			log.Printf("RPC service -> createMethod: RPC service %s.%s created and registered\n", service.ServiceName, method.Name)
+			log.Printf("RPC service -> createMethod: RPC service %s.%s created and registered", service.ServiceName, method.Name)
 		}
 	}
 }
@@ -107,7 +110,8 @@ func (service *Service) Call(method *Method, input reflect.Value, output reflect
 	if errors != nil {
 		return errors.(error)
 	} else {
-		log.Printf("RPC service -> Call: RPC service %s.%s finished RPC call with input %v and output %v", service.ServiceName, method.MethodName, input, output.Elem())
+		//log.Printf("RPC service -> Call: RPC service %s.%s finished RPC call with input %v and output %v", service.ServiceName, method.MethodName, input, output.Elem())
+		log.Printf("RPC service -> Call: RPC service %s.%s finished RPC call with input %+v and output %+v", service.ServiceName, method.MethodName, input, output)
 		return nil
 	}
 }

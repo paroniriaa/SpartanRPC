@@ -19,7 +19,7 @@ func createServer(addressPort string, serviceList []any, registryURL string) {
 		log.Fatal("main -> createServer error: RPC server creation issue:", err)
 	}
 	for _, service := range serviceList {
-		err = testServer.ServerRegister(service)
+		err = testServer.ServiceRegister(service)
 		if err != nil {
 			log.Fatal("main -> createServer error: RPC server register error:", err)
 		}
@@ -42,7 +42,7 @@ func createServerHTTP(addressPort string, serviceList []any, registryURL string)
 		log.Fatal("main -> createServerHTTP error: RPC server creation issue:", err)
 	}
 	for _, service := range serviceList {
-		err = testServer.ServerRegister(service)
+		err = testServer.ServiceRegister(service)
 		if err != nil {
 			log.Fatal("main -> createServerHTTP error: RPC server register error:", err)
 		}
@@ -74,7 +74,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	registryURL = "http://" + registryAddressPort + registry.DefaultRegistryPath
+	//registryURL = "http://" + registryAddressPort + registry.DefaultRegistryPath
+	if registryAddressPort[:1] == ":" {
+		//listener.Addr().String() -> "[::]:1234" -> port extraction needed
+		registryURL = "http://localhost" + registryAddressPort + registry.DefaultRegistryPath
+	} else {
+		//listener.Addr().String() -> "127.0.0.1:1234", port extraction not needed
+		registryURL = "http://" + registryAddressPort + registry.DefaultRegistryPath
+	}
+
 	if serverType == "HTTP" || serverType == "http" {
 		createServerHTTP(machineAddressPort, serviceList, registryURL)
 	} else {

@@ -16,6 +16,7 @@ import (
 // returns all alive RPC servers in the RpcServerAddressToServerInfoMap and delete dead RPC servers simultaneously.
 type Registry struct {
 	Listener                        net.Listener
+	RegistryAddress                 string
 	RegistryURL                     string
 	Timeout                         time.Duration
 	mutex                           sync.Mutex // protect following
@@ -38,29 +39,35 @@ const (
 
 // CreateRegistry create a registry instance with Timeout setting
 func CreateRegistry(listener net.Listener, timeout time.Duration) (*Registry, error) {
-	log.Printf("RPC registry -> CreateRegistry: creating RPC registry on port %s...", listener.Addr().String())
+	//log.Printf("RPC registry -> CreateRegistry: creating RPC registry on port %s...", listener.Addr().String())
 	if listener == nil {
 		return nil, errors.New("RPC server > CreateServer error: Network listener should not be nil, but received nil")
 	}
 	var registryURL string
-	if listener.Addr().String()[:4] == "[::]" {
-		//listener.Addr().String() -> "[::]:1234" -> port extraction needed
-		registryURL = "http://localhost" + listener.Addr().String()[4:] + DefaultRegistryPath
+	registryListenerAddress := listener.Addr().String()
+	if registryListenerAddress[:4] == "[::]" {
+		//registryListenerAddress -> "[::]:1234" -> port extraction needed
+		registryURL = "http://localhost" + registryListenerAddress[4:] + DefaultRegistryPath
 	} else {
-		//listener.Addr().String() -> "127.0.0.1:1234", port extraction not needed
-		registryURL = "http://" + listener.Addr().String() + DefaultRegistryPath
+		//registryListenerAddress -> "127.0.0.1:1234", port extraction not needed
+		registryURL = "http://" + registryListenerAddress + DefaultRegistryPath
 	}
-	log.Printf("RPC registry -> CreateRegistry: created RPC registry on HTTP end-point %s...", registryURL)
-	return &Registry{
+	//http@registryAddress will hide the transportation protocol info, use listener.Addr().Network() to fetch the transportation protocol info when needed
+	registryAddress := "http" + "@" + listener.Addr().String()
+	//log.Printf("RPC registry -> CreateRegistry: created RPC registry on HTTP end-point %s...", registryURL)
+	registry := &Registry{
 		Listener:                        listener,
+		RegistryAddress:                 registryAddress,
 		RegistryURL:                     registryURL,
 		RpcServerAddressToServerInfoMap: make(map[string]*ServerInfo),
 		Timeout:                         timeout,
-	}, nil
+	}
+	log.Printf("RPC registry -> CreateRegistry: created RPC registry %s with field -> %+v", registry.RegistryAddress, registry)
+	return registry, nil
 }
 
 func (registry *Registry) registerServer(serverAddress string) {
-	log.Printf("RPC registry -> registerServer: RPC registry updatiing server instance %s...", serverAddress)
+	//log.Printf("RPC registry -> registerServer: RPC registry %p updating server instance %s...", registry, serverAddress)
 	registry.mutex.Lock()
 	defer registry.mutex.Unlock()
 	serverInfo := registry.RpcServerAddressToServerInfoMap[serverAddress]
@@ -70,11 +77,10 @@ func (registry *Registry) registerServer(serverAddress string) {
 		// if the server already exists, update its lastUpdateTime time as now to keep it alive
 		serverInfo.lastUpdateTime = time.Now()
 	}
-	log.Printf("RPC registry -> registerServer: RPC registry finished server instance update, and the current alive server map is: %+v", registry.RpcServerAddressToServerInfoMap)
+	log.Printf("RPC registry -> registerServer: RPC registry %s finished RPC server instance update with address %s, and the current alive server map is: %+v", registry.RegistryAddress, serverAddress, registry.RpcServerAddressToServerInfoMap)
 }
 
 func (registry *Registry) getAliveServerList() []string {
-	log.Println("RPC registry -> getAliveServerList: RPC registry return list of aliveServerList server instance (and delete any expire server instances)...")
 	registry.mutex.Lock()
 	defer registry.mutex.Unlock()
 	var aliveServerList []string
@@ -89,6 +95,7 @@ func (registry *Registry) getAliveServerList() []string {
 		}
 	}
 	sort.Strings(aliveServerList)
+	log.Printf("RPC registry -> getAliveServerList: RPC registry %s return list of aliveServerList server instance (and deleted any expire server instances)...", registry.RegistryAddress)
 	return aliveServerList
 }
 
@@ -97,7 +104,7 @@ func (registry *Registry) ServeHTTP(responseWriter http.ResponseWriter, request 
 	switch request.Method {
 	//GET returns all the alive servers instance currently available in the registry, used "GET-SpartanRPC-AliveServers" as customized HTTP header field
 	case "GET":
-		log.Printf("RPC registry -> ServeHTTP: RPC registry serving HTTP GET request from RPC client...")
+		log.Printf("RPC registry -> ServeHTTP: RPC registry %s serving HTTP GET request from RPC client...", registry.RegistryAddress)
 		// keep it simple, server is in request.Header
 		responseWriter.Header().Set("GET-SpartanRPC-AliveServers", strings.Join(registry.getAliveServerList(), ","))
 
@@ -105,7 +112,7 @@ func (registry *Registry) ServeHTTP(responseWriter http.ResponseWriter, request 
 	case "POST":
 		// keep it simple, server is in request.Header
 		serverAddress := request.Header.Get("POST-SpartanRPC-AliveServer")
-		log.Printf("RPC registry -> ServeHTTP: RPC registry serving HTTP POST request from RPC server %s...", serverAddress)
+		log.Printf("RPC registry -> ServeHTTP: RPC registry %s serving HTTP POST request from RPC server %s...", registry.RegistryAddress, serverAddress)
 		if serverAddress == "" {
 			responseWriter.WriteHeader(http.StatusInternalServerError)
 			return
@@ -118,10 +125,10 @@ func (registry *Registry) ServeHTTP(responseWriter http.ResponseWriter, request 
 
 // LaunchAndServe is a convenient approach for registry to register an individual HTTP handler and have it serve the specified path
 func (registry *Registry) LaunchAndServe() {
-	log.Println("RPC registry -> LaunchAndServe: RPC registry initializing an HTTP multiplexer (handler) for message receiving/sending...")
+	//log.Printf("RPC registry -> LaunchAndServe: RPC registry %s initializing an HTTP multiplexer (handler) for HTTP message receiving/sending...", registry.registryAddress)
 	serverMultiplexer := http.NewServeMux()
 	serverMultiplexer.HandleFunc(DefaultRegistryPath, registry.ServeHTTP)
-	log.Println("RPC registry -> LaunchAndServe: RPC registry finished initializing the HTTP multiplexer (handler), and it is serving on URL path: ", registry.RegistryURL, "")
+	log.Printf("RPC registry -> LaunchAndServe: RPC registry %s finished initializing the HTTP multiplexer (handler), and it is serving on URL path: %s", registry.RegistryAddress, registry.RegistryURL)
 	_ = http.Serve(registry.Listener, serverMultiplexer)
 }
 

@@ -2,6 +2,7 @@ package loadBalancer
 
 import (
 	"errors"
+	"log"
 	"math"
 	"math/rand"
 	"sync"
@@ -25,6 +26,7 @@ func CreateLoadBalancerClientSide(serverList []string) *LoadBalancerClientSide {
 		randomNumber: rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 	loadBalancerClientSide.serverIndex = loadBalancerClientSide.randomNumber.Intn(math.MaxInt32 - 1)
+	log.Printf("RPC Load Balancer(Client Side) -> CreateLoadBalancerClientSide: created RPC load balancer(Client side) %p with field -> %+v...", loadBalancerClientSide, loadBalancerClientSide)
 	return loadBalancerClientSide
 }
 
@@ -32,9 +34,10 @@ func CreateLoadBalancerClientSide(serverList []string) *LoadBalancerClientSide {
 func (loadBalancerClientSide *LoadBalancerClientSide) GetServer(loadBalancingMode LoadBalancingMode) (string, error) {
 	loadBalancerClientSide.readWriteMutex.Lock()
 	defer loadBalancerClientSide.readWriteMutex.Unlock()
+	log.Printf("RPC Load Balancer(Client Side) -> GetServer: RPC load balancer(client side) %p choose and return an RPC server instance based on load balancing mode...", loadBalancerClientSide)
 	length := len(loadBalancerClientSide.serverList)
 	if length == 0 {
-		return "", errors.New("RPC loadBalancerClientSide -> GetServer: length of the serverList is 0, no available servers")
+		return "", errors.New("RPC Load Balancer(Client Side) -> GetServer: length of the serverList is 0, no available servers")
 	}
 	switch loadBalancingMode {
 	case RandomSelectMode:
@@ -45,7 +48,7 @@ func (loadBalancerClientSide *LoadBalancerClientSide) GetServer(loadBalancingMod
 		loadBalancerClientSide.serverIndex = (loadBalancerClientSide.serverIndex + 1) % length
 		return server, nil
 	default:
-		return "", errors.New("RPC loadBalancerClientSide -> GetServer: unrecognized loadBalancingMode")
+		return "", errors.New("RPC Load Balancer(Client Side) -> GetServer: unrecognized loadBalancingMode")
 	}
 }
 
@@ -53,6 +56,7 @@ func (loadBalancerClientSide *LoadBalancerClientSide) GetServer(loadBalancingMod
 func (loadBalancerClientSide *LoadBalancerClientSide) GetServerList() ([]string, error) {
 	loadBalancerClientSide.readWriteMutex.RLock()
 	defer loadBalancerClientSide.readWriteMutex.RUnlock()
+	log.Printf("RPC Load Balancer(Client Side) -> GetServerList: RPC load balancer(cleint side) %p return all RPC severs instance in its maintained RPC server instance list...", loadBalancerClientSide)
 	// return a copy of loadBalancerClientSide.serverList
 	serverList := make([]string, len(loadBalancerClientSide.serverList), len(loadBalancerClientSide.serverList))
 	copy(serverList, loadBalancerClientSide.serverList)
@@ -68,6 +72,7 @@ func (loadBalancerClientSide *LoadBalancerClientSide) RefreshServerList() error 
 func (loadBalancerClientSide *LoadBalancerClientSide) UpdateServerList(serverList []string) error {
 	loadBalancerClientSide.readWriteMutex.Lock()
 	defer loadBalancerClientSide.readWriteMutex.Unlock()
+	log.Printf("RPC Load Balancer(Client Side) -> UpdateServerList: RPC load balancer(client side) %p manually update its maintained RPC server instance list...", loadBalancerClientSide)
 	loadBalancerClientSide.serverList = serverList
 	return nil
 }

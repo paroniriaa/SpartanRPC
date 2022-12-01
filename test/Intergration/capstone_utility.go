@@ -72,7 +72,7 @@ func createServer(port string, serviceList []any, serverChannel chan *server.Ser
 		log.Fatal("main -> createServer error: RPC server creation issue:", err)
 	}
 	for _, service := range serviceList {
-		err = testServer.ServerRegister(service)
+		err = testServer.ServiceRegister(service)
 		if err != nil {
 			log.Fatal("main -> createServer error: RPC server register error:", err)
 		}
@@ -126,7 +126,7 @@ func createServerHTTP(port string, serviceList []any, serverChannelHTTP chan *se
 		log.Fatal("main -> createServerHTTP error: RPC HTTP server creation issue: ", err)
 	}
 	for _, service := range serviceList {
-		err = testServerHTTP.ServerRegister(service)
+		err = testServerHTTP.ServiceRegister(service)
 		if err != nil {
 			log.Fatal("main -> createServerHTTP error: RPC HTTP server register error:", err)
 		}

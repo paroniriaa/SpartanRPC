@@ -2,6 +2,7 @@ package coder
 
 import (
 	"io"
+	"log"
 )
 
 /*
@@ -35,4 +36,5 @@ var CoderInitializerMap map[CoderType]CoderInitializer
 func init() {
 	CoderInitializerMap = make(map[CoderType]CoderInitializer)
 	CoderInitializerMap[Json] = NewJsonCoder
+	log.Printf("RPC coder -> init: Initialized CoderInitializerMap with field -> %+v", CoderInitializerMap)
 }
