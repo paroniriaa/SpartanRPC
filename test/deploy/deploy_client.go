@@ -24,9 +24,9 @@ func createClient(registryURL string, connectionInfo *server.ConnectionInfo) {
 	//log.Println("sRPC Call example: Arithmetic.Addition 1 1")
 	for {
 		log.Printf("Connection Configuration Info: %+v", connectionInfo)
-		log.Println("Available RPC service.method: \nA.A -> Arithmetic.Addition \nA.S -> Arithmetic.Subtraction \nA.M -> Arithmetic.Multiplication \nA.D -> Arithmetic.Division \nA.HC -> Arithmetic.HeavyComputation")
-		log.Println("Available RPC call type: \nNC -> RPC Normal CALL \nBC -> RPC Broadcast")
-		log.Println("Enter sRPC call info: [RPC_Call_Type] [Service.Method] [NumberA] [NumberB]")
+		log.Println("Available RPC Service.Method: \nA.A -> Arithmetic.Addition \nA.S -> Arithmetic.Subtraction \nA.M -> Arithmetic.Multiplication \nA.D -> Arithmetic.Division \nA.HC -> Arithmetic.HeavyComputation")
+		log.Println("Available RPC Call Type: \nNC -> RPC Normal Call \nBC -> RPC Broadcast")
+		log.Println("Enter sRPC Call Info: [RPC_Call_Type] [Service.Method] [NumberA] [NumberB]")
 		var rpcCallType, serviceDotMethod, arithmeticSymbol string
 		var numberA, numberB int
 		n, err := fmt.Scanln(&rpcCallType, &serviceDotMethod, &numberA, &numberB)
@@ -34,7 +34,7 @@ func createClient(registryURL string, connectionInfo *server.ConnectionInfo) {
 			os.Exit(0)
 		}
 		if n != 4 {
-			log.Println("Initialize sRPC call error: expected 4 arguments: [RPC_Call_Type] [Service.Method] [NumberA] [NumberB]")
+			log.Println("Initialize sRPC Call Error: expected 4 arguments: [RPC_Call_Type] [Service.Method] [NumberA] [NumberB]")
 		}
 		if err != nil {
 			log.Fatal(err)
@@ -56,7 +56,7 @@ func createClient(registryURL string, connectionInfo *server.ConnectionInfo) {
 			serviceDotMethod, arithmeticSymbol = "Arithmetic.HeavyComputation", "+"
 			break
 		default:
-			log.Printf("Initialize sRPC call error: [Service.Method] %s does not exist, plesae choose the existing RPC service.method...", serviceDotMethod)
+			log.Printf("Initialize sRPC Call Error: [Service.Method] %s does not exist, plesae choose the existing RPC service.method...", serviceDotMethod)
 			continue
 
 		}
@@ -70,22 +70,22 @@ func createClient(registryURL string, connectionInfo *server.ConnectionInfo) {
 
 		switch rpcCallType {
 		case "NC":
-			rpcCallType = "call"
+			rpcCallType = "Call"
 			err = loadBalancedClient.Call(context.Background(), testCase.ServiceDotMethod, testCase.Input, testCase.Output)
 			break
 		case "BC":
-			rpcCallType = "broadcast"
+			rpcCallType = "Broadcast"
 			err = loadBalancedClient.BroadcastCall(context.Background(), testCase.ServiceDotMethod, testCase.Input, testCase.Output)
 			break
 		default:
-			log.Printf("Initialize sRPC call error: [RPC_Call_Type] %s does not exist, plesae choose the existing RPC call type...", rpcCallType)
+			log.Printf("Initialize sRPC Call Error: [RPC_Call_Type] %s does not exist, plesae choose the existing RPC call type...", rpcCallType)
 			continue
 		}
 		//err = loadBalancedClient.Call(context.Background(), testCase.ServiceDotMethod, testCase.Input, testCase.Output)
 		if err != nil {
-			log.Printf("sRPC %s %s error: %s", rpcCallType, testCase.ServiceDotMethod, err)
+			log.Printf("sRPC %s %s Error: %s", rpcCallType, testCase.ServiceDotMethod, err)
 		} else {
-			log.Printf("sRPC %s %s success -> %d %s %d = %d", rpcCallType, testCase.ServiceDotMethod, testCase.Input.A, arithmeticSymbol, testCase.Input.B, testCase.Output.C)
+			log.Printf("sRPC %s %s Success -> %d %s %d = %d", rpcCallType, testCase.ServiceDotMethod, testCase.Input.A, arithmeticSymbol, testCase.Input.B, testCase.Output.C)
 		}
 	}
 }
@@ -99,7 +99,7 @@ func main() {
 	var connectionTimeout, processingTimeout int
 	n, err := fmt.Scanln(&registryAddressPort, &connectionTimeout, &processingTimeout)
 	if n != 3 {
-		log.Println("Initialize RPC Client Info error: expected 3 argument1: [Registry_Subnet_IP_Address:Port] [Connection_Timeout] [Processing_Timeout]")
+		log.Println("Initialize RPC Client Info Error: expected 3 arguments: [Registry_Subnet_IP_Address:Port] [Connection_Timeout] [Processing_Timeout]")
 	}
 	if err != nil {
 		log.Fatal(err)

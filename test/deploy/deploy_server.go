@@ -68,7 +68,7 @@ func main() {
 	var serverType, machineAddressPort, registryAddressPort, registryURL string
 	n, err := fmt.Scanln(&serverType, &machineAddressPort, &registryAddressPort)
 	if n != 3 {
-		log.Println("Initialize RPC Server Info error: expected 3 arguments: [Server_Type] [Machine_Subnet_IP_Address:Port] [Registry_Subnet_IP_Address:Port]")
+		log.Println("Initialize RPC Server Info Error: expected 3 arguments: [Server_Type] [Machine_Subnet_IP_Address:Port] [Registry_Subnet_IP_Address:Port]")
 	}
 	if err != nil {
 		log.Fatal(err)
