@@ -105,24 +105,24 @@ func BenchmarkServer(b *testing.B) {
 		}
 	})
 
-	b.Run("ServerRegister", func(b *testing.B) {
+	b.Run("ServiceRegister", func(b *testing.B) {
 		//testListener, _ = net.Listen("tcp", ":0")
 		//testServer, _ = server.CreateServer(testListener)
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			for _, service := range serviceList {
-				_ = testServer.ServerRegister(service)
+				_ = testServer.ServiceRegister(service)
 			}
 		}
 	})
 
-	b.Run("ServerRegister.HTTP", func(b *testing.B) {
+	b.Run("ServiceRegister.HTTP", func(b *testing.B) {
 		//testListenerHTTP, _ = net.Listen("tcp", ":0")
 		//testServerHTTP, _ = server.CreateServerHTTP(testListenerHTTP)
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			for _, service := range serviceList {
-				_ = testServerHTTP.ServerRegister(service)
+				_ = testServerHTTP.ServiceRegister(service)
 			}
 		}
 	})
