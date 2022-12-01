@@ -31,7 +31,7 @@ func main() {
 	var registryAddressPort string
 	n, err := fmt.Scanln(&registryAddressPort)
 	if n != 1 {
-		log.Println("Initialize RPC Registry Info error: expected 1 argument: [Machine_Subnet_IP_Address:Port]")
+		log.Println("Initialize RPC Registry Info Error: expected 1 argument: [Machine_Subnet_IP_Address:Port]")
 	}
 	if err != nil {
 		log.Fatal(err)
