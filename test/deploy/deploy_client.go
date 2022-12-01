@@ -2,34 +2,39 @@ package main
 
 import (
 	"Distributed-RPC-Framework/client"
+	"Distributed-RPC-Framework/coder"
 	"Distributed-RPC-Framework/loadBalancer"
 	"Distributed-RPC-Framework/registry"
+	"Distributed-RPC-Framework/server"
 	"context"
 	"fmt"
 	"log"
 	"os"
+	"time"
 )
 
-func createClient(registryURL string) {
+func createClient(registryURL string, connectionInfo *server.ConnectionInfo) {
 	var testCase ArithmeticCase
 
+	//log.Printf("connectionInfo: %+v", connectionInfo)
 	registryLoadBalancer := loadBalancer.CreateLoadBalancerRegistrySide(registryURL, 0)
-	loadBalancedClient := client.CreateLoadBalancedClient(registryLoadBalancer, loadBalancer.RoundRobinSelectMode, nil)
+	loadBalancedClient := client.CreateLoadBalancedClient(registryLoadBalancer, loadBalancer.RoundRobinSelectMode, connectionInfo)
 	defer func() { _ = loadBalancedClient.Close() }()
-	log.Printf("Before Call -> clientLoadBalancer: %+v", registryLoadBalancer)
-	log.Printf("Before Call -> loadBalancedClient: %+v", loadBalancedClient)
 
 	//log.Println("sRPC Call example: Arithmetic.Addition 1 1")
 	for {
-		log.Println("Enter sRPC call info: [Service.Method] [NumberA] [NumberB]")
-		var serviceDotMethod, arithmeticSymbol string
+		log.Printf("Connection Configuration Info: %+v", connectionInfo)
+		log.Println("Available RPC service.method: \nA.A -> Arithmetic.Addition \nA.S -> Arithmetic.Subtraction \nA.M -> Arithmetic.Multiplication \nA.D -> Arithmetic.Division \nA.HC -> Arithmetic.HeavyComputation")
+		log.Println("Available RPC call type: \nNC -> RPC Normal CALL \nBC -> RPC Broadcast")
+		log.Println("Enter sRPC call info: [RPC_Call_Type] [Service.Method] [NumberA] [NumberB]")
+		var rpcCallType, serviceDotMethod, arithmeticSymbol string
 		var numberA, numberB int
-		n, err := fmt.Scanln(&serviceDotMethod, &numberA, &numberB)
+		n, err := fmt.Scanln(&rpcCallType, &serviceDotMethod, &numberA, &numberB)
 		if serviceDotMethod == "exit" {
 			os.Exit(0)
 		}
-		if n != 3 {
-			log.Println("Initialize sRPC call error: expected 3 arguments: [Service.Method] [NumberA] [NumberB]")
+		if n != 4 {
+			log.Println("Initialize sRPC call error: expected 4 arguments: [RPC_Call_Type] [Service.Method] [NumberA] [NumberB]")
 		}
 		if err != nil {
 			log.Fatal(err)
@@ -47,12 +52,14 @@ func createClient(registryURL string) {
 		case "A.D":
 			serviceDotMethod, arithmeticSymbol = "Arithmetic.Division", "/"
 			break
+		case "A.HC":
+			serviceDotMethod, arithmeticSymbol = "Arithmetic.HeavyComputation", "+"
+			break
 		default:
-			log.Printf("Initialize sRPC call error: [Service.Method] %s does not exist, plesae retry...", serviceDotMethod)
+			log.Printf("Initialize sRPC call error: [Service.Method] %s does not exist, plesae choose the existing RPC service.method...", serviceDotMethod)
 			continue
 
 		}
-		log.Printf("Invoking sRPC call: %s -> %d %s %d", serviceDotMethod, numberA, arithmeticSymbol, numberB)
 		testCase = ArithmeticCase{
 			serviceDotMethod,
 			arithmeticSymbol,
@@ -60,12 +67,25 @@ func createClient(registryURL string) {
 			&Output{},
 			0,
 		}
-		//expect no timeout
-		err = loadBalancedClient.Call(context.Background(), testCase.ServiceDotMethod, testCase.Input, testCase.Output)
+
+		switch rpcCallType {
+		case "NC":
+			rpcCallType = "call"
+			err = loadBalancedClient.Call(context.Background(), testCase.ServiceDotMethod, testCase.Input, testCase.Output)
+			break
+		case "BC":
+			rpcCallType = "broadcast"
+			err = loadBalancedClient.BroadcastCall(context.Background(), testCase.ServiceDotMethod, testCase.Input, testCase.Output)
+			break
+		default:
+			log.Printf("Initialize sRPC call error: [RPC_Call_Type] %s does not exist, plesae choose the existing RPC call type...", rpcCallType)
+			continue
+		}
+		//err = loadBalancedClient.Call(context.Background(), testCase.ServiceDotMethod, testCase.Input, testCase.Output)
 		if err != nil {
-			log.Printf("sRPC call %s error: %s", testCase.ServiceDotMethod, err)
+			log.Printf("sRPC %s %s error: %s", rpcCallType, testCase.ServiceDotMethod, err)
 		} else {
-			log.Printf("sRPC call %s success -> %d %s %d = %d", testCase.ServiceDotMethod, testCase.Input.A, arithmeticSymbol, testCase.Input.B, testCase.Output.C)
+			log.Printf("sRPC %s %s success -> %d %s %d = %d", rpcCallType, testCase.ServiceDotMethod, testCase.Input.A, arithmeticSymbol, testCase.Input.B, testCase.Output.C)
 		}
 	}
 }
@@ -74,17 +94,33 @@ func main() {
 	//set up logger
 	log.SetFlags(log.Lshortfile)
 
-	log.Println("Enter RPC Client Info: [Registry_Subnet_IP_Address:Port]")
+	log.Println("Enter RPC Client Info: [Registry_Subnet_IP_Address:Port] [Connection_Timeout] [Processing_Timeout]")
 	var registryAddressPort, registryURL string
-	n, err := fmt.Scanln(&registryAddressPort)
-	if n != 1 {
-		log.Println("Initialize RPC Client Info error: expected 1 argument1: [Registry_Subnet_IP_Address:Port]")
+	var connectionTimeout, processingTimeout int
+	n, err := fmt.Scanln(&registryAddressPort, &connectionTimeout, &processingTimeout)
+	if n != 3 {
+		log.Println("Initialize RPC Client Info error: expected 3 argument1: [Registry_Subnet_IP_Address:Port] [Connection_Timeout] [Processing_Timeout]")
 	}
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	registryURL = "http://" + registryAddressPort + registry.DefaultRegistryPath
-	createClient(registryURL)
+	//registryURL = "http://" + registryAddressPort + registry.DefaultRegistryPath
+	if registryAddressPort[:1] == ":" {
+		//listener.Addr().String() -> "[::]:1234" -> port extraction needed
+		registryURL = "http://localhost" + registryAddressPort + registry.DefaultRegistryPath
+	} else {
+		//listener.Addr().String() -> "127.0.0.1:1234", port extraction not needed
+		registryURL = "http://" + registryAddressPort + registry.DefaultRegistryPath
+	}
+
+	var connectionInfo = &server.ConnectionInfo{
+		IDNumber:          server.MagicNumber,
+		CoderType:         coder.Json,
+		ConnectionTimeout: time.Second * time.Duration(connectionTimeout),
+		ProcessingTimeout: time.Second * time.Duration(processingTimeout),
+	}
+
+	createClient(registryURL, connectionInfo)
 
 }
