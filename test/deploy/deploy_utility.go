@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"math/rand"
 	"time"
 )
 
@@ -46,8 +47,9 @@ func (t *Arithmetic) Division(input *Input, output *Output) error {
 	return nil
 }
 
-func (t *Arithmetic) SleepThenAddition(input *Input, output *Output) error {
+func (t *Arithmetic) HeavyComputation(input *Input, output *Output) error {
 	time.Sleep(time.Second * time.Duration(input.A))
-	output.C = input.A + input.B
+	rand.Seed(int64(input.B))
+	output.C = rand.Int()
 	return nil
 }
