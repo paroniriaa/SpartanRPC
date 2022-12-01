@@ -3,10 +3,53 @@ package main
 import (
 	"Distributed-RPC-Framework/registry"
 	"Distributed-RPC-Framework/server"
+	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
+	"time"
 )
+
+type Input struct {
+	A, B int
+}
+
+type Output struct {
+	C int
+}
+
+type Arithmetic int
+
+func (t *Arithmetic) Addition(input *Input, output *Output) error {
+	output.C = input.A + input.B
+	return nil
+}
+
+func (t *Arithmetic) Subtraction(input *Input, output *Output) error {
+	output.C = input.A - input.B
+	return nil
+}
+
+func (t *Arithmetic) Multiplication(input *Input, output *Output) error {
+	output.C = input.A * input.B
+	return nil
+}
+
+func (t *Arithmetic) Division(input *Input, output *Output) error {
+	if input.B == 0 {
+		return errors.New("divide by zero")
+	}
+	output.C = input.A / input.B
+	return nil
+}
+
+func (t *Arithmetic) HeavyComputation(input *Input, output *Output) error {
+	time.Sleep(time.Second * time.Duration(input.A))
+	rand.Seed(int64(input.B))
+	output.C = rand.Int()
+	return nil
+}
 
 func createServer(addressPort string, serviceList []any, registryURL string) {
 	log.Println("main -> createServer: RPC server initialization routine start...")

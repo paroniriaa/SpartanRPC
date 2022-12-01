@@ -13,6 +13,22 @@ import (
 	"time"
 )
 
+type ArithmeticCase struct {
+	ServiceDotMethod string
+	ArithmeticSymbol string
+	Input            *TestInput
+	Output           *TestOutput
+	Expected         int
+}
+
+type TestInput struct {
+	A, B int
+}
+
+type TestOutput struct {
+	C int
+}
+
 func createClient(registryURL string, connectionInfo *server.ConnectionInfo) {
 	var testCase ArithmeticCase
 
@@ -53,7 +69,7 @@ func createClient(registryURL string, connectionInfo *server.ConnectionInfo) {
 			serviceDotMethod, arithmeticSymbol = "Arithmetic.Division", "/"
 			break
 		case "A.HC":
-			serviceDotMethod, arithmeticSymbol = "Arithmetic.HeavyComputation", "+"
+			serviceDotMethod, arithmeticSymbol = "Arithmetic.HeavyComputation", "$"
 			break
 		default:
 			log.Printf("Initialize sRPC Call Error: [Service.Method] %s does not exist, plesae choose the existing RPC service.method...", serviceDotMethod)
@@ -63,8 +79,8 @@ func createClient(registryURL string, connectionInfo *server.ConnectionInfo) {
 		testCase = ArithmeticCase{
 			serviceDotMethod,
 			arithmeticSymbol,
-			&Input{numberA, numberB},
-			&Output{},
+			&TestInput{numberA, numberB},
+			&TestOutput{},
 			0,
 		}
 
