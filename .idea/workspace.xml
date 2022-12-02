@@ -6,6 +6,13 @@
   <component name="ChangeListManager">
     <list default="true" id="bf430c80-8e27-40e9-af5f-2e23ca91ed6c" name="Default Changelist" comment="client">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/Intergration/capstone_1.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/intergration/capstone_1.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/Intergration/capstone_2.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/intergration/capstone_2.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/Intergration/capstone_3a.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/intergration/capstone_3a.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/Intergration/capstone_3b.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/intergration/capstone_3b.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/Intergration/capstone_4a.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/intergration/capstone_4a.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/Intergration/capstone_4b.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/intergration/capstone_4b.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/Intergration/capstone_utility.go" beforeDir="false" afterPath="$PROJECT_DIR$/test/intergration/capstone_utility.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -79,7 +86,7 @@
       <recent name="C:\Local Project\Distributed-RPC-Framework\server" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Build.go build capstone 1">
+  <component name="RunManager" selected="Go Build.go build capstone 4b">
     <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="SpartanRPC" />
       <working_directory value="$PROJECT_DIR$/test/Intergration" />
@@ -95,7 +102,7 @@
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/test/Intergration/capstone_utility.go|$PROJECT_DIR$/test/Intergration/capstone_1.go" />
+      <filePath value="$PROJECT_DIR$/test/intergration/capstone_utility.go|$PROJECT_DIR$/test/intergration/capstone_1.go" />
       <method v="2" />
     </configuration>
     <configuration name="go build capstone 2" type="GoApplicationRunConfiguration" factoryName="Go Application">
@@ -104,7 +111,7 @@
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/test/Intergration/capstone_utility.go|$PROJECT_DIR$/test/Intergration/capstone_2.go" />
+      <filePath value="$PROJECT_DIR$/test/intergration/capstone_utility.go|$PROJECT_DIR$/test/intergration/capstone_2.go" />
       <method v="2" />
     </configuration>
     <configuration name="go build capstone 3a" type="GoApplicationRunConfiguration" factoryName="Go Application">
@@ -113,7 +120,7 @@
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/test/Intergration/capstone_utility.go|$PROJECT_DIR$/test/Intergration/capstone_3a.go" />
+      <filePath value="$PROJECT_DIR$/test/intergration/capstone_utility.go|$PROJECT_DIR$/test/intergration/capstone_3a.go" />
       <method v="2" />
     </configuration>
     <configuration name="go build capstone 3b" type="GoApplicationRunConfiguration" factoryName="Go Application">
@@ -122,7 +129,7 @@
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/test/Intergration/capstone_utility.go|$PROJECT_DIR$/test/Intergration/capstone_3b.go" />
+      <filePath value="$PROJECT_DIR$/test/intergration/capstone_utility.go|$PROJECT_DIR$/test/intergration/capstone_3b.go" />
       <method v="2" />
     </configuration>
     <configuration name="go build capstone 4a" type="GoApplicationRunConfiguration" factoryName="Go Application">
@@ -131,7 +138,7 @@
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/test/Intergration/capstone_utility.go|$PROJECT_DIR$/test/Intergration/capstone_4a.go" />
+      <filePath value="$PROJECT_DIR$/test/intergration/capstone_utility.go|$PROJECT_DIR$/test/intergration/capstone_4a.go" />
       <method v="2" />
     </configuration>
     <configuration name="go build capstone 4b" type="GoApplicationRunConfiguration" factoryName="Go Application">
@@ -140,7 +147,7 @@
       <kind value="FILE" />
       <package value="Distributed-RPC-Framework" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/test/Intergration/capstone_utility.go|$PROJECT_DIR$/test/Intergration/capstone_4b.go" />
+      <filePath value="$PROJECT_DIR$/test/intergration/capstone_utility.go|$PROJECT_DIR$/test/intergration/capstone_4b.go" />
       <method v="2" />
     </configuration>
     <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
@@ -391,7 +398,8 @@
       <workItem from="1669598976506" duration="5868000" />
       <workItem from="1669686242505" duration="4582000" />
       <workItem from="1669864095590" duration="27412000" />
-      <workItem from="1669934519813" duration="3397000" />
+      <workItem from="1669934519813" duration="4438000" />
+      <workItem from="1669943033380" duration="102000" />
     </task>
     <servers />
   </component>
