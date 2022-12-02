@@ -295,7 +295,7 @@ func (server *Server) LaunchAndServe() {
 	} else {
 		//serverListenerAddress -> "127.0.0.1:1234", port extraction not needed
 		serverConnectURL = "http://" + serverListenerAddress + DefaultServerPath
-		serverInfoURL = "http://localhost" + serverListenerAddress + DefaultServerInfoPath
+		serverInfoURL = "http://" + serverListenerAddress + DefaultServerInfoPath
 
 	}
 	serverInfoHTTP := &ServerInfoHTTP{
